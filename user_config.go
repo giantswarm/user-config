@@ -2,25 +2,25 @@ package userconfig
 
 type AppConfig struct {
 	AppName     string            `json:"app_name"`
-	PublicPorts map[string]string `json:"public_ports"`
+	PublicPorts map[string]string `json:"public_ports,omitempty"`
 	Services    []ServiceConfig   `json:"services"`
 }
 
 type ScalingPolicyConfig struct {
 	// Minimum instances to launch.
-	Min int
+	Min int `json:"min,omitempty"`
 
 	// Maximum instances to launch.
-	Max int
+	Max int `json:"max,omitempty"`
 }
 
 // User defined service.
 type ServiceConfig struct {
 	ServiceName string            `json:"service_name"`
-	PublicPorts map[string]string `json:"public_ports"`
+	PublicPorts map[string]string `json:"public_ports,omitempty"`
 
 	// Config defining how many instances should be launched.
-	ScalingPolicy ScalingPolicyConfig `json:"scaling_policy"`
+	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	Components []ComponentConfig
 }
@@ -53,19 +53,19 @@ type ComponentConfig struct {
 	Image string `json:"image"`
 
 	// Config defining how many instances should be launched.
-	ScalingPolicy ScalingPolicyConfig `json:"scaling_policy"`
+	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
 	Ports []string `json:"ports"`
 
 	// Docker env to inject into docker containers.
-	Env []string `json:"env"`
+	Env []string `json:"env,omitempty"`
 
 	// Docker volumes to inject into docker containers.
-	Volumes []VolumeConfig `json:"volumes"`
+	Volumes []VolumeConfig `json:"volumes,omitempty"`
 
 	// Arguments for processes inside docker containers.
-	Args []string `json:"args"`
+	Args []string `json:"args,omitempty"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
 	Domains map[string]string `json:"domains,omitempty"`
