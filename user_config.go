@@ -56,7 +56,7 @@ type ComponentConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
-	Ports []string `json:"ports"`
+	Ports []string `json:"ports,omitempty"`
 
 	// Docker env to inject into docker containers.
 	Env []string `json:"env,omitempty"`
