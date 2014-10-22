@@ -32,7 +32,6 @@ type DiffInfo struct {
 }
 
 // Diff compares the two AppConfigs and returns a list of changes between the two.
-//
 func Diff(newConfig, oldConfig AppConfig) []DiffInfo {
 	if newConfig.AppName != oldConfig.AppName {
 		return []DiffInfo{
