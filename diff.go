@@ -8,19 +8,19 @@ type DiffType string
 
 const (
 	// Used to indicate that the app-name in the two files was changed
-	infoAppNameChanged DiffType = "infoAppNameChanged"
+	InfoAppNameChanged DiffType = "infoAppNameChanged"
 
 	// Used to indicate that a node (service or component) was added. `Name` in the DiffInfo describes the node that was added.
-	infoNodeAdded DiffType = "node-added"
+	InfoNodeAdded DiffType = "node-added"
 
 	// Used to indicate that a node (service or component) was removed. `Name` in the DiffInfo describes the node that was removed.
-	infoNodeRemoved DiffType = "node-removed"
+	InfoNodeRemoved DiffType = "node-removed"
 
 	// Used to indicate that the InstanceConfig in the ComponentConfig identified by `Name` changed.
-	infoInstanceConfigUpdated DiffType = "instance-update"
+	InfoInstanceConfigUpdated DiffType = "instance-update"
 
 	// Used to indicate that the component itself changed (but not the underlying InstanceConfig). `Name` in the DiffInfo describes the node that was changed.
-	infoComponentUpdated DiffType = "component-update"
+	InfoComponentUpdated DiffType = "component-update"
 )
 
 type DiffInfo struct {
@@ -36,7 +36,7 @@ type DiffInfo struct {
 func Diff(newConfig, oldConfig AppConfig) []DiffInfo {
 	if newConfig.AppName != oldConfig.AppName {
 		return []DiffInfo{
-			DiffInfo{Type: infoAppNameChanged, Name: []string{oldConfig.AppName}},
+			DiffInfo{Type: InfoAppNameChanged, Name: []string{oldConfig.AppName}},
 		}
 	}
 
@@ -111,9 +111,9 @@ func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) 
 	componentChanged := !reflect.DeepEqual(c, other)
 
 	if instanceConfigChanged {
-		changes <- DiffInfo{Type: infoInstanceConfigUpdated, Name: path}
+		changes <- DiffInfo{Type: InfoInstanceConfigUpdated, Name: path}
 	} else if componentChanged {
-		changes <- DiffInfo{Type: infoComponentUpdated, Name: path}
+		changes <- DiffInfo{Type: InfoComponentUpdated, Name: path}
 	}
 }
 
@@ -134,12 +134,12 @@ func diffHierarchy(path []string, newNode, oldNode node, changes chan<- DiffInfo
 			// This helps us later to determine which nodes were removed
 			delete(oldNodes, name)
 		} else {
-			changes <- DiffInfo{Type: infoNodeAdded, Name: append(path, name)}
+			changes <- DiffInfo{Type: InfoNodeAdded, Name: append(path, name)}
 		}
 	}
 
 	// Catch all nodes that were removed (the once left do not longer exist in the new config)
 	for name, _ := range oldNodes {
-		changes <- DiffInfo{Type: infoNodeRemoved, Name: append(path, name)}
+		changes <- DiffInfo{Type: InfoNodeRemoved, Name: append(path, name)}
 	}
 }

@@ -1,8 +1,10 @@
-package userconfig
+package userconfig_test
 
 import (
 	"reflect"
 	"testing"
+
+	. "github.com/giantswarm/user-config"
 )
 
 func ExampleConfig() AppConfig {
@@ -50,7 +52,7 @@ func TestDiffAppRename(t *testing.T) {
 	newCfg.AppName = "app#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoAppNameChanged, Name: []string{"app"}},
+		DiffInfo{Type: InfoAppNameChanged, Name: []string{"app"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -62,8 +64,8 @@ func TestDiffServiceRename(t *testing.T) {
 	newCfg.Services[0].ServiceName = "service1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: infoNodeRemoved, Name: []string{"app", "service1"}},
+		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
+		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -75,8 +77,8 @@ func TestDiffComponentRename(t *testing.T) {
 	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: infoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
+		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -88,7 +90,7 @@ func TestDiffComponentUpdateImage(t *testing.T) {
 	newCfg.Services[0].Components[0].Image = "landingpage2"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -99,7 +101,7 @@ func TestDiffComponentUpdateArgs(t *testing.T) {
 	newCfg.Services[0].Components[0].Args = []string{"--env=test"}
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -111,7 +113,7 @@ func TestDiffComponentScalingChanged(t *testing.T) {
 	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 0, Max: 1000}
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoComponentUpdated, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoComponentUpdated, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -131,8 +133,8 @@ func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
 	newCfg.Services[0].ServiceName = "service1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: infoNodeRemoved, Name: []string{"app", "service1"}},
+		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
+		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -151,9 +153,9 @@ func TestDiffMultipleChanges(t *testing.T) {
 	})
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: infoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: infoNodeAdded, Name: []string{"app", "service1", "service1component2"}},
-		DiffInfo{Type: infoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
+		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component2"}},
+		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
