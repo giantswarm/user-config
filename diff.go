@@ -123,7 +123,7 @@ func diffHierarchy(path []string, newNode, oldNode node, changes chan<- DiffInfo
 		oldNodes[child.Name()] = child
 	}
 
-	// Search for services that were added or changed
+	// Search for nodes that were added or changed
 	for _, child := range newNode.Children() {
 		name := child.Name()
 
@@ -131,14 +131,14 @@ func diffHierarchy(path []string, newNode, oldNode node, changes chan<- DiffInfo
 		if oldNodeExists {
 			child.Diff(append(path, name), oldNode, changes)
 
-			// This helps us later to determine which services were removed
+			// This helps us later to determine which nodes were removed
 			delete(oldNodes, name)
 		} else {
 			changes <- DiffInfo{Type: infoNodeAdded, Name: append(path, name)}
 		}
 	}
 
-	// Catch all services that were removed (the once left do not longer exist in the new config)
+	// Catch all nodes that were removed (the once left do not longer exist in the new config)
 	for name, _ := range oldNodes {
 		changes <- DiffInfo{Type: infoNodeRemoved, Name: append(path, name)}
 	}
