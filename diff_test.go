@@ -113,7 +113,7 @@ func TestDiffComponentScalingChanged(t *testing.T) {
 	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 0, Max: 1000}
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoComponentUpdated, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoComponentScalingUpdated, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -156,6 +156,21 @@ func TestDiffMultipleChanges(t *testing.T) {
 		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
 		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component2"}},
 		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
+	}
+
+	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
+}
+
+func TestDiffComponentMultipleChanges(t *testing.T) {
+	oldCfg := ExampleConfig()
+	newCfg := ExampleConfig()
+
+	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 10}
+	newCfg.Services[0].Components[0].InstanceConfig.Image = "new-site"
+
+	expectedDiffItems := []DiffInfo{
+		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoComponentScalingUpdated, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)

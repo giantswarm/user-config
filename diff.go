@@ -16,6 +16,9 @@ const (
 	// Used to indicate that a node (service or component) was removed. `Name` in the DiffInfo describes the node that was removed.
 	InfoNodeRemoved DiffType = "node-removed"
 
+	// Used to indicate that the scaling config of a component changed.
+	InfoComponentScalingUpdated DiffType = "component-scaling-changed"
+
 	// Used to indicate that the InstanceConfig in the ComponentConfig identified by `Name` changed.
 	InfoInstanceConfigUpdated DiffType = "instance-update"
 
@@ -107,11 +110,19 @@ func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) 
 	otherComponent := other.(componentNode)
 
 	instanceConfigChanged := !reflect.DeepEqual(c.InstanceConfig, otherComponent.InstanceConfig)
+	componentScalingChanged := !reflect.DeepEqual(c.ScalingPolicy, otherComponent.ScalingPolicy)
 	componentChanged := !reflect.DeepEqual(c, other)
 
 	if instanceConfigChanged {
 		changes <- DiffInfo{Type: InfoInstanceConfigUpdated, Name: path}
-	} else if componentChanged {
+	}
+	if componentScalingChanged {
+		changes <- DiffInfo{Type: InfoComponentScalingUpdated, Name: path}
+	}
+
+	// NOTE: This shouldn't trigger at the moment, a component only consist of scalingpolicy + instanceconfig
+	// This is just here if we extend the component in the future so it also gets reported
+	if !instanceConfigChanged && !componentScalingChanged && componentChanged {
 		changes <- DiffInfo{Type: InfoComponentUpdated, Name: path}
 	}
 }
