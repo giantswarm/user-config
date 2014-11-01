@@ -27,6 +27,7 @@ var parsings = []struct {
 	Input string
 
 	ExpectedRegistry   string
+	ExpectedNamespace  string
 	ExpectedRepository string
 	ExpectedVersion    string
 }{
@@ -34,14 +35,16 @@ var parsings = []struct {
 		"zeisss/static-website",
 
 		"",
-		"zeisss/static-website",
+		"zeisss",
+		"static-website",
 		"",
 	},
 	{
 		"registry.private.giantswarm.io/sharethemeal/payment:1.0.0",
 
 		"registry.private.giantswarm.io",
-		"sharethemeal/payment",
+		"sharethemeal",
+		"payment",
 		"1.0.0",
 	},
 
@@ -49,20 +52,23 @@ var parsings = []struct {
 		"192.168.59.103:5000/sharethemeal/payment",
 
 		"192.168.59.103:5000",
-		"sharethemeal/payment",
+		"sharethemeal",
+		"payment",
 		"",
 	},
 	{
 		"192.168.59.103:5000/sharethemeal/payment:192.0.0",
 
 		"192.168.59.103:5000",
-		"sharethemeal/payment",
+		"sharethemeal",
+		"payment",
 		"192.0.0",
 	},
 	{
 		"registry.private.giantswarm.io/app-service:latest",
 
 		"registry.private.giantswarm.io",
+		"",
 		"app-service",
 		"latest",
 	},
@@ -70,6 +76,7 @@ var parsings = []struct {
 	{
 		"ruby",
 
+		"",
 		"",
 		"ruby",
 		"",
@@ -81,7 +88,7 @@ func TestParsing(t *testing.T) {
 		t.Logf("Input: %s", data.Input)
 		image, err := NewDockerImage(data.Input)
 		if err != nil {
-			t.Fatalf("Failed to parse docker image: %s", data.Input)
+			t.Fatalf("Failed to parse docker image %s: %v", data.Input, err)
 		}
 
 		if image.Registry != data.ExpectedRegistry {
@@ -106,7 +113,10 @@ var invalidImages = []struct {
 		"ab", // too short
 	},
 	{
-		"abca/asd/asd", // only one / is allowed
+		"abca/asd/asd", // First element is not a hostname
+	},
+	{
+		"zeisss/static-website::latest",
 	},
 }
 

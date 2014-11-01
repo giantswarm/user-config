@@ -9,7 +9,11 @@ import (
 )
 
 var (
-	PatternNamespace = regexp.MustCompile("[a-z0-9_]")
+	// Must have at least one .
+	PatternRegistry  = regexp.MustCompile("[a-z]+[a-z0-9-_]*\\.[a-z]+[a-z0-9-_]*")
+	PatternNamespace = regexp.MustCompile("[a-z0-9_]{4,}")
+	PatternImage     = regexp.MustCompile("[a-z0-9-_]{4,}")
+	PatternVersion   = regexp.MustCompile("[a-z0-9-\\.]")
 )
 
 var (
@@ -26,7 +30,8 @@ type DockerImage struct {
 	origin string // All of the below strings combined: <registry>/<repository>:<version>
 
 	Registry   string // The registry name
-	Repository string // The namespace and repository name
+	Namespace  string // The namespace
+	Repository string // The repository name
 	Version    string // The version part
 }
 
@@ -44,7 +49,7 @@ func (img *DockerImage) UnmarshalJSON(data []byte) error {
 }
 
 func (img *DockerImage) parse(input string) error {
-	if strings.Trimspace(input) == "" {
+	if strings.TrimSpace(input) == "" {
 		return errgo.Notef(ErrInvalidFormat, "Zero length")
 	}
 	img.origin = input
@@ -54,46 +59,47 @@ func (img *DockerImage) parse(input string) error {
 		return errgo.Notef(ErrInvalidFormat, "Too many path elements")
 	}
 
-	index := 0
-	if isRegistry(splitByPath[index]) {
-		img.Registry = splitByPath[index]
-		index++
-	}
-
-	if isNamespace(splitByPath[index]) {
-
+	if isRegistry(splitByPath[0]) {
+		img.Registry = splitByPath[0]
+		splitByPath = splitByPath[1:]
 	}
 
 	switch len(splitByPath) {
-	case 0:
-		return errgo.Notef(ErrInvalidFormat, "No path separator found.")
 	case 1:
-		img.Repository = input
-		if isRegistry(img.Repository) {
+		if !isImage(splitByPath[0]) {
 			return errgo.Notef(ErrInvalidFormat, "Only element is a registry")
 		}
+		img.Repository = splitByPath[0]
 	case 2:
-		if isRegistry(splitByPath[0]) {
-			img.Registry = splitByPath[0]
-			img.Repository = splitByPath[1]
-		} else {
-			img.Repository = input
+		img.Namespace = splitByPath[0]
+		img.Repository = splitByPath[1]
+
+		if !isNamespace(img.Namespace) {
+			return errgo.Notef(ErrInvalidFormat, "Invalid namespace part: "+img.Namespace)
 		}
+	default:
+		return errgo.Notef(ErrInvalidFormat, "Invalid format")
 	}
 
-	// Now split img.Image into img.Image and img.Version
+	// Now split img.Repository into img.Repository and img.Version
 	splitByVersionSeparator := strings.Split(img.Repository, ":")
-	if len(splitByVersionSeparator) > 2 {
+
+	switch len(splitByVersionSeparator) {
+	case 2:
+		img.Repository = splitByVersionSeparator[0]
+		img.Version = splitByVersionSeparator[1]
+
+		if !isVersion(img.Version) {
+			return errgo.Notef(ErrInvalidFormat, "Invalid version: "+img.Version)
+		}
+	case 1:
+		img.Repository = splitByVersionSeparator[0]
+	default:
 		return errgo.Notef(ErrInvalidFormat, "Too many double colons")
 	}
 
-	if len(splitByVersionSeparator) == 2 {
-		img.Repository = splitByVersionSeparator[0]
-		img.Version = splitByVersionSeparator[1]
-	}
-
-	if strings.TrimSpace(img.Repository) == "" {
-		return errgo.Notef(ErrInvalidFormat, "No repository provided.")
+	if !isImage(img.Repository) {
+		return errgo.Notef(ErrInvalidFormat, "Invalid image part: "+img.Repository)
 	}
 	return nil
 }
@@ -106,7 +112,7 @@ func isRegistry(input string) bool {
 	if strings.ContainsAny(input, ".:") {
 		return true
 	}
-	return false
+	return PatternRegistry.MatchString(input)
 }
 
 // Only [a-z0-9_]
@@ -115,4 +121,15 @@ func isNamespace(input string) bool {
 		return false
 	}
 	return PatternNamespace.MatchString(input)
+}
+
+func isImage(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	return PatternImage.MatchString(input)
+}
+
+func isVersion(input string) bool {
+	return PatternVersion.MatchString(input)
 }

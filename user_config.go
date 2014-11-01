@@ -50,7 +50,7 @@ type ComponentConfig struct {
 
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
-	Image string `json:"image"`
+	Image DockerImage `json:"image"`
 
 	// Config defining how many instances should be launched.
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
