@@ -5,6 +5,31 @@ import (
 	"testing"
 )
 
+func TestMarshal(t *testing.T) {
+	expectedMessage := []byte(`"zeisss/static-website:1.0"`)
+
+	image, err := NewDockerImage("zeisss/static-website:1.0")
+	if err != nil {
+		t.Fatalf("Failed to parse input image: %v", err)
+	}
+
+	data, err := json.Marshal(image)
+	if err != nil {
+		t.Fatalf("Failed to marshal image %v: %v", image, err)
+	}
+
+	if len(expectedMessage) != len(data) {
+		t.Logf("Expected: %s", string(expectedMessage))
+		t.Fatalf("Different length: %v", string(data))
+	}
+
+	for i := 0; i < len(expectedMessage); i++ {
+		if expectedMessage[i] != data[i] {
+			t.Fatalf("serialized message differs at index %d: %v != %v", i, expectedMessage[i], data[i])
+		}
+	}
+}
+
 func TestWrongDockerImageParsing(t *testing.T) {
 	msg := `["zeisss/static-website"]`
 

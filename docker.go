@@ -35,7 +35,7 @@ type DockerImage struct {
 	Version    string // The version part
 }
 
-func (img *DockerImage) MarshalJSON() ([]byte, error) {
+func (img DockerImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(img.origin)
 }
 
