@@ -9,10 +9,9 @@ import (
 )
 
 var (
-	// Must have at least one .
-	PatternRegistry  = regexp.MustCompile("^[A-Za-z]+[A-Za-z0-9-_]*\\.[A-Za-z]+[A-Za-z0-9-_]*$")
-	PatternNamespace = regexp.MustCompile("^[a-zA-Z0-9_]{4,}$")
-	PatternImage     = regexp.MustCompile("^[a-zA-Z0-9-_]{4,}$")
+	// https://github.com/docker/docker/blob/6d6dc2c1a1e36a2c3992186664d4513ce28e84ae/registry/registry.go#L27
+	PatternNamespace = regexp.MustCompile(`^([a-z0-9_]{4,30})$`)
+	PatternImage     = regexp.MustCompile(`^([a-z0-9-_.]+)$`)
 	PatternVersion   = regexp.MustCompile("^[a-zA-Z0-9-\\.]+$")
 )
 
@@ -110,10 +109,11 @@ func (img DockerImage) String() string {
 }
 
 func isRegistry(input string) bool {
-	if strings.ContainsAny(input, ".:") {
+	// See https://github.com/docker/docker/blob/6d6dc2c1a1e36a2c3992186664d4513ce28e84ae/registry/registry.go#L204
+	if strings.ContainsAny(input, ".:") || input == "localhost" {
 		return true
 	}
-	return PatternRegistry.MatchString(input)
+	return false
 }
 
 func isNamespace(input string) bool {
