@@ -8,7 +8,7 @@ import (
 func TestMarshal(t *testing.T) {
 	expectedMessage := []byte(`"zeisss/static-website:1.0"`)
 
-	image, err := NewDockerImage("zeisss/static-website:1.0")
+	image, err := ParseDockerImage("zeisss/static-website:1.0")
 	if err != nil {
 		t.Fatalf("Failed to parse input image: %v", err)
 	}
@@ -111,9 +111,9 @@ var parsings = []struct {
 func TestParsing(t *testing.T) {
 	for _, data := range parsings {
 		t.Logf("Input: %s", data.Input)
-		image, err := NewDockerImage(data.Input)
+		image, err := ParseDockerImage(data.Input)
 		if err != nil {
-			t.Fatalf("Failed to parse docker image %s: %v", data.Input, err)
+			t.Fatalf("Failed to parse docker image %#v: %v", data.Input, err)
 		}
 
 		if image.Registry != data.ExpectedRegistry {
@@ -143,13 +143,16 @@ var invalidImages = []struct {
 	{
 		"zeisss/static-website::latest",
 	},
+	{"zeisss/static-website\t"},
+	{"  zeisss/static-website"},
+	{"zeisss/  static-website"},
 }
 
 func TestParsingErrors(t *testing.T) {
 	for _, data := range invalidImages {
-		image, err := NewDockerImage(data.Input)
+		image, err := ParseDockerImage(data.Input)
 		if err == nil {
-			t.Fatalf("Expected error for input: %s\nBut got: %#v", data.Input, image)
+			t.Fatalf("Expected error for input: %v\nBut got: %#v", data.Input, image)
 		}
 	}
 }

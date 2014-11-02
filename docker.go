@@ -10,24 +10,28 @@ import (
 
 var (
 	// Must have at least one .
-	PatternRegistry  = regexp.MustCompile("[a-z]+[a-z0-9-_]*\\.[a-z]+[a-z0-9-_]*")
-	PatternNamespace = regexp.MustCompile("[a-z0-9_]{4,}")
-	PatternImage     = regexp.MustCompile("[a-z0-9-_]{4,}")
-	PatternVersion   = regexp.MustCompile("[a-z0-9-\\.]")
+	PatternRegistry  = regexp.MustCompile("^[A-Za-z]+[A-Za-z0-9-_]*\\.[A-Za-z]+[A-Za-z0-9-_]*$")
+	PatternNamespace = regexp.MustCompile("^[a-zA-Z0-9_]{4,}$")
+	PatternImage     = regexp.MustCompile("^[a-zA-Z0-9-_]{4,}$")
+	PatternVersion   = regexp.MustCompile("^[a-zA-Z0-9-\\.]+$")
 )
 
 var (
-	ErrInvalidFormat = errgo.New("Not a valid docker image")
+	// NOTE: This format description is slightly different from what we parse down there.
+	// The format given here is the one docker documents. But the repository also consist of a
+	// namespace which is more or less always there. Since our business logic requires some checks based on the
+	// namespace, we parse it explicitly.
+	ErrInvalidFormat = errgo.New("Not a valid docker image. Format: [<registry>/]<repository>[:<version>]")
 )
 
-func NewDockerImage(image string) (DockerImage, error) {
+func ParseDockerImage(image string) (DockerImage, error) {
 	var dockerImage DockerImage
 	err := dockerImage.parse(image)
 	return dockerImage, err
 }
 
 type DockerImage struct {
-	origin string // All of the below strings combined: <registry>/<repository>:<version>
+	origin string // All of the below strings combined: <registry>/<namespace>/<repository>:<version>
 
 	Registry   string // The registry name
 	Namespace  string // The namespace
@@ -66,9 +70,6 @@ func (img *DockerImage) parse(input string) error {
 
 	switch len(splitByPath) {
 	case 1:
-		if !isImage(splitByPath[0]) {
-			return errgo.Notef(ErrInvalidFormat, "Only element is a registry")
-		}
 		img.Repository = splitByPath[0]
 	case 2:
 		img.Namespace = splitByPath[0]
@@ -90,7 +91,7 @@ func (img *DockerImage) parse(input string) error {
 		img.Version = splitByVersionSeparator[1]
 
 		if !isVersion(img.Version) {
-			return errgo.Notef(ErrInvalidFormat, "Invalid version: "+img.Version)
+			return errgo.Notef(ErrInvalidFormat, "Invalid version %#v", img.Version)
 		}
 	case 1:
 		img.Repository = splitByVersionSeparator[0]
@@ -99,7 +100,7 @@ func (img *DockerImage) parse(input string) error {
 	}
 
 	if !isImage(img.Repository) {
-		return errgo.Notef(ErrInvalidFormat, "Invalid image part: "+img.Repository)
+		return errgo.Notef(ErrInvalidFormat, "Invalid image part %#v", img.Repository)
 	}
 	return nil
 }
@@ -115,7 +116,6 @@ func isRegistry(input string) bool {
 	return PatternRegistry.MatchString(input)
 }
 
-// Only [a-z0-9_]
 func isNamespace(input string) bool {
 	if len(input) < 4 {
 		return false
