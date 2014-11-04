@@ -37,6 +37,9 @@ type DependencyConfig struct {
 	// Name of a required component
 	Name string `json:"name"`
 
+	// The name how this dependency should appear in the container
+	Alias string `json:"alias,omitempty"`
+
 	// Port of the required component
 	Port int `json:"port"`
 
