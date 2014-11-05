@@ -30,6 +30,103 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
+func TestFieldChange(t *testing.T) {
+
+	image := &DockerImage{
+		Repository: "website",
+		Version:    "0.1.1",
+	}
+
+	image.Version = "10.1.1"
+	expectedString := "website:10.1.1"
+	changedString := image.String()
+
+	if changedString != expectedString {
+		t.Fatalf("Changed version was not respected in String(): Expected '%s', got '%s'", expectedString, changedString)
+	}
+}
+
+var stringConversions = []struct {
+	Registry   string
+	Namespace  string
+	Repository string
+	Version    string
+
+	ExpectedString string
+}{
+	{
+		"",
+		"",
+		"static-website",
+		"",
+
+		"static-website",
+	},
+	{
+		"",
+		"denderello",
+		"static-website",
+		"",
+
+		"denderello/static-website",
+	},
+	{
+		"",
+		"",
+		"static-website",
+		"0.0.1",
+
+		"static-website:0.0.1",
+	},
+	{
+		"",
+		"denderello",
+		"static-website",
+		"0.0.1",
+
+		"denderello/static-website:0.0.1",
+	},
+	{
+		"registry.giantswarm.io",
+		"",
+		"static-website",
+		"",
+
+		"registry.giantswarm.io/static-website",
+	},
+	{
+		"registry.giantswarm.io",
+		"denderello",
+		"static-website",
+		"",
+
+		"registry.giantswarm.io/denderello/static-website",
+	},
+	{
+		"registry.giantswarm.io",
+		"denderello",
+		"static-website",
+		"10.1.1",
+
+		"registry.giantswarm.io/denderello/static-website:10.1.1",
+	},
+}
+
+func TestStringConversion(t *testing.T) {
+	for _, data := range stringConversions {
+		image := &DockerImage{
+			Registry:   data.Registry,
+			Namespace:  data.Namespace,
+			Repository: data.Repository,
+			Version:    data.Version,
+		}
+
+		if image.String() != data.ExpectedString {
+			t.Fatalf("Unexpected string conversion output: '%s' but got '%s'", data.ExpectedString, image.String())
+		}
+	}
+}
+
 func TestWrongDockerImageParsing(t *testing.T) {
 	msg := `["zeisss/static-website"]`
 

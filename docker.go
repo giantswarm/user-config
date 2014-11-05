@@ -30,8 +30,6 @@ func ParseDockerImage(image string) (DockerImage, error) {
 }
 
 type DockerImage struct {
-	origin string // All of the below strings combined: <registry>/<namespace>/<repository>:<version>
-
 	Registry   string // The registry name
 	Namespace  string // The namespace
 	Repository string // The repository name
@@ -39,7 +37,7 @@ type DockerImage struct {
 }
 
 func (img DockerImage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(img.origin)
+	return json.Marshal(img.String())
 }
 
 func (img *DockerImage) UnmarshalJSON(data []byte) error {
@@ -55,7 +53,6 @@ func (img *DockerImage) parse(input string) error {
 	if strings.TrimSpace(input) == "" {
 		return errgo.Notef(ErrInvalidFormat, "Zero length")
 	}
-	img.origin = input
 
 	splitByPath := strings.Split(input, "/")
 	if len(splitByPath) > 3 {
@@ -104,8 +101,25 @@ func (img *DockerImage) parse(input string) error {
 	return nil
 }
 
+// Returns all image inforamtion combined: <registry>/<namespace>/<repository>:<version>
 func (img DockerImage) String() string {
-	return img.origin
+	var imageString string
+
+	if img.Registry != "" {
+		imageString += img.Registry + "/"
+	}
+
+	if img.Namespace != "" {
+		imageString += img.Namespace + "/"
+	}
+
+	imageString += img.Repository
+
+	if img.Version != "" {
+		imageString += ":" + img.Version
+	}
+
+	return imageString
 }
 
 func isRegistry(input string) bool {
