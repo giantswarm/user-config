@@ -135,10 +135,10 @@ var invalidImages = []struct {
 		"192.168.59.103:500", // not a valid image name
 	},
 	{
-		"ab", // too short
+		"abca/asd/asd", // First element is not a hostname
 	},
 	{
-		"abca/asd/asd", // First element is not a hostname
+		"foo/image", // namespace too short
 	},
 	{
 		"zeisss/static-website::latest",
