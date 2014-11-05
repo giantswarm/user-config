@@ -54,7 +54,7 @@ func (img *DockerImage) parse(input string) error {
 		return errgo.Notef(ErrInvalidFormat, "Zero length")
 	}
 	if strings.Contains(input, " ") {
-		return errgo.Notef(ErrInvalidFormat, "No whitespaaces allowed")
+		return errgo.Notef(ErrInvalidFormat, "No whitespaces allowed")
 	}
 
 	splitByPath := strings.Split(input, "/")
