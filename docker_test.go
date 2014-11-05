@@ -229,6 +229,9 @@ var invalidImages = []struct {
 	Input string
 }{
 	{
+		"", // Empty strings are not allowed
+	},
+	{
 		"192.168.59.103:500", // not a valid image name
 	},
 	{
@@ -243,6 +246,7 @@ var invalidImages = []struct {
 	{"zeisss/static-website\t"},
 	{"  zeisss/static-website"},
 	{"zeisss/  static-website"},
+	{"zeisss/static-website   "},
 }
 
 func TestParsingErrors(t *testing.T) {

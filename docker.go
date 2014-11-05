@@ -50,8 +50,11 @@ func (img *DockerImage) UnmarshalJSON(data []byte) error {
 }
 
 func (img *DockerImage) parse(input string) error {
-	if strings.TrimSpace(input) == "" {
+	if len(input) < 1 {
 		return errgo.Notef(ErrInvalidFormat, "Zero length")
+	}
+	if strings.Contains(input, " ") {
+		return errgo.Notef(ErrInvalidFormat, "No whitespaaces allowed")
 	}
 
 	splitByPath := strings.Split(input, "/")
