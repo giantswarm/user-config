@@ -50,7 +50,7 @@ func (img *DockerImage) UnmarshalJSON(data []byte) error {
 }
 
 func (img *DockerImage) parse(input string) error {
-	if len(input) < 1 {
+	if len(input) == 0 {
 		return errgo.Notef(ErrInvalidFormat, "Zero length")
 	}
 	if strings.Contains(input, " ") {
