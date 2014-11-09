@@ -13,7 +13,7 @@ func (s *Status) String() string {
 	return string(*s)
 }
 
-// AggregateStatus returns the 'higher' of the two status, given the following ordner:
+// AggregateStatus returns the 'higher' of the two status, given the following order:
 //  ok < starting < down < failed
 func AggregateStatus(status1, status2 Status) Status {
 	if status1 == STATUS_FAILED || status2 == STATUS_FAILED {
