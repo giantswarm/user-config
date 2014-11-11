@@ -251,6 +251,9 @@ var invalidImages = []struct {
 	{
 		"zeisss/static-website::latest",
 	},
+	{"http://registry.com/denderello/foobar"},
+	{"https://registry.com/denderello/foobar"},
+	{"ftp://registry.com/denderello/foobar"},
 	{"zeisss/static-website\t"},
 	{"  zeisss/static-website"},
 	{"zeisss/  static-website"},
