@@ -148,7 +148,7 @@ func TestWrongDockerImageParsing(t *testing.T) {
 		t.Fatalf("Wrong length: %d, expected 1", len(target))
 	}
 
-	if target[0].String() != "zeisss/static-website" {
+	if target[0].String() != "zeisss/static-website:latest" {
 		t.Fatalf("Wrong imagename: %s", target[0])
 	}
 }
@@ -167,7 +167,7 @@ var parsings = []struct {
 		"",
 		"zeisss",
 		"static-website",
-		"",
+		"latest",
 	},
 	{
 		"registry.private.giantswarm.io/sharethemeal/payment:1.0.0",
@@ -184,7 +184,7 @@ var parsings = []struct {
 		"192.168.59.103:5000",
 		"sharethemeal",
 		"payment",
-		"",
+		"latest",
 	},
 	{
 		"192.168.59.103:5000/sharethemeal/payment:192.0.0",
@@ -202,14 +202,13 @@ var parsings = []struct {
 		"app-service",
 		"latest",
 	},
-
 	{
 		"ruby",
 
 		"",
 		"",
 		"ruby",
-		"",
+		"latest",
 	},
 }
 

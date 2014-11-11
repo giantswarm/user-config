@@ -94,6 +94,7 @@ func (img *DockerImage) parse(input string) error {
 		}
 	case 1:
 		img.Repository = splitByVersionSeparator[0]
+		img.Version = "latest"
 	default:
 		return errgo.Notef(ErrInvalidFormat, "Too many double colons")
 	}
