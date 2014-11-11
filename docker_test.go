@@ -110,6 +110,14 @@ var stringConversions = []struct {
 
 		"registry.giantswarm.io/denderello/static-website:10.1.1",
 	},
+	{
+		"192.168.59.103:5000",
+		"sharethemeal",
+		"payment",
+		"192.0.0",
+
+		"192.168.59.103:5000/sharethemeal/payment:192.0.0",
+	},
 }
 
 func TestStringConversion(t *testing.T) {
