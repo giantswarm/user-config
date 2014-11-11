@@ -265,3 +265,32 @@ func TestParsingErrors(t *testing.T) {
 		}
 	}
 }
+
+var registryTests = []struct {
+	Input          string
+	ExpectedResult bool
+}{
+	{
+		"registry.giantswarm.io", true,
+	},
+	{
+		"registry.giantswarm.io:8080", true,
+	},
+	{
+		"my-registry:8080", true,
+	},
+	{
+		"localhost", false,
+	},
+	{
+		"foobar", false,
+	},
+}
+
+func TestIsRegistry(t *testing.T) {
+	for _, data := range registryTests {
+		if isRegistry(data.Input) != data.ExpectedResult {
+			t.Fatalf("Expected result of isRegistry for input '%v' to be %v but got %v", data.Input, data.ExpectedResult, isRegistry(data.Input))
+		}
+	}
+}

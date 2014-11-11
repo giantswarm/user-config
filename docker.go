@@ -127,7 +127,7 @@ func (img DockerImage) String() string {
 
 func isRegistry(input string) bool {
 	// See https://github.com/docker/docker/blob/6d6dc2c1a1e36a2c3992186664d4513ce28e84ae/registry/registry.go#L204
-	if strings.ContainsAny(input, ".:") || input == "localhost" {
+	if strings.ContainsAny(input, ".:") {
 		return true
 	}
 	return false
