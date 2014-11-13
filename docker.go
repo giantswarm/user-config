@@ -62,7 +62,7 @@ func (img *DockerImage) parse(input string) error {
 		return errgo.Notef(ErrInvalidFormat, "Too many path elements")
 	}
 
-	if isRegistry(splitByPath[0]) {
+	if containsRegistry(splitByPath) {
 		img.Registry = splitByPath[0]
 		splitByPath = splitByPath[1:]
 	}
@@ -126,9 +126,15 @@ func (img DockerImage) String() string {
 	return imageString
 }
 
-func isRegistry(input string) bool {
+func containsRegistry(input []string) bool {
 	// See https://github.com/docker/docker/blob/6d6dc2c1a1e36a2c3992186664d4513ce28e84ae/registry/registry.go#L204
-	if strings.ContainsAny(input, ".:") {
+	if len(input) == 1 {
+		return false
+	}
+	if len(input) == 2 && strings.ContainsAny(input[0], ".:") {
+		return true
+	}
+	if len(input) == 3 {
 		return true
 	}
 	return false

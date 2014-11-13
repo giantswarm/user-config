@@ -170,6 +170,22 @@ var parsings = []struct {
 		"latest",
 	},
 	{
+		"python:3",
+
+		"",
+		"",
+		"python",
+		"3",
+	},
+	{
+		"busy.box/busy.com",
+
+		"busy.box",
+		"",
+		"busy.com",
+		"latest",
+	},
+	{
 		"registry.private.giantswarm.io/sharethemeal/payment:1.0.0",
 
 		"registry.private.giantswarm.io",
@@ -239,9 +255,6 @@ var invalidImages = []struct {
 		"", // Empty strings are not allowed
 	},
 	{
-		"192.168.59.103:500", // not a valid image name
-	},
-	{
 		"abca/asd/asd", // First element is not a hostname
 	},
 	{
@@ -264,35 +277,6 @@ func TestParsingErrors(t *testing.T) {
 		image, err := ParseDockerImage(data.Input)
 		if err == nil {
 			t.Fatalf("Expected error for input: %v\nBut got: %#v", data.Input, image)
-		}
-	}
-}
-
-var registryTests = []struct {
-	Input          string
-	ExpectedResult bool
-}{
-	{
-		"registry.giantswarm.io", true,
-	},
-	{
-		"registry.giantswarm.io:8080", true,
-	},
-	{
-		"my-registry:8080", true,
-	},
-	{
-		"localhost", false,
-	},
-	{
-		"foobar", false,
-	},
-}
-
-func TestIsRegistry(t *testing.T) {
-	for _, data := range registryTests {
-		if isRegistry(data.Input) != data.ExpectedResult {
-			t.Fatalf("Expected result of isRegistry for input '%v' to be %v but got %v", data.Input, data.ExpectedResult, isRegistry(data.Input))
 		}
 	}
 }
