@@ -38,7 +38,9 @@ func IsStatusActive(status Status) bool {
 	return status == STATUS_STARTING || status == STATUS_UP
 }
 
-// Is the given status either failed or up.
+// IsStatusFinal returns whether the given status is a final status and should not change upon itself.
+// E.g. A unit with a status STARTING will after some time either switch to UP or FAILED, thus the state is not final.
+// Final states are UP or FAILED.
 func IsStatusFinal(status Status) bool {
 	return status == STATUS_FAILED || status == STATUS_UP
 }
