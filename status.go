@@ -37,3 +37,8 @@ func IsStatusInactive(status Status) bool {
 func IsStatusActive(status Status) bool {
 	return status == STATUS_STARTING || status == STATUS_UP
 }
+
+// Final means failed or up.
+func IsStatusFinal(status Status) bool {
+	return status == STATUS_FAILED || status == STATUS_UP
+}
