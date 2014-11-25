@@ -51,12 +51,16 @@ type ComponentConfig struct {
 	// Name of a service.
 	ComponentName string `json:"component_name"`
 
+	// Config defining how many instances should be launched.
+	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
+
+	InstanceConfig
+}
+
+type InstanceConfig struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
 	Image DockerImage `json:"image"`
-
-	// Config defining how many instances should be launched.
-	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
 	Ports []string `json:"ports,omitempty"`
