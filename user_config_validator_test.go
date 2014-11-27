@@ -26,47 +26,6 @@ var _ = Describe("user config validator", func() {
 		err = nil
 	})
 
-	Describe("UnmarshalSwarmJson()", func() {
-		Describe("parsing valid app-config", func() {
-			BeforeEach(func() {
-				byteSlice = []byte(`{
-          "app_name": "test-app-name"
-        }`)
-
-				appConfig = userConfigPkg.AppConfig{}
-				err = userConfigPkg.UnmarshalSwarmJson(byteSlice, &appConfig)
-			})
-
-			It("should not throw error", func() {
-				Expect(err).To(BeNil())
-			})
-
-			It("should properly parse given app name", func() {
-				Expect(appConfig.AppName).To(Equal("test-app-name"))
-			})
-		})
-
-		Describe("parsing app-config with unknown fields", func() {
-			BeforeEach(func() {
-				byteSlice = []byte(`{
-          "app_name": "test-app-name",
-          "foo": 47
-        }`)
-
-				appConfig = userConfigPkg.AppConfig{}
-				err = userConfigPkg.UnmarshalSwarmJson(byteSlice, &appConfig)
-			})
-
-			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeTrue())
-			})
-
-			It("should not parse given app name", func() {
-				Expect(appConfig.AppName).To(Equal(""))
-			})
-		})
-	})
-
 	Describe("json.Unmarshal()", func() {
 		Describe("parsing valid app-config", func() {
 			BeforeEach(func() {

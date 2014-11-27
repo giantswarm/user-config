@@ -8,7 +8,15 @@ type AppConfig struct {
 }
 
 func (ac *AppConfig) UnmarshalJSON(b []byte) error {
-	return UnmarshalSwarmJson(b, ac)
+	if err := UnmarshalWithBSONUnmarshaler(b, ac); err != nil {
+		return Mask(err)
+	}
+
+	if err := CheckForUnknownFields(ac); err != nil {
+		return Mask(err)
+	}
+
+	return nil
 }
 
 type ScalingPolicyConfig struct {

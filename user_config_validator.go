@@ -7,11 +7,10 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-func UnmarshalSwarmJson(byteSlice []byte, appConfig *AppConfig) error {
-	if err := unmarshal(byteSlice, appConfig); err != nil {
-		return Mask(err)
-	}
-
+// CheckForUnknownFields looks up AppConfig.Arbitrary, that contains arbitrary
+// keys, if any. Those arbitrary keys are handled as errors by us, since we
+// want to improve user feedback.
+func CheckForUnknownFields(appConfig *AppConfig) error {
 	// If we found arbitrary keys, we need to return an error.
 	if len(appConfig.Arbitrary) > 0 {
 		// Just return the first invalid field we find.
@@ -26,7 +25,11 @@ func UnmarshalSwarmJson(byteSlice []byte, appConfig *AppConfig) error {
 	return nil
 }
 
-func unmarshal(byteSlice []byte, v interface{}) error {
+// UnmarshalWithBSONUnmarshaler unmarshals data given by byteSlice into the
+// given pointer interface. The BSON unmarshaler is special in terms of
+// detecting arbitrary JSON fields, that can be inlined in the given pointer
+// interface. For more information see http://godoc.org/labix.org/v2/mgo/bson.
+func UnmarshalWithBSONUnmarshaler(byteSlice []byte, v interface{}) error {
 	var j map[string]interface{}
 
 	if err := json.Unmarshal(byteSlice, &j); err != nil {
