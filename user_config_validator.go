@@ -3,8 +3,8 @@ package userconfig
 import (
 	"encoding/json"
 
+	"github.com/giantswarm/golang-mgo-bson-debian"
 	"github.com/juju/errgo"
-	"labix.org/v2/mgo/bson"
 )
 
 // CheckForUnknownFields looks up AppConfig.Arbitrary, that contains arbitrary
