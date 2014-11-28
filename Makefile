@@ -27,6 +27,11 @@ get-deps: .gobuild
 	# Fetch public dependencies via `go get`
 	GOPATH=$(GOPATH) go get -d -v github.com/giantswarm/$(PROJECT)
 
+	#
+	# Build test packages (we only want those two, so we use `-d` in go get)
+	GOPATH=$(GOPATH) go get -d -v github.com/onsi/gomega
+	GOPATH=$(GOPATH) go get -d -v github.com/onsi/ginkgo
+
 $(BIN): $(SOURCE)
 	GOPATH=$(GOPATH) go build -o $(BIN)
 
