@@ -1,46 +1,68 @@
 package userconfig
 
-type Status string
+type State string
 
 const (
-	STATUS_FAILED   Status = "failed"
-	STATUS_DOWN     Status = "down"
-	STATUS_STARTING Status = "starting"
-	STATUS_UP       Status = "up"
+	StateFailed   State = "failed"
+	StateDown     State = "down"
+	StateStarting State = "starting"
+	StateStopping State = "stopping"
+	StateUp       State = "up"
+	StateUnknown  State = "unknown"
 )
 
-func (s *Status) String() string {
+func (s *State) String() string {
 	return string(*s)
 }
 
-// AggregateStatus returns the 'higher' of the two status, given the following order:
-//  ok < starting < down < failed
-func AggregateStatus(status1, status2 Status) Status {
-	if status1 == STATUS_FAILED || status2 == STATUS_FAILED {
-		return STATUS_FAILED
-	}
-	if status1 == STATUS_DOWN || status2 == STATUS_DOWN {
-		return STATUS_DOWN
-	}
-	if status1 == STATUS_STARTING || status2 == STATUS_STARTING {
-		return STATUS_STARTING
-	}
-	return STATUS_UP
+type SubState string
+
+const (
+	SubStartingWaitingOnDependency SubState = "waiting-on-dependency"
+	SubStartingPreparingVolume              = "preparing-volume"
+	SubStartingFetchingImage                = "fetching-image"
+	SubStartingRegisteringService           = "registering-service"
+	SubStartingRegisteringDomain            = "registering-domain"
+
+	SubUnknown = "unknown"
+)
+
+func (s *SubState) String() string {
+	return string(*s)
 }
 
-// Inactive means an app is failed or down.
-func IsStatusInactive(status Status) bool {
-	return status == STATUS_FAILED || status == STATUS_DOWN
+type Status struct {
+	State State    `json:"state"`
+	Sub   SubState `json:"sub"`
+}
+
+// AggregateStatus returns the 'higher' of the two status, given the following order:
+//  ok < starting < stopping < down < failed
+func AggregateStatus(status1, status2 Status) State {
+	if status1.State == StateFailed || status2.State == StateFailed {
+		return StateFailed
+	}
+	if status1.State == StateDown || status2.State == StateDown {
+		return StateDown
+	}
+	if status1.State == StateStopping || status2.State == StateStopping {
+		return StateStopping
+	}
+	if status1.State == StateStarting || status2.State == StateStarting {
+		return StateStarting
+	}
+	return StateUp
 }
 
 // Active means starting or up.
 func IsStatusActive(status Status) bool {
-	return status == STATUS_STARTING || status == STATUS_UP
+	return status.State == StateStarting || status.State == StateUp
 }
 
-// IsStatusFinal returns whether the given status is a final status and should not change upon itself.
-// E.g. A unit with a status STARTING will after some time either switch to UP or FAILED, thus the state is not final.
-// Final states are UP or FAILED.
+// IsStatusFinal returns whether the given status is a final status and should
+// not change upon itself. E.g. A unit with a StateStarting will after some
+// time either switch to StateUp or StateFailed, thus the state is not final.
+// Final states are StateUp, StateDown or StateFailed.
 func IsStatusFinal(status Status) bool {
-	return status == STATUS_FAILED || status == STATUS_UP
+	return status.State == StateFailed || status.State == StateUp || status.State == StateDown
 }
