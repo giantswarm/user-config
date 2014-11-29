@@ -36,7 +36,8 @@ type Status struct {
 	Sub   SubState `json:"sub"`
 }
 
-// AggregateStatus returns the 'higher' of the two status, given the following order:
+// AggregateStatus returns the 'higher' of the two status,
+// given the following order:
 //  ok < starting < stopping < down < failed
 func AggregateStatus(status1, status2 Status) State {
 	if status1.State == StateFailed || status2.State == StateFailed {
@@ -64,5 +65,6 @@ func IsStatusActive(status Status) bool {
 // time either switch to StateUp or StateFailed, thus the state is not final.
 // Final states are StateUp, StateDown or StateFailed.
 func IsStatusFinal(status Status) bool {
-	return status.State == StateFailed || status.State == StateUp || status.State == StateDown
+	return status.State == StateFailed || status.State == StateUp ||
+		status.State == StateDown
 }
