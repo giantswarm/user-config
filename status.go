@@ -39,17 +39,26 @@ type Status struct {
 // AggregateStatus returns the 'higher' of the two status,
 // given the following order:
 //  ok < starting < stopping < down < failed
-func AggregateStatus(status1, status2 Status) State {
-	if status1.State == StateFailed || status2.State == StateFailed {
+// If any of two state is unknown, the other one is returned
+func AggregateState(status1, status2 State) State {
+	if status1 == StateUnknown {
+		return status2
+	}
+	if status2 == StateUnknown {
+		return status1
+	}
+
+	// Hierarchy checks
+	if status1 == StateFailed || status2 == StateFailed {
 		return StateFailed
 	}
-	if status1.State == StateDown || status2.State == StateDown {
+	if status1 == StateDown || status2 == StateDown {
 		return StateDown
 	}
-	if status1.State == StateStopping || status2.State == StateStopping {
+	if status1 == StateStopping || status2 == StateStopping {
 		return StateStopping
 	}
-	if status1.State == StateStarting || status2.State == StateStarting {
+	if status1 == StateStarting || status2 == StateStarting {
 		return StateStarting
 	}
 	return StateUp
@@ -57,7 +66,11 @@ func AggregateStatus(status1, status2 Status) State {
 
 // Active means starting or up.
 func IsStatusActive(status Status) bool {
-	return status.State == StateStarting || status.State == StateUp
+	return IsStateActive(status.State)
+}
+
+func IsStateActive(state State) bool {
+	return state == StateStarting || state == StateUp
 }
 
 // IsStatusFinal returns whether the given status is a final status and should
@@ -65,6 +78,9 @@ func IsStatusActive(status Status) bool {
 // time either switch to StateUp or StateFailed, thus the state is not final.
 // Final states are StateUp, StateDown or StateFailed.
 func IsStatusFinal(status Status) bool {
-	return status.State == StateFailed || status.State == StateUp ||
-		status.State == StateDown
+	return IsStateFinal(status.State)
+}
+func IsStateFinal(state State) bool {
+	return state == StateFailed || state == StateUp ||
+		state == StateDown
 }
