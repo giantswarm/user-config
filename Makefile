@@ -38,5 +38,12 @@ $(BIN): $(SOURCE)
 run-tests:
 	GOPATH=$(GOPATH) go test ./...
 
+run-test:
+	if test "$(test)" = "" ; then \
+		echo "missing test parameter, that is, path to test folder e.g. './middleware/v1/'."; \
+		exit 1; \
+	fi
+	GOPATH=$(GOPATH) go test -v $(test)
+
 fmt:
 	gofmt -l -w .
