@@ -23,6 +23,14 @@ var (
 	ErrInvalidFormat = errgo.New("Not a valid docker image. Format: [<registry>/]<repository>[:<version>]")
 )
 
+func MustParseDockerImage(image string) DockerImage {
+	img, err := ParseDockerImage(image)
+	if err != nil {
+		panic(errgo.Mask(err))
+	}
+	return img
+}
+
 func ParseDockerImage(image string) (DockerImage, error) {
 	var dockerImage DockerImage
 	err := dockerImage.parse(image)
