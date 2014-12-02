@@ -24,12 +24,12 @@ type ScalingPolicyConfig struct {
 	Min int `json:"min,omitempty" bson:"min,omitempty"`
 
 	// Maximum instances to launch.
-	Max int `json:"max,omitempty", bson:"max,omitempty"`
+	Max int `json:"max,omitempty" bson:"max,omitempty"`
 }
 
 // User defined service.
 type ServiceConfig struct {
-	ServiceName string            `json:"service_name", bson:"service_name"`
+	ServiceName string            `json:"service_name" bson:"service_name"`
 	PublicPorts map[string]string `json:"public_ports,omitempty" bson:"public_ports,omitempty"`
 
 	// Config defining how many instances should be launched.
