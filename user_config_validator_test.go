@@ -30,7 +30,12 @@ var _ = Describe("user config validator", func() {
 		Describe("parsing valid app-config", func() {
 			BeforeEach(func() {
 				byteSlice = []byte(`{
-          "app_name": "test-app-name"
+          "app_name": "test-app-name",
+          "services": [
+            {
+              "service_name": "session"
+            }
+          ]
         }`)
 
 				appConfig = userConfigPkg.AppConfig{}
@@ -44,13 +49,26 @@ var _ = Describe("user config validator", func() {
 			It("should properly parse given app name", func() {
 				Expect(appConfig.AppName).To(Equal("test-app-name"))
 			})
+
+			It("should parse one service", func() {
+				Expect(appConfig.Services).To(HaveLen(1))
+			})
+
+			It("should parse one service", func() {
+				Expect(appConfig.Services[0].ServiceName).To(Equal("session"))
+			})
 		})
 
 		Describe("parsing app-config with unknown fields", func() {
 			BeforeEach(func() {
 				byteSlice = []byte(`{
           "app_name": "test-app-name",
-          "foo": 47
+          "foo": 47,
+          "services": [
+            {
+              "service_name": "session"
+            }
+          ]
         }`)
 
 				appConfig = userConfigPkg.AppConfig{}
