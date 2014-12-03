@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var (
+	lowerRegex = regexp.MustCompile("[a-z]")
+	upperRegex = regexp.MustCompile("[A-Z]")
+)
+
 // input: "serviceName", "session",                 output: "serviceName"     "session"
 // input: "serviceName", "session-service/session", output: "session-service" "session"
 func ParseDependency(serviceName, dependency string) (string, string) {
@@ -26,6 +31,9 @@ func ParseDependency(serviceName, dependency string) (string, string) {
 	return depServiceName, depComponentName
 }
 
+// FixJSONFieldNames expects an byte array representing a valid JSON string.
+// The given JSON field names will be transformed from upper cased to
+// underscore.
 func FixJSONFieldNames(b []byte) ([]byte, error) {
 	zeroVal := make([]byte, 0)
 	var j map[string]interface{}
@@ -44,6 +52,8 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 	return b, nil
 }
 
+// fixJSONFieldNamesRecursive transforms the keys of the given map from
+// uppercased to underscore.
 func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{} {
 	for k, v := range j {
 		delete(j, k)
@@ -79,9 +89,12 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{}
 	return j
 }
 
-var lowerRegex = regexp.MustCompile("[a-z]")
-var upperRegex = regexp.MustCompile("[A-Z]")
-
+// fixFieldName transforms upper cased strings into underscore ones.
+//
+//   "appName"       => "app_name"
+//   "Services"      => "services"
+//   "ComponentName" => "component_name"
+//
 func fixFieldName(s string) string {
 	r := strings.Split(s, "")
 
