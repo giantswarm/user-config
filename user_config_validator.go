@@ -1,49 +1,55 @@
 package userconfig
 
 import (
-	"encoding/json"
+//"encoding/json"
+//"fmt"
 
-	"github.com/giantswarm/golang-mgo-bson-debian"
-	"github.com/juju/errgo"
+//"github.com/juju/errgo"
 )
 
-// CheckForUnknownFields looks up AppConfig.Arbitrary, that contains arbitrary
-// keys, if any. Those arbitrary keys are handled as errors by us, since we
-// want to improve user feedback.
-func CheckForUnknownFields(appConfig *AppConfig) error {
-	// If we found arbitrary keys, we need to return an error.
-	if len(appConfig.Arbitrary) > 0 {
-		// Just return the first invalid field we find.
-		for k, _ := range appConfig.Arbitrary {
-			// Better reset app-config to its zero value.
-			*appConfig = AppConfig{}
+func CheckForUnknownFields(b []byte, ac *AppConfig) error {
+	// Unmarshal clean struct
+	//var clean AppConfig
+	//if err := json.Unmarshal(b, &clean); err != nil {
+	//	return Mask(err)
+	//}
 
-			return errgo.WithCausef(nil, ErrUnknownJSONField, "Cannot parse app config. Unknown field '%s' detected.", k)
-		}
-	}
+	//// Marshal clean struct
+	//cleanBytes, err := json.Marshal(clean)
+	//if err != nil {
+	//	return Mask(err)
+	//}
 
-	return nil
-}
+	//fmt.Printf("%#v\n", string(cleanBytes))
+	//fmt.Printf("%#v\n", string(b))
 
-// UnmarshalWithBSONUnmarshaler unmarshals data given by byteSlice into the
-// given pointer interface. The BSON unmarshaler is special in terms of
-// detecting arbitrary JSON fields, that can be inlined in the given pointer
-// interface. For more information see http://godoc.org/labix.org/v2/mgo/bson.
-func UnmarshalWithBSONUnmarshaler(byteSlice []byte, v interface{}) error {
-	var j map[string]interface{}
+	// compare bytes
+	// if diverged unmarshal into map[string]interface{}
+	//   loop and detect diff
 
-	if err := json.Unmarshal(byteSlice, &j); err != nil {
-		return Mask(err)
-	}
+	//		// Better reset app-config to its zero value.
+	//		*appConfig = AppConfig{}
 
-	byteSlice, err := bson.Marshal(&j)
-	if err != nil {
-		return Mask(err)
-	}
-
-	if err := bson.Unmarshal(byteSlice, v); err != nil {
-		return Mask(err)
-	}
+	//		return errgo.WithCausef(nil, ErrUnknownJSONField, "Cannot parse app config. Unknown field '%s' detected.", k)
 
 	return nil
 }
+
+//func UnmarshalDirty(byteSlice []byte, v interface{}) error {
+//	var j map[string]interface{}
+//
+//	if err := json.Unmarshal(byteSlice, &j); err != nil {
+//		return Mask(err)
+//	}
+//
+//	byteSlice, err := json.Marshal(&j)
+//	if err != nil {
+//		return Mask(err)
+//	}
+//
+//	if err := json.Unmarshal(byteSlice, v); err != nil {
+//		return Mask(err)
+//	}
+//
+//	return nil
+//}
