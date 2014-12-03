@@ -10,18 +10,20 @@ type AppConfig struct {
 	Services    []ServiceConfig   `json:"services"`
 }
 
-func (ac *AppConfig) UnmarshalJSON(b []byte) error {
-	//if err := CheckForUnknownFields(b, ac); err != nil {
-	//	return Mask(err)
-	//}
+type AppConfigCopy AppConfig
 
-	// Just unmarshal the given bytes into the app-config struct.
-	var appConfig AppConfig
-	if err := json.Unmarshal(b, &appConfig); err != nil {
+func (ac *AppConfig) UnmarshalJSON(b []byte) error {
+	if err := CheckForUnknownFields(b, ac); err != nil {
 		return Mask(err)
 	}
 
-	*ac = appConfig
+	// Just unmarshal the given bytes into the app-config struct.
+	var appConfigCopy AppConfigCopy
+	if err := json.Unmarshal(b, &appConfigCopy); err != nil {
+		return Mask(err)
+	}
+
+	*ac = AppConfig(appConfigCopy)
 
 	return nil
 }
