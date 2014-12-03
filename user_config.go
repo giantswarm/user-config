@@ -10,6 +10,10 @@ type AppConfig struct {
 	Services    []ServiceConfig   `json:"services"`
 }
 
+// We need to define a separate AppConfig type that does not implement the
+// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
+// unmarshaler and would create a infinite loop using the original AppConfig
+// type.
 type AppConfigCopy AppConfig
 
 func (ac *AppConfig) UnmarshalJSON(b []byte) error {
@@ -17,7 +21,8 @@ func (ac *AppConfig) UnmarshalJSON(b []byte) error {
 		return Mask(err)
 	}
 
-	// Just unmarshal the given bytes into the app-config struct.
+	// Just unmarshal the given bytes into the app-config struct, since there
+	// were no errors.
 	var appConfigCopy AppConfigCopy
 	if err := json.Unmarshal(b, &appConfigCopy); err != nil {
 		return Mask(err)

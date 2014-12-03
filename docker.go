@@ -94,7 +94,10 @@ func (img *DockerImage) parse(input string) error {
 		}
 	case 1:
 		img.Repository = splitByVersionSeparator[0]
-		// Don't apply latest
+		// Don't apply latest, since we would produce an extra diff, when checking
+		// for arbitrary keys in the app-config. 'latest' is not necessary anyway,
+		// because the docker daemon does not pull all tags of an image, if there
+		// is none given.
 		img.Version = ""
 	default:
 		return errgo.Notef(ErrInvalidFormat, "Too many double colons")
