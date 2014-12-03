@@ -2,6 +2,7 @@ package userconfig_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -9,6 +10,24 @@ import (
 
 	userConfigPkg "github.com/giantswarm/user-config"
 )
+
+func TestMarshalUnmarshal(t *testing.T) {
+	app := ExampleConfig()
+
+	data, err := json.Marshal(app)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+
+	var app2 userConfigPkg.AppConfig
+	if err := json.Unmarshal(data, &app2); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(app, app2) {
+		t.Fatalf("Objects differ:\n%v\n%v", app, app2)
+	}
+}
 
 func TestUserConfigValidator(t *testing.T) {
 	RegisterFailHandler(Fail)
