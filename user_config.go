@@ -17,6 +17,11 @@ type AppConfig struct {
 type AppConfigCopy AppConfig
 
 func (ac *AppConfig) UnmarshalJSON(b []byte) error {
+	b, err := FixJSONFieldNames(b)
+	if err != nil {
+		return Mask(err)
+	}
+
 	if err := CheckForUnknownFields(b, ac); err != nil {
 		return Mask(err)
 	}
@@ -52,6 +57,30 @@ type ServiceConfig struct {
 	Components []ComponentConfig `json:"components"`
 }
 
+// We need to define a separate ServiceConfig type that does not implement the
+// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
+// unmarshaler and would create a infinite loop using the original ServiceConfig
+// type.
+type ServiceConfigCopy ServiceConfig
+
+func (sc *ServiceConfig) UnmarshalJSON(b []byte) error {
+	b, err := FixJSONFieldNames(b)
+	if err != nil {
+		return Mask(err)
+	}
+
+	// Just unmarshal the given bytes into the service-config struct, since there
+	// were no errors.
+	var serviceConfigCopy ServiceConfigCopy
+	if err := json.Unmarshal(b, &serviceConfigCopy); err != nil {
+		return Mask(err)
+	}
+
+	*sc = ServiceConfig(serviceConfigCopy)
+
+	return nil
+}
+
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path"`
@@ -82,6 +111,30 @@ type ComponentConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	InstanceConfig
+}
+
+// We need to define a separate ComponentConfig type that does not implement the
+// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
+// unmarshaler and would create a infinite loop using the original ComponentConfig
+// type.
+type ComponentConfigCopy ComponentConfig
+
+func (sc *ComponentConfig) UnmarshalJSON(b []byte) error {
+	b, err := FixJSONFieldNames(b)
+	if err != nil {
+		return Mask(err)
+	}
+
+	// Just unmarshal the given bytes into the component-config struct, since there
+	// were no errors.
+	var componentConfigCopy ComponentConfigCopy
+	if err := json.Unmarshal(b, &componentConfigCopy); err != nil {
+		return Mask(err)
+	}
+
+	*sc = ComponentConfig(componentConfigCopy)
+
+	return nil
 }
 
 type InstanceConfig struct {
