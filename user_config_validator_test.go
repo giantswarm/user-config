@@ -30,32 +30,32 @@ var _ = Describe("user config validator", func() {
 		Describe("parsing valid app-config", func() {
 			BeforeEach(func() {
 				byteSlice = []byte(`{
-				          "app_name": "test-app-name",
-				          "services": [
-				            {
-				              "service_name": "session",
-				              "components": [
-				                {
-				                  "component_name": "api",
-				                  "image": "registry/namespace/repository:version",
-				                  "ports": [ "80/tcp" ],
-				                  "dependencies": [
-				                    { "name": "redis", "port": 6379, "same_machine": true }
-				                  ],
-				                  "domains": { "test.domain.io": "80" }
-				                },
-				                {
-				                  "component_name": "redis",
-				                  "image": "dockerfile/redis",
-				                  "ports": [ "6379/tcp" ],
-				                  "volumes": [
-				                    { "path": "/data", "size": "5 GB" }
-				                  ]
-				                }
-				              ]
-				            }
-				          ]
-				        }`)
+          "app_name": "test-app-name",
+          "services": [
+            {
+              "service_name": "session",
+              "components": [
+                {
+                  "component_name": "api",
+                  "image": "registry/namespace/repository:version",
+                  "ports": [ "80/tcp" ],
+                  "dependencies": [
+                    { "name": "redis", "port": 6379, "same_machine": true }
+                  ],
+                  "domains": { "test.domain.io": "80" }
+                },
+                {
+                  "component_name": "redis",
+                  "image": "dockerfile/redis",
+                  "ports": [ "6379/tcp" ],
+                  "volumes": [
+                    { "path": "/data", "size": "5 GB" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }`)
 
 				appConfig = userConfigPkg.AppConfig{}
 				err = json.Unmarshal(byteSlice, &appConfig)
@@ -107,14 +107,14 @@ var _ = Describe("user config validator", func() {
 		Describe("parsing app-config with missing fields", func() {
 			BeforeEach(func() {
 				byteSlice = []byte(`{
-		        "app_name": "test-app-name",
-		        "foo": 47,
-		        "services": [
-		          {
-		            "service_name": "session"
-		          }
-		        ]
-		      }`)
+          "app_name": "test-app-name",
+          "foo": 47,
+          "services": [
+            {
+              "service_name": "session"
+            }
+          ]
+        }`)
 
 				appConfig = userConfigPkg.AppConfig{}
 				err = json.Unmarshal(byteSlice, &appConfig)
@@ -134,32 +134,32 @@ var _ = Describe("user config validator", func() {
 	Describe("parsing app-config with unknown fields", func() {
 		BeforeEach(func() {
 			byteSlice = []byte(`{
-				          "app_name": "test-app-name",
-				          "services": [
-				            {
-				              "service_name": "session",
-				              "components": [
-				                {
-				                  "component_name": "api",
-				                  "image": "registry/namespace/repository:version",
-				                  "ports": [ "80/tcp" ],
-				                  "dependencies": [
-				                    { "name": "redis", "port": 6379, "same_machine": true }
-				                  ],
-				                  "domains": { "test.domain.io": "80" }
-				                },
-				                {
-				                  "component_name": "redis",
-				                  "image": "dockerfile/redis",
-				                  "ports": [ "6379/tcp" ],
-				                  "volume": [
-				                    { "path": "/data", "size": "5 GB" }
-				                  ]
-				                }
-				              ]
-				            }
-				          ]
-		      }`)
+        "app_name": "test-app-name",
+        "services": [
+          {
+            "service_name": "session",
+            "components": [
+              {
+                "component_name": "api",
+                "image": "registry/namespace/repository:version",
+                "ports": [ "80/tcp" ],
+                "dependencies": [
+                  { "name": "redis", "port": 6379, "same_machine": true }
+                ],
+                "domains": { "test.domain.io": "80" }
+              },
+              {
+                "component_name": "redis",
+                "image": "dockerfile/redis",
+                "ports": [ "6379/tcp" ],
+                "volume": [
+                  { "path": "/data", "size": "5 GB" }
+                ]
+              }
+            ]
+          }
+        ]
+      }`)
 
 			appConfig = userConfigPkg.AppConfig{}
 			err = json.Unmarshal(byteSlice, &appConfig)
