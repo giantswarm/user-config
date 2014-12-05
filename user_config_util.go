@@ -56,7 +56,7 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{} {
 	for k, v := range j {
 		delete(j, k)
-		k = fixFieldName(k)
+		k = FixFieldName(k)
 		j[k] = v
 
 		if reflect.TypeOf(v).Kind() == reflect.Map {
@@ -88,13 +88,13 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{}
 	return j
 }
 
-// fixFieldName transforms upper cased strings into underscore ones.
+// FixFieldName transforms upper cased strings into underscore ones.
 //
 //   "appName"       => "app_name"
 //   "Services"      => "services"
 //   "ComponentName" => "component_name"
 //
-func fixFieldName(s string) string {
+func FixFieldName(s string) string {
 	r := strings.Split(s, "")
 
 	for i, v := range r {
