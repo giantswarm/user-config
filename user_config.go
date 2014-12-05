@@ -8,6 +8,9 @@ type AppConfig struct {
 	AppName     string            `json:"app_name"`
 	PublicPorts map[string]string `json:"public_ports,omitempty"`
 	Services    []ServiceConfig   `json:"services"`
+
+	// IsUserData says wether the given JSON data is given by the user or not.
+	IsUserData bool `json:"-"`
 }
 
 // We need to define a separate AppConfig type that does not implement the
@@ -17,9 +20,15 @@ type AppConfig struct {
 type AppConfigCopy AppConfig
 
 func (ac *AppConfig) UnmarshalJSON(b []byte) error {
-	b, err := FixJSONFieldNames(b)
-	if err != nil {
-		return Mask(err)
+	// If the given JSON data is given by a user, don't fix JSON field names. If
+	// the given JSON data us given by ETCD, fix JSON field names.
+	if !ac.IsUserData {
+		var err error
+
+		b, err = FixJSONFieldNames(b)
+		if err != nil {
+			return Mask(err)
+		}
 	}
 
 	if err := CheckForUnknownFields(b, ac); err != nil {

@@ -255,11 +255,11 @@ var _ = Describe("user config validator", func() {
 			Describe("with actually invalid field names", func() {
 				BeforeEach(func() {
 					byteSlice = []byte(`{
-            "appName": "test-app-name",
-            "Services": [
+            "app_name": "test-app-name",
+            "services": [
               {
                 "service_name": "session",
-                "Components": [
+                "compOnents": [
                   {
                     "component_name": "api",
                     "image": "registry/namespace/repository:version",
@@ -267,10 +267,10 @@ var _ = Describe("user config validator", func() {
                     "dependencies": [
                       { "name": "redis", "port": 6379, "same_machine": true }
                     ],
-                    "Domains": { "test.domain.io": "80" }
+                    "domains": { "test.domain.io": "80" }
                   },
                   {
-                    "ComponentNames": "redis",
+                    "component_name": "redis",
                     "image": "dockerfile/redis",
                     "ports": [ "6379/tcp" ],
                     "volumes": [
@@ -282,13 +282,18 @@ var _ = Describe("user config validator", func() {
             ]
           }`)
 
-					appConfig = userConfigPkg.AppConfig{}
+					appConfig = userConfigPkg.AppConfig{
+						// Don't fix the given JSON data's field names, but still validate
+						// it as it is.
+						IsUserData: true,
+					}
+
 					err = json.Unmarshal(byteSlice, &appConfig)
 				})
 
 				It("should throw error", func() {
 					Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["components"][1]["component_names"]' detected.`))
+					Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["compOnents"]' detected.`))
 				})
 
 				It("should not parse given app name", func() {
