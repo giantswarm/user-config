@@ -35,18 +35,17 @@ func ParseDependency(serviceName, dependency string) (string, string) {
 // The given JSON field names will be transformed from upper cased to
 // underscore.
 func FixJSONFieldNames(b []byte) ([]byte, error) {
-	zeroVal := make([]byte, 0)
 	var j map[string]interface{}
 
 	if err := json.Unmarshal(b, &j); err != nil {
-		return zeroVal, Mask(err)
+		return nil, Mask(err)
 	}
 
 	j = fixJSONFieldNamesRecursive(j)
 
 	b, err := json.Marshal(j)
 	if err != nil {
-		return zeroVal, Mask(err)
+		return nil, Mask(err)
 	}
 
 	return b, nil
