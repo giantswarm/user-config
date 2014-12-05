@@ -21,17 +21,17 @@ var _ = Describe("user config util", func() {
 			expected string
 		)
 
-		It("should foo", func() {
+		It("should transform upper cased character in the middle of the word", func() {
 			input = "appName"
 			expected = "app_name"
 		})
 
-		It("should bar", func() {
+		It("should transform upper cased character at the beginning of the word", func() {
 			input = "Services"
 			expected = "services"
 		})
 
-		It("should baz", func() {
+		It("should transform upper cased character at the beginning and in the middle of the word", func() {
 			input = "ComponentName"
 			expected = "component_name"
 		})
