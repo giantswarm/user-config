@@ -31,6 +31,15 @@ func ParseDependency(serviceName, dependency string) (string, string) {
 	return depServiceName, depComponentName
 }
 
+func marshalToLowerCaseJSON(obj interface{}) ([]byte, error) {
+	defaultJson, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return FixJSONFieldNames(defaultJson)
+}
+
 // FixJSONFieldNames expects an byte array representing a valid JSON string.
 // The given JSON field names will be transformed from upper cased to
 // underscore.
@@ -58,6 +67,10 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{}
 		delete(j, k)
 		k = FixFieldName(k)
 		j[k] = v
+
+		if v == nil {
+			continue
+		}
 
 		if reflect.TypeOf(v).Kind() == reflect.Map {
 			if m, ok := v.(map[string]interface{}); ok {

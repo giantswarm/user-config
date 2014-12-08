@@ -8,41 +8,26 @@ type AppConfig struct {
 	AppName     string            `json:"app_name"`
 	PublicPorts map[string]string `json:"public_ports,omitempty"`
 	Services    []ServiceConfig   `json:"services"`
-
-	// IsUserData says wether the given JSON data is given by the user or not.
-	IsUserData bool `json:"-"`
 }
 
-// We need to define a separate AppConfig type that does not implement the
-// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
-// unmarshaler and would create a infinite loop using the original AppConfig
-// type.
-type AppConfigCopy AppConfig
-
-func (ac *AppConfig) UnmarshalJSON(b []byte) error {
-	// If the given JSON data is given by a user, don't fix JSON field names. If
-	// the given JSON data us given by ETCD, fix JSON field names.
-	if !ac.IsUserData {
-		var err error
-
-		b, err = FixJSONFieldNames(b)
-		if err != nil {
-			return Mask(err)
-		}
+func (this *AppConfig) UnmarshalJSON(data []byte) error {
+	data, err := FixJSONFieldNames(data)
+	if err != nil {
+		return err
 	}
 
-	if err := CheckForUnknownFields(b, ac); err != nil {
-		return Mask(err)
+	if err := CheckForUnknownFields(data, this); err != nil {
+		return err
 	}
 
 	// Just unmarshal the given bytes into the app-config struct, since there
 	// were no errors.
-	var appConfigCopy AppConfigCopy
-	if err := json.Unmarshal(b, &appConfigCopy); err != nil {
+	var appConfigCopy appConfigCopy
+	if err := json.Unmarshal(data, &appConfigCopy); err != nil {
 		return Mask(err)
 	}
 
-	*ac = AppConfig(appConfigCopy)
+	*this = AppConfig(appConfigCopy)
 
 	return nil
 }
@@ -64,30 +49,6 @@ type ServiceConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	Components []ComponentConfig `json:"components"`
-}
-
-// We need to define a separate ServiceConfig type that does not implement the
-// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
-// unmarshaler and would create a infinite loop using the original ServiceConfig
-// type.
-type ServiceConfigCopy ServiceConfig
-
-func (sc *ServiceConfig) UnmarshalJSON(b []byte) error {
-	b, err := FixJSONFieldNames(b)
-	if err != nil {
-		return Mask(err)
-	}
-
-	// Just unmarshal the given bytes into the service-config struct, since there
-	// were no errors.
-	var serviceConfigCopy ServiceConfigCopy
-	if err := json.Unmarshal(b, &serviceConfigCopy); err != nil {
-		return Mask(err)
-	}
-
-	*sc = ServiceConfig(serviceConfigCopy)
-
-	return nil
 }
 
 type VolumeConfig struct {
@@ -120,30 +81,6 @@ type ComponentConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty"`
 
 	InstanceConfig
-}
-
-// We need to define a separate ComponentConfig type that does not implement the
-// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
-// unmarshaler and would create a infinite loop using the original ComponentConfig
-// type.
-type ComponentConfigCopy ComponentConfig
-
-func (sc *ComponentConfig) UnmarshalJSON(b []byte) error {
-	b, err := FixJSONFieldNames(b)
-	if err != nil {
-		return Mask(err)
-	}
-
-	// Just unmarshal the given bytes into the component-config struct, since there
-	// were no errors.
-	var componentConfigCopy ComponentConfigCopy
-	if err := json.Unmarshal(b, &componentConfigCopy); err != nil {
-		return Mask(err)
-	}
-
-	*sc = ComponentConfig(componentConfigCopy)
-
-	return nil
 }
 
 type InstanceConfig struct {
