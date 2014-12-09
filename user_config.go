@@ -10,14 +10,14 @@ type AppConfig struct {
 	Services    []ServiceConfig   `json:"services"`
 }
 
-func (this *AppConfig) UnmarshalJSON(data []byte) error {
+func (ac *AppConfig) UnmarshalJSON(data []byte) error {
 	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
 		return err
 	}
 
-	if err := CheckForUnknownFields(data, this); err != nil {
+	if err := CheckForUnknownFields(data, ac); err != nil {
 		return err
 	}
 
@@ -28,7 +28,7 @@ func (this *AppConfig) UnmarshalJSON(data []byte) error {
 		return Mask(err)
 	}
 
-	*this = AppConfig(appConfigCopy)
+	*ac = AppConfig(appConfigCopy)
 
 	return nil
 }
