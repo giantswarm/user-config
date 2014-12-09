@@ -10,21 +10,21 @@ type AppConfig struct {
 	Services    []ServiceConfig   `json:"services"`
 }
 
-// We need to define a separate AppConfig type that does not implement the
-// json.Unmarshaler. We do this because we need to call json.Unmarshal in the
-// unmarshaler and would create a infinite loop using the original AppConfig
-// type.
-type AppConfigCopy AppConfig
+func (ac *AppConfig) UnmarshalJSON(data []byte) error {
+	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
+	data, err := FixJSONFieldNames(data)
+	if err != nil {
+		return err
+	}
 
-func (ac *AppConfig) UnmarshalJSON(b []byte) error {
-	if err := CheckForUnknownFields(b, ac); err != nil {
-		return Mask(err)
+	if err := CheckForUnknownFields(data, ac); err != nil {
+		return err
 	}
 
 	// Just unmarshal the given bytes into the app-config struct, since there
 	// were no errors.
-	var appConfigCopy AppConfigCopy
-	if err := json.Unmarshal(b, &appConfigCopy); err != nil {
+	var appConfigCopy appConfigCopy
+	if err := json.Unmarshal(data, &appConfigCopy); err != nil {
 		return Mask(err)
 	}
 

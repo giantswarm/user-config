@@ -8,8 +8,10 @@ import (
 	"github.com/juju/errgo"
 )
 
+type appConfigCopy AppConfig
+
 func CheckForUnknownFields(b []byte, ac *AppConfig) error {
-	var clean AppConfigCopy
+	var clean appConfigCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
 		return Mask(err)
 	}
