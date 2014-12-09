@@ -11,6 +11,7 @@ type AppConfig struct {
 }
 
 func (this *AppConfig) UnmarshalJSON(data []byte) error {
+	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
 		return err
