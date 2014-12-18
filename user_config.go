@@ -91,26 +91,32 @@ type EnvList []string
 // UnmarshalJSON supports parsing an EnvList as array and as structure
 func (this *EnvList) UnmarshalJSON(data []byte) error {
 	// Try to parse as struct first
-	kvMap := make(map[string]string)
-	err := json.Unmarshal(data, &kvMap)
-	if err == nil {
-		// Success, wrap into array
+	if len(data) > 1 && data[0] == '{' {
+		kvMap := make(map[string]string)
+		err := json.Unmarshal(data, &kvMap)
+		if err == nil {
+			// Success, wrap into array
+			list := []string{}
+			for k, v := range kvMap {
+				list = append(list, fmt.Sprintf("%s=%s", k, v))
+			}
+			*this = list
+			return nil
+		}
+	}
+
+	// Try to parse are []string
+	if len(data) > 1 && data[0] == '[' {
 		list := []string{}
-		for k, v := range kvMap {
-			list = append(list, fmt.Sprintf("%s=%s", k, v))
+		err := json.Unmarshal(data, &list)
+		if err != nil {
+			return err
 		}
 		*this = list
 		return nil
 	}
 
-	// Try to parse are []string
-	list := []string{}
-	err = json.Unmarshal(data, &list)
-	if err != nil {
-		return err
-	}
-	*this = list
-	return nil
+	return ErrInvalidFormat
 }
 
 type InstanceConfig struct {
