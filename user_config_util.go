@@ -41,7 +41,7 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 		return nil, Mask(err)
 	}
 
-	j = fixJSONFieldNamesRecursive(j)
+	j = fixJSONFieldNamesRecursive(j, "")
 
 	b, err := json.Marshal(j)
 	if err != nil {
@@ -53,8 +53,13 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 
 // fixJSONFieldNamesRecursive transforms the keys of the given map from
 // uppercased to underscore.
-func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{} {
+func fixJSONFieldNamesRecursive(j map[string]interface{}, keyPrefix string) map[string]interface{} {
+	// Exclude some keys from fixing
+	if keyPrefix == "/services/components/env" {
+		return j
+	}
 	for k, v := range j {
+
 		delete(j, k)
 		k = FixFieldName(k)
 		j[k] = v
@@ -65,7 +70,7 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{}
 
 		if reflect.TypeOf(v).Kind() == reflect.Map {
 			if m, ok := v.(map[string]interface{}); ok {
-				j[k] = fixJSONFieldNamesRecursive(m)
+				j[k] = fixJSONFieldNamesRecursive(m, keyPrefix+"/"+k)
 			}
 
 			continue
@@ -78,7 +83,7 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}) map[string]interface{}
 						k: item,
 					}
 
-					m = fixJSONFieldNamesRecursive(m)
+					m = fixJSONFieldNamesRecursive(m, keyPrefix)
 					s[i] = m[k]
 				}
 

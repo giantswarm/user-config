@@ -114,7 +114,7 @@ func TestUnmarshalEnvFullApp(t *testing.T) {
         }, {
             "component_name": "env-struct",
             "env": {
-                "key": "env-struct"
+                "KEY": "env-struct"
             },
             "image": "busybox",
             "args": ["sh", "-c", "while true; do echo \"Beep $KEY\"; sleep 2; done"]
@@ -125,5 +125,41 @@ func TestUnmarshalEnvFullApp(t *testing.T) {
 	err := json.Unmarshal(byteSlice, &appConfig)
 	if err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
+	}
+}
+
+func TestUnmarshalEnvFullAppUpperCase(t *testing.T) {
+	// Test the validator for full apps containing both array and structs with uppercase env keys
+	var appConfig userConfigPkg.AppConfig
+
+	byteSlice := []byte(`{
+    "app_name": "envtest",
+    "services": [{
+        "service_name": "envtest-service",
+        "components": [{
+            "component_name": "env-struct",
+            "image": "busybox",
+            "env": [
+                "KEY=env-array"
+            ]
+        }, {
+            "component_name": "env-struct",
+            "image": "busybox",
+            "env": {
+                "KEY": "env-struct"
+            }
+        }]
+    }]
+}`)
+
+	err := json.Unmarshal(byteSlice, &appConfig)
+	if err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	got := fmt.Sprintf("%v", appConfig)
+	expected := "{envtest map[] [{envtest-service map[] <nil> [{env-struct <nil> {busybox [] [KEY=env-array] [] [] map[] []}} {env-struct <nil> {busybox [] [KEY=env-struct] [] [] map[] []}}]}]}"
+	if got != expected {
+		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
 	}
 }
