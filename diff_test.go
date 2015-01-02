@@ -18,7 +18,7 @@ func ExampleConfig() AppConfig {
 						ComponentName: "service1component1",
 						InstanceConfig: InstanceConfig{
 							Image: MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
-							Ports: []string{"80/tcp"},
+							Ports: []DockerPort{MustParseDockerPort("80/tcp")},
 						},
 					},
 				},

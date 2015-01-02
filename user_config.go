@@ -70,7 +70,7 @@ type DependencyConfig struct {
 	Alias string `json:"alias,omitempty"`
 
 	// Port of the required component
-	Port int `json:"port"`
+	Port DockerPort `json:"port"`
 
 	// Wether the component should run on the same machine
 	SameMachine bool `json:"same_machine,omitempty"`
@@ -133,7 +133,7 @@ type InstanceConfig struct {
 	Image DockerImage `json:"image"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
-	Ports []string `json:"ports,omitempty"`
+	Ports []DockerPort `json:"ports,omitempty"`
 
 	// Docker env to inject into docker containers.
 	Env EnvList `json:"env,omitempty"`
@@ -145,7 +145,7 @@ type InstanceConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains map[string]string `json:"domains,omitempty"`
+	Domains map[string]DockerPort `json:"domains,omitempty"`
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty"`

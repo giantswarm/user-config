@@ -97,7 +97,7 @@ var _ = Describe("user config validator", func() {
 				Expect(appConfig.Services).To(HaveLen(1))
 			})
 
-			It("should parse one service", func() {
+			It("should parse one service with the name 'session'", func() {
 				Expect(appConfig.Services[0].ServiceName).To(Equal("session"))
 			})
 
@@ -110,7 +110,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should parse correct component domain", func() {
-				Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"]).To(Equal("80"))
+				Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"].Port).To(Equal("80"))
 			})
 
 			It("should parse correct component image 1", func() {
@@ -394,7 +394,7 @@ var _ = Describe("user config validator", func() {
 					})
 
 					It("should parse correct component domain", func() {
-						Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"]).To(Equal("80"))
+						Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"].Port).To(Equal("80"))
 					})
 
 					It("should parse correct component image 1", func() {
@@ -471,7 +471,7 @@ var _ = Describe("user config validator", func() {
 					})
 
 					It("should parse correct component domain", func() {
-						Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"]).To(Equal("80"))
+						Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"].Port).To(Equal("80"))
 					})
 
 					It("should parse correct component image 1", func() {
