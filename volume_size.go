@@ -20,6 +20,12 @@ const (
 	GB = SizeUnit("GB")
 )
 
+// NewVolumeSize creates a new VolumeSize with given parameters
+func NewVolumeSize(size int, unit SizeUnit) VolumeSize {
+	sz := strconv.Itoa(size)
+	return VolumeSize(sz + " " + string(unit))
+}
+
 // UnmarshalJSON performs a format friendly parsing of volume sizes
 func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	var sz string
@@ -71,10 +77,4 @@ func (this VolumeSize) SizeInGB() (int, error) {
 		return 0, nil
 	}
 	return this.Size()
-}
-
-// NewVolumeSize creates a new VolumeSize with given parameters
-func NewVolumeSize(size int, unit SizeUnit) VolumeSize {
-	sz := strconv.Itoa(size)
-	return VolumeSize(sz + " " + string(unit))
 }
