@@ -3,6 +3,14 @@ package userconfig
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
+
+	"github.com/juju/errgo"
+)
+
+var (
+	volumeSizeRegex = regexp.MustCompile("([0-9]+)\\s*(GB|G)")
 )
 
 type AppConfig struct {
@@ -53,12 +61,34 @@ type ServiceConfig struct {
 	Components []ComponentConfig `json:"components"`
 }
 
+type VolumeSize string
+
+// UnmarshalJSON performs a format friendly parsing of volume sizes
+func (this *VolumeSize) UnmarshalJSON(data []byte) error {
+	var sz string
+	err := json.Unmarshal(data, &sz)
+	if err != nil {
+		return err
+	}
+	sz = strings.ToUpper(sz)
+	matches := volumeSizeRegex.FindStringSubmatch(sz)
+	if matches == nil || len(matches) != 3 {
+		return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
+	}
+	unit := matches[2]
+	if unit == "G" {
+		unit = "GB"
+	}
+	*this = VolumeSize(matches[1] + " " + unit)
+	return nil
+}
+
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path"`
 
 	// Storage size in GB, e.g. "5 GB".
-	Size string `json:"size"`
+	Size VolumeSize `json:"size"`
 }
 
 type DependencyConfig struct {
