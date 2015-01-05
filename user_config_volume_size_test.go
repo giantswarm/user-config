@@ -258,3 +258,39 @@ func TestVolumeSize3c(t *testing.T) {
 		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
 	}
 }
+
+func TestVolumeSizeGetters(t *testing.T) {
+	tests := []struct {
+		Input           string
+		ExpectSizeError bool
+		ExpectedSize    int
+		ExpectUnitError bool
+		ExpectedUnit    userConfigPkg.SizeUnit
+	}{
+		{"5 GB", false, 5, false, userConfigPkg.GB},
+		{"123 G", false, 123, false, userConfigPkg.GB},
+		{"123", false, 123, true, userConfigPkg.GB},
+		{"abc G", true, 0, false, userConfigPkg.GB},
+		{"", true, 0, true, userConfigPkg.GB},
+		{"124 KB", false, 124, true, userConfigPkg.GB},
+		{"5GB", true, 0, true, userConfigPkg.GB},
+	}
+
+	for _, test := range tests {
+		input := userConfigPkg.VolumeSize(test.Input)
+		if sz, err := input.Size(); err != nil {
+			if !test.ExpectSizeError {
+				t.Fatalf("Size failed: %v", err)
+			}
+		} else if sz != test.ExpectedSize {
+			t.Fatalf("Invalid Size() result: got %v, expected %v", sz, test.ExpectedSize)
+		}
+		if unit, err := input.Unit(); err != nil {
+			if !test.ExpectUnitError {
+				t.Fatalf("Unit failed: %v", err)
+			}
+		} else if unit != test.ExpectedUnit {
+			t.Fatalf("Invalid Unit() result: got %v, expected %v", unit, test.ExpectedUnit)
+		}
+	}
+}
