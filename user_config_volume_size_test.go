@@ -261,19 +261,21 @@ func TestVolumeSize3c(t *testing.T) {
 
 func TestVolumeSizeGetters(t *testing.T) {
 	tests := []struct {
-		Input           string
-		ExpectSizeError bool
-		ExpectedSize    int
-		ExpectUnitError bool
-		ExpectedUnit    userConfigPkg.SizeUnit
+		Input                 string
+		ExpectSizeError       bool
+		ExpectedSize          int
+		ExpectUnitError       bool
+		ExpectedUnit          userConfigPkg.SizeUnit
+		ExpectedSizeInGBError bool
+		ExpectedSizeInGB      int
 	}{
-		{"5 GB", false, 5, false, userConfigPkg.GB},
-		{"123 G", false, 123, false, userConfigPkg.GB},
-		{"123", false, 123, true, userConfigPkg.GB},
-		{"abc G", true, 0, false, userConfigPkg.GB},
-		{"", true, 0, true, userConfigPkg.GB},
-		{"124 KB", false, 124, true, userConfigPkg.GB},
-		{"5GB", true, 0, true, userConfigPkg.GB},
+		{"5 GB", false, 5, false, userConfigPkg.GB, false, 5},
+		{"123 G", false, 123, false, userConfigPkg.GB, false, 123},
+		{"123", false, 123, true, userConfigPkg.GB, true, 123},
+		{"abc G", true, 0, false, userConfigPkg.GB, true, 0},
+		{"", true, 0, true, userConfigPkg.GB, false, 0},
+		{"124 KB", false, 124, true, userConfigPkg.GB, true, 124},
+		{"5GB", true, 0, true, userConfigPkg.GB, true, 0},
 	}
 
 	for _, test := range tests {
@@ -291,6 +293,31 @@ func TestVolumeSizeGetters(t *testing.T) {
 			}
 		} else if unit != test.ExpectedUnit {
 			t.Fatalf("Invalid Unit() result: got %v, expected %v", unit, test.ExpectedUnit)
+		}
+		if sz, err := input.SizeInGB(); err != nil {
+			if !test.ExpectedSizeInGBError {
+				t.Fatalf("SizeInGB failed: %v", err)
+			}
+		} else if sz != test.ExpectedSizeInGB {
+			t.Fatalf("Invalid SizeInGB() result: got %v, expected %v", sz, test.ExpectedSizeInGB)
+		}
+	}
+}
+
+func TestVolumeSizeNew(t *testing.T) {
+	tests := []struct {
+		Size     int
+		Unit     userConfigPkg.SizeUnit
+		Expected string
+	}{
+		{5, userConfigPkg.GB, "5 GB"},
+		{110, userConfigPkg.GB, "110 GB"},
+	}
+
+	for _, test := range tests {
+		vs := userConfigPkg.NewVolumeSize(test.Size, test.Unit)
+		if string(vs) != test.Expected {
+			t.Fatalf("Invalid result: got %v, expected %v", string(vs), test.Expected)
 		}
 	}
 }
