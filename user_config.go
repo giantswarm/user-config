@@ -2,6 +2,7 @@ package userconfig
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -114,6 +115,40 @@ type ComponentConfig struct {
 	InstanceConfig
 }
 
+// List of environment settings like "KEY=VALUE", "KEY2=VALUE2"
+type EnvList []string
+
+// UnmarshalJSON supports parsing an EnvList as array and as structure
+func (this *EnvList) UnmarshalJSON(data []byte) error {
+	// Try to parse as struct first
+	if len(data) > 1 && data[0] == '{' {
+		kvMap := make(map[string]string)
+		err := json.Unmarshal(data, &kvMap)
+		if err == nil {
+			// Success, wrap into array
+			list := []string{}
+			for k, v := range kvMap {
+				list = append(list, fmt.Sprintf("%s=%s", k, v))
+			}
+			*this = list
+			return nil
+		}
+	}
+
+	// Try to parse are []string
+	if len(data) > 1 && data[0] == '[' {
+		list := []string{}
+		err := json.Unmarshal(data, &list)
+		if err != nil {
+			return err
+		}
+		*this = list
+		return nil
+	}
+
+	return ErrInvalidFormat
+}
+
 type InstanceConfig struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
@@ -123,7 +158,7 @@ type InstanceConfig struct {
 	Ports []string `json:"ports,omitempty"`
 
 	// Docker env to inject into docker containers.
-	Env []string `json:"env,omitempty"`
+	Env EnvList `json:"env,omitempty"`
 
 	// Docker volumes to inject into docker containers.
 	Volumes []VolumeConfig `json:"volumes,omitempty"`
