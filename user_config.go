@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/juju/errgo"
@@ -62,6 +63,11 @@ type ServiceConfig struct {
 }
 
 type VolumeSize string
+type SizeUnit string
+
+const (
+	GB = SizeUnit("GB")
+)
 
 // UnmarshalJSON performs a format friendly parsing of volume sizes
 func (this *VolumeSize) UnmarshalJSON(data []byte) error {
@@ -81,6 +87,30 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	}
 	*this = VolumeSize(matches[1] + " " + unit)
 	return nil
+}
+
+// Size gets the size part of a volume size as an integer.
+// E.g. "5 GB" -> 5
+func (this VolumeSize) Size() (int, error) {
+	parts := strings.Split(string(this), " ")
+	return strconv.Atoi(parts[0])
+}
+
+// Size gets the unit part of a volume size.
+// E.g. "5 GB" -> GB
+func (this VolumeSize) Unit() (SizeUnit, error) {
+	parts := strings.Split(string(this), " ")
+	if len(parts) < 2 {
+		return GB, errgo.Newf("No unit found, got '%s'", string(this))
+	}
+	switch parts[1] {
+	case "G":
+		return GB, nil
+	case "GB":
+		return GB, nil
+	default:
+		return GB, errgo.Newf("Unknown unit, got '%s'", parts[1])
+	}
 }
 
 type VolumeConfig struct {

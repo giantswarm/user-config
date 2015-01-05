@@ -258,3 +258,28 @@ func TestVolumeSize3c(t *testing.T) {
 		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
 	}
 }
+
+func TestVolumeSizeGetters(t *testing.T) {
+	input := userConfigPkg.VolumeSize("5 GB")
+	if sz, err := input.Size(); err != nil {
+		t.Fatalf("Size failed: %v", err)
+	} else if sz != 5 {
+		t.Fatalf("Invalid Size() result: got %v, expected %v", sz, 5)
+	}
+	if unit, err := input.Unit(); err != nil {
+		t.Fatalf("Unit failed: %v", err)
+	} else if unit != userConfigPkg.GB {
+		t.Fatalf("Invalid Unit() result: got %v, expected %v", unit, userConfigPkg.GB)
+	}
+	input = userConfigPkg.VolumeSize("123 G")
+	if sz, err := input.Size(); err != nil {
+		t.Fatalf("Size failed: %v", err)
+	} else if sz != 123 {
+		t.Fatalf("Invalid Size() result: got %v, expected %v", sz, 123)
+	}
+	if unit, err := input.Unit(); err != nil {
+		t.Fatalf("Unit failed: %v", err)
+	} else if unit != userConfigPkg.GB {
+		t.Fatalf("Invalid Unit() result: got %v, expected %v", unit, userConfigPkg.GB)
+	}
+}
