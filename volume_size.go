@@ -35,10 +35,13 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	}
 	sz = strings.ToUpper(sz)
 	matches := volumeSizeRegex.FindStringSubmatch(sz)
-	if matches == nil || len(matches) != 3 {
+	if matches == nil || len(matches) < 2 || len(matches) > 3 {
 		return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
 	}
-	unit := matches[2]
+	unit := "GB"
+	if len(matches) > 2 {
+		unit = matches[2]
+	}
 	if unit == "G" {
 		unit = "GB"
 	}
@@ -57,6 +60,10 @@ func (this VolumeSize) Size() (int, error) {
 // E.g. "5 GB" -> GB
 func (this VolumeSize) Unit() (SizeUnit, error) {
 	parts := strings.Split(string(this), " ")
+	if len(parts) == 1 {
+		// No unit found, assume GB
+		return GB, nil
+	}
 	if len(parts) < 2 {
 		return GB, errgo.Newf("No unit found, got '%s'", string(this))
 	}

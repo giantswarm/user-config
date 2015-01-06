@@ -276,6 +276,7 @@ func TestVolumeSizeGetters(t *testing.T) {
 		{"", true, 0, true, userConfigPkg.GB, false, 0},
 		{"124 KB", false, 124, true, userConfigPkg.GB, true, 124},
 		{"5GB", true, 0, true, userConfigPkg.GB, true, 0},
+		{"8", false, 8, false, userConfigPkg.GB, false, 8},
 	}
 
 	for _, test := range tests {
