@@ -73,7 +73,8 @@ var _ = Describe("user config validator", func() {
 		                  "volumes": [
 		                    { "path": "/data", "size": "5 GB" },
 		                    { "path": "/data2", "size": "8" },
-		                    { "path": "/data3", "size": "8  G" }
+		                    { "path": "/data3", "size": "8  G" },
+		                    { "path": "/data4", "size": "8GB" }
 		                  ]
 		                }
 		              ]
@@ -124,6 +125,84 @@ var _ = Describe("user config validator", func() {
 				Expect(appConfig.Services[0].Components[1].Image.Namespace).To(Equal("dockerfile"))
 				Expect(appConfig.Services[0].Components[1].Image.Repository).To(Equal("redis"))
 				Expect(appConfig.Services[0].Components[1].Image.Version).To(Equal(""))
+			})
+		})
+
+		Describe("parsing app-config with invalid volume size 1", func() {
+			BeforeEach(func() {
+				byteSlice = []byte(`{
+		          "app_name": "test-app-name",
+		          "services": [
+		            {
+		              "service_name": "session",
+		              "components": [
+		                {
+		                  "component_name": "api",
+		                  "image": "registry/namespace/repository:version",
+		                  "ports": [ "80/tcp" ],
+		                  "dependencies": [
+		                    { "name": "redis", "port": 6379, "same_machine": true }
+		                  ],
+		                  "domains": { "test.domain.io": "80" }
+		                },
+		                {
+		                  "component_name": "redis",
+		                  "image": "dockerfile/redis",
+		                  "ports": [ "6379/tcp" ],
+		                  "volumes": [
+		                    { "path": "/data1", "size": "5KB" }
+		                  ]
+		                }
+		              ]
+		            }
+		          ]
+		        }`)
+
+				err = json.Unmarshal(byteSlice, &appConfig)
+			})
+
+			It("should throw error ErrUnknownJSONField", func() {
+				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeFalse())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '5KB' detected.`))
+			})
+		})
+
+		Describe("parsing app-config with invalid volume size 2", func() {
+			BeforeEach(func() {
+				byteSlice = []byte(`{
+		          "app_name": "test-app-name",
+		          "services": [
+		            {
+		              "service_name": "session",
+		              "components": [
+		                {
+		                  "component_name": "api",
+		                  "image": "registry/namespace/repository:version",
+		                  "ports": [ "80/tcp" ],
+		                  "dependencies": [
+		                    { "name": "redis", "port": 6379, "same_machine": true }
+		                  ],
+		                  "domains": { "test.domain.io": "80" }
+		                },
+		                {
+		                  "component_name": "redis",
+		                  "image": "dockerfile/redis",
+		                  "ports": [ "6379/tcp" ],
+		                  "volumes": [
+		                    { "path": "/data2", "size": "-8KB" }
+		                  ]
+		                }
+		              ]
+		            }
+		          ]
+		        }`)
+
+				err = json.Unmarshal(byteSlice, &appConfig)
+			})
+
+			It("should throw error ErrUnknownJSONField", func() {
+				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeFalse())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '-8KB' detected.`))
 			})
 		})
 

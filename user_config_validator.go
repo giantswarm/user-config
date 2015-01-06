@@ -47,6 +47,7 @@ func CheckForUnknownFields(b []byte, ac *AppConfig) error {
 }
 
 // normalizeEnv normalizes all struct "env" elements under service/component to its natural array format.
+// This normalization function is expected to normalize "valid" data and passthrough everything else.
 func normalizeEnv(config map[string]interface{}) {
 	services := getArrayEntry(config, "services")
 	if services == nil {
@@ -88,6 +89,7 @@ func normalizeEnv(config map[string]interface{}) {
 }
 
 // normalizeVolumeSizes normalizes all volume sizes to it's normalized format of "number GB"
+// This normalization function is expected to normalize "valid" data and passthrough everything else.
 func normalizeVolumeSizes(config map[string]interface{}) {
 	services := getArrayEntry(config, "services")
 	if services == nil {
