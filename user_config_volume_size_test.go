@@ -28,6 +28,27 @@ func TestVolumeSize1(t *testing.T) {
 	}
 }
 
+// Test no-space no-unit
+func TestVolumeSizeNoUnit1(t *testing.T) {
+	var compConfig userConfigPkg.ComponentConfig
+	byteSlice := []byte(`{
+        "component_name": "x",
+        "image": "x",
+        "volumes": [ { "path": "/tmp", "size": "10" } ]
+    }`)
+
+	err := json.Unmarshal(byteSlice, &compConfig)
+	if err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	got := string(compConfig.Volumes[0].Size)
+	expected := "10 GB"
+	if got != expected {
+		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+	}
+}
+
 // Test space + lower case
 func TestVolumeSize2(t *testing.T) {
 	var compConfig userConfigPkg.ComponentConfig
