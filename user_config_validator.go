@@ -28,6 +28,7 @@ func CheckForUnknownFields(b []byte, ac *AppConfig) error {
 	}
 	// Normalize fields to common format
 	normalizeEnv(dirtyMap)
+	normalizeVolumeSizes(dirtyMap)
 
 	var cleanMap map[string]interface{}
 	if err := json.Unmarshal(cleanBytes, &cleanMap); err != nil {
@@ -46,6 +47,7 @@ func CheckForUnknownFields(b []byte, ac *AppConfig) error {
 }
 
 // normalizeEnv normalizes all struct "env" elements under service/component to its natural array format.
+// This normalization function is expected to normalize "valid" data and passthrough everything else.
 func normalizeEnv(config map[string]interface{}) {
 	services := getArrayEntry(config, "services")
 	if services == nil {
@@ -82,6 +84,68 @@ func normalizeEnv(config map[string]interface{}) {
 				list = append(list, fmt.Sprintf("%s=%s", k, v))
 			}
 			componentMap["env"] = list
+		}
+	}
+}
+
+// normalizeVolumeSizes normalizes all volume sizes to it's normalized format of "number GB"
+// This normalization function is expected to normalize "valid" data and passthrough everything else.
+func normalizeVolumeSizes(config map[string]interface{}) {
+	services := getArrayEntry(config, "services")
+	if services == nil {
+		// No services element
+		return
+	}
+	for _, service := range services {
+		serviceMap, ok := service.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		components := getArrayEntry(serviceMap, "components")
+		if components == nil {
+			// No components element
+			continue
+		}
+		for _, component := range components {
+			componentMap, ok := component.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			volumes := getArrayEntry(componentMap, "volumes")
+			if volumes == nil {
+				// No volumes element
+				continue
+			}
+			for _, volume := range volumes {
+				volumeMap, ok := volume.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				sizeRaw, ok := volumeMap["size"]
+				if !ok {
+					// Size not found
+					continue
+				}
+				size, ok := sizeRaw.(string)
+				if !ok {
+					// size is not a string
+					continue
+				}
+				// Parse volume size
+				var volumeSize VolumeSize
+				// Marshal size string to json
+				data, err := json.Marshal(size)
+				if err != nil {
+					continue
+				}
+				// Try to unmarshal volume size
+				if err := volumeSize.UnmarshalJSON(data); err != nil {
+					// Not valid format
+					continue
+				}
+				// Use normalized format
+				volumeMap["size"] = string(volumeSize)
+			}
 		}
 	}
 }
