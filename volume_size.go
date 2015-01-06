@@ -35,8 +35,19 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	}
 	sz = strings.ToUpper(sz)
 	matches := volumeSizeRegex.FindStringSubmatch(sz)
-	if matches == nil || len(matches) < 2 || len(matches) > 3 {
-		return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
+	if matches == nil || len(matches) < 1 || len(matches) > 3 {
+		if matches == nil {
+			// See if it is just a number
+			_, err := strconv.Atoi(sz)
+			if err == nil {
+				// Just a number, use that without unit for now
+				matches = []string{sz, sz}
+			}
+		}
+		// Re-test
+		if matches == nil || len(matches) < 1 || len(matches) > 3 {
+			return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
+		}
 	}
 	unit := "GB"
 	if len(matches) > 2 {
