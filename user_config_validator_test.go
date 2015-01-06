@@ -71,7 +71,9 @@ var _ = Describe("user config validator", func() {
 		                  "image": "dockerfile/redis",
 		                  "ports": [ "6379/tcp" ],
 		                  "volumes": [
-		                    { "path": "/data", "size": "5 GB" }
+		                    { "path": "/data", "size": "5 GB" },
+		                    { "path": "/data2", "size": "8" },
+		                    { "path": "/data3", "size": "8  G" }
 		                  ]
 		                }
 		              ]
