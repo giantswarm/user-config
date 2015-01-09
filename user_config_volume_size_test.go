@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/juju/errgo"
+
 	userConfigPkg "github.com/giantswarm/user-config"
 )
 
@@ -277,6 +279,51 @@ func TestVolumeSize3c(t *testing.T) {
 	expected := "100000 GB"
 	if got != expected {
 		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+	}
+}
+
+// Test negative sizes
+func TestVolumeSizeNegative1(t *testing.T) {
+	var compConfig userConfigPkg.ComponentConfig
+	byteSlice := []byte(`{
+        "component_name": "x",
+        "image": "x",
+        "volumes": [ { "path": "/tmp", "size": "-1 G" } ]
+    }`)
+
+	err := json.Unmarshal(byteSlice, &compConfig)
+	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
+		t.Fatalf("Unmarshal returned invalid error: %v", err)
+	}
+}
+
+// Test large negative sizes
+func TestVolumeSizeNegative2(t *testing.T) {
+	var compConfig userConfigPkg.ComponentConfig
+	byteSlice := []byte(`{
+        "component_name": "x",
+        "image": "x",
+        "volumes": [ { "path": "/tmp", "size": "-9223372036854775806 G" } ]
+    }`)
+
+	err := json.Unmarshal(byteSlice, &compConfig)
+	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
+		t.Fatalf("Unmarshal returned invalid error: %v", err)
+	}
+}
+
+// Test too large positive sizes
+func TestVolumeSizeLargePositive1(t *testing.T) {
+	var compConfig userConfigPkg.ComponentConfig
+	byteSlice := []byte(`{
+        "component_name": "x",
+        "image": "x",
+        "volumes": [ { "path": "/tmp", "size": "9223372036854775806 G" } ]
+    }`)
+
+	err := json.Unmarshal(byteSlice, &compConfig)
+	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
+		t.Fatalf("Unmarshal returned invalid error: %v", err)
 	}
 }
 
