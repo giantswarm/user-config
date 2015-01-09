@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	volumeSizeRegex = regexp.MustCompile("([0-9]+)\\s*(GB|G)")
+	volumeSizeRegex = regexp.MustCompile("^\\s*([0-9]+)\\s*(GB|G)\\s*$")
 )
 
 type VolumeSize string
@@ -55,6 +55,10 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	}
 	if unit == "G" {
 		unit = "GB"
+	}
+	// Check size being a proper number
+	if _, err := strconv.ParseUint(matches[1], 10, 32); err != nil {
+		return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
 	}
 	*this = VolumeSize(matches[1] + " " + unit)
 	return nil
