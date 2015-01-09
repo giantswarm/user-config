@@ -2,6 +2,7 @@ package userconfig_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/juju/errgo"
@@ -9,321 +10,70 @@ import (
 	userConfigPkg "github.com/giantswarm/user-config"
 )
 
-// Test space + upper case
-func TestVolumeSize1(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
+// Various volume size unmarshal tests
+func TestVolumeSizeUnmarshal(t *testing.T) {
+	tests := []struct {
+		Input       string
+		ExpectedErr error
+		Result      string
+	}{
+		// Correct ones
+		{"1 G", nil, "1 GB"},
+		{"10 GB", nil, "10 GB"},
+		{"5G", nil, "5 GB"},
+		{"8GB", nil, "8 GB"},
+		{"100", nil, "100 GB"},
+		// Correct, mixed case
+		{"8gb", nil, "8 GB"},
+		{"8gB", nil, "8 GB"},
+		{"8Gb", nil, "8 GB"},
+		{"9 gb", nil, "9 GB"},
+		{"9 gB", nil, "9 GB"},
+		{"9 Gb", nil, "9 GB"},
+		// Correct, extra spaces
+		{"   8gb", nil, "8 GB"},
+		{"  8gB     ", nil, "8 GB"},
+		{"8Gb   ", nil, "8 GB"},
+		{"8    Gb   ", nil, "8 GB"},
+
+		// Invalid ones
+		{"-0 G", userConfigPkg.ErrInvalidSize, ""},
+		{"-9223372036854775806 G", userConfigPkg.ErrInvalidSize, ""},
+		{"- 9223372036854775806 G", userConfigPkg.ErrInvalidSize, ""},
+		{"-0 GB", userConfigPkg.ErrInvalidSize, ""},
+		{"-9223372036854775806 GB", userConfigPkg.ErrInvalidSize, ""},
+		{"- 9223372036854775806 GB", userConfigPkg.ErrInvalidSize, ""},
+		{"-0G", userConfigPkg.ErrInvalidSize, ""},
+		{"-9223372036854775806G", userConfigPkg.ErrInvalidSize, ""},
+		{"- 9223372036854775806G", userConfigPkg.ErrInvalidSize, ""},
+		{"-0GB", userConfigPkg.ErrInvalidSize, ""},
+		{"-9223372036854775806GB", userConfigPkg.ErrInvalidSize, ""},
+		{"- 9223372036854775806GB", userConfigPkg.ErrInvalidSize, ""},
+		{"-9223372036854775806", userConfigPkg.ErrInvalidSize, ""},
+		{"GB 10", userConfigPkg.ErrInvalidSize, ""},
+		{" 0x10 GB", userConfigPkg.ErrInvalidSize, ""},
+	}
+
+	for _, test := range tests {
+		var compConfig userConfigPkg.ComponentConfig
+		byteSlice := []byte(fmt.Sprintf(`{
         "component_name": "x",
         "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10 GB" } ]
-    }`)
+        "volumes": [ { "path": "/tmp", "size": "%s" } ]
+    }`, test.Input))
 
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no-space no-unit
-func TestVolumeSizeNoUnit1(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test space + lower case
-func TestVolumeSize2(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10 gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test space + mixed case
-func TestVolumeSize3(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10 Gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test multiple spaces + upper case
-func TestVolumeSize1a(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10  GB" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test multiple spaces + lower case
-func TestVolumeSize2a(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10  gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test multiple spaces + mixed case
-func TestVolumeSize3a(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "10  Gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "10 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + upper case
-func TestVolumeSize1b(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "34GB" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "34 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + lower case
-func TestVolumeSize2b(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "1gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "1 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + mixed case
-func TestVolumeSize3b(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "100000 Gb" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "100000 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + upper case + "G"
-func TestVolumeSize1c(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "34G" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "34 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + lower case + "g"
-func TestVolumeSize2c(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "1g" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "1 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test no space + mixed case + "G"
-func TestVolumeSize3c(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "100000 G" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
-
-	got := string(compConfig.Volumes[0].Size)
-	expected := "100000 GB"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
-	}
-}
-
-// Test negative sizes
-func TestVolumeSizeNegative1(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "-1 G" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
-		t.Fatalf("Unmarshal returned invalid error: %v", err)
-	}
-}
-
-// Test large negative sizes
-func TestVolumeSizeNegative2(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "-9223372036854775806 G" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
-		t.Fatalf("Unmarshal returned invalid error: %v", err)
-	}
-}
-
-// Test too large positive sizes
-func TestVolumeSizeLargePositive1(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
-	byteSlice := []byte(`{
-        "component_name": "x",
-        "image": "x",
-        "volumes": [ { "path": "/tmp", "size": "9223372036854775806 G" } ]
-    }`)
-
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if errgo.Cause(err) != userConfigPkg.ErrInvalidSize {
-		t.Fatalf("Unmarshal returned invalid error: %v", err)
+		err := json.Unmarshal(byteSlice, &compConfig)
+		if err != nil {
+			if errgo.Cause(err) != test.ExpectedErr {
+				t.Fatalf("Unmarshal failed: %v", err)
+			}
+		} else {
+			got := string(compConfig.Volumes[0].Size)
+			expected := test.Result
+			if got != expected {
+				t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+			}
+		}
 	}
 }
 
