@@ -3,6 +3,7 @@ package userconfig
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/juju/errgo"
@@ -79,8 +80,15 @@ func normalizeEnv(config map[string]interface{}) {
 				continue
 			}
 			// 'env' is of map type, normalize it to an array
+			// Sort the keys first so the outcome it always the same
+			keys := []string{}
+			for k, _ := range envMap {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
 			list := []interface{}{}
-			for k, v := range envMap {
+			for _, k := range keys {
+				v := envMap[k]
 				list = append(list, fmt.Sprintf("%s=%s", k, v))
 			}
 			componentMap["env"] = list

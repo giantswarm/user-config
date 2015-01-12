@@ -31,24 +31,26 @@ func TestUnmarshalEnvArray(t *testing.T) {
 }
 
 func TestUnmarshalEnvStruct(t *testing.T) {
-	var compConfig userConfigPkg.ComponentConfig
+	for i := 0; i < 10000; i++ {
+		var compConfig userConfigPkg.ComponentConfig
 
-	byteSlice := []byte(`{
+		byteSlice := []byte(`{
         "component_name": "api",
         "image": "registry/namespace/repository:version",
         "env": { "key1": "value1", "key2": "value2" },
         "domains": { "test.domain.io": "80" }
 		        }`)
 
-	err := json.Unmarshal(byteSlice, &compConfig)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
-	}
+		err := json.Unmarshal(byteSlice, &compConfig)
+		if err != nil {
+			t.Fatalf("Unmarshal failed: %v", err)
+		}
 
-	got := fmt.Sprintf("%v", compConfig.Env)
-	expected := "[key1=value1 key2=value2]"
-	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+		got := fmt.Sprintf("%v", compConfig.Env)
+		expected := "[key1=value1 key2=value2]"
+		if got != expected {
+			t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+		}
 	}
 }
 

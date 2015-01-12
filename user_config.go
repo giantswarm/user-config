@@ -3,6 +3,7 @@ package userconfig
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 )
 
 type AppConfig struct {
@@ -96,8 +97,15 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		err := json.Unmarshal(data, &kvMap)
 		if err == nil {
 			// Success, wrap into array
+			// Sort the keys first so the outcome it always the same
+			keys := []string{}
+			for k, _ := range kvMap {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
 			list := []string{}
-			for k, v := range kvMap {
+			for _, k := range keys {
+				v := kvMap[k]
 				list = append(list, fmt.Sprintf("%s=%s", k, v))
 			}
 			*this = list
