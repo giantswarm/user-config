@@ -30,7 +30,14 @@ func (ac *AppConfig) UnmarshalJSON(data []byte) error {
 		return Mask(err)
 	}
 
-	*ac = AppConfig(appConfigCopy)
+	result := AppConfig(appConfigCopy)
+
+	// Perform semantic checks
+	if err := result.validate(); err != nil {
+		return Mask(err)
+	}
+
+	*ac = result
 
 	return nil
 }
