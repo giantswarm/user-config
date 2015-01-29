@@ -287,7 +287,7 @@ var _ = Describe("user config validator", func() {
 		                  "image": "registry/namespace/repository:version",
 		                  "volumes": [
 		                    { "path": "/data", "size": "5 GB" },
-		                    { "path": "/data", "size": "5 GB" }
+		                    { "path": "/data", "size": "10 GB" }
 		                   ]
 		                }
 		              ]
