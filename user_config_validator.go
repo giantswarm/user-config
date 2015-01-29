@@ -174,3 +174,44 @@ func getArrayEntry(config map[string]interface{}, key string) []interface{} {
 
 	return entryArr
 }
+
+// validate performs semantic validations of this AppConfig.
+// Return the first possible error.
+func (this *AppConfig) validate() error {
+	for _, s := range this.Services {
+		if err := s.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validate performs semantic validations of this ServiceConfig.
+// Return the first possible error.
+func (this *ServiceConfig) validate() error {
+	for _, c := range this.Components {
+		if err := c.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validate performs semantic validations of this ComponentConfig.
+// Return the first possible error.
+func (this *ComponentConfig) validate() error {
+	// Detect duplicate volume "path"
+	paths := make(map[string]string)
+	for _, v := range this.Volumes {
+		path := v.Path
+		if _, found := paths[path]; found {
+			return errgo.WithCausef(nil, ErrDuplicateVolumePath, "Cannot parse app config. Duplicate volume '%s' detected.", path)
+		}
+		paths[path] = path
+	}
+
+	// No errors found
+	return nil
+}

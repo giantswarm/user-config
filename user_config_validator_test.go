@@ -274,6 +274,40 @@ var _ = Describe("user config validator", func() {
 			})
 		})
 
+		Describe("parsing app-config with duplicate volume paths", func() {
+			BeforeEach(func() {
+				byteSlice = []byte(`{
+		          "app_name": "test-app-name",
+		          "services": [
+		            {
+		              "service_name": "session",
+		              "components": [
+		                {
+		                  "component_name": "api",
+		                  "image": "registry/namespace/repository:version",
+		                  "volumes": [
+		                    { "path": "/data", "size": "5 GB" },
+		                    { "path": "/data", "size": "10 GB" }
+		                   ]
+		                }
+		              ]
+		            }
+		          ]
+		        }`)
+
+				err = json.Unmarshal(byteSlice, &appConfig)
+			})
+
+			It("should detect first occuring error and throw IsErrDuplicateVolumePath", func() {
+				Expect(userConfigPkg.IsErrDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' detected.`))
+			})
+
+			It("should not parse given app name", func() {
+				Expect(appConfig.AppName).To(Equal(""))
+			})
+		})
+
 		Context("fix app-config fields", func() {
 			Context("ComponentConfig", func() {
 				var componentConfig userConfigPkg.ComponentConfig

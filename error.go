@@ -5,10 +5,11 @@ import (
 )
 
 var (
-	ErrUnknownJSONField = errgo.New("Unknown JSON field.")
-	ErrInvalidSize      = errgo.New("Invalid size.")
+	ErrUnknownJSONField    = errgo.New("Unknown JSON field.")
+	ErrInvalidSize         = errgo.New("Invalid size.")
+	ErrDuplicateVolumePath = errgo.New("Duplicate volume path.")
 
-	Mask = errgo.MaskFunc(IsErrUnknownJsonField, IsErrInvalidSize)
+	Mask = errgo.MaskFunc(IsErrUnknownJsonField, IsErrInvalidSize, IsErrDuplicateVolumePath)
 )
 
 func IsErrUnknownJsonField(err error) bool {
@@ -17,4 +18,8 @@ func IsErrUnknownJsonField(err error) bool {
 
 func IsErrInvalidSize(err error) bool {
 	return errgo.Cause(err) == ErrInvalidSize
+}
+
+func IsErrDuplicateVolumePath(err error) bool {
+	return errgo.Cause(err) == ErrDuplicateVolumePath
 }
