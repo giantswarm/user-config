@@ -175,7 +175,7 @@ func getArrayEntry(config map[string]interface{}, key string) []interface{} {
 	return entryArr
 }
 
-// Perform semantic validations of this AppConfig.
+// validate performs semantic validations of this AppConfig.
 // Return the first possible error.
 func (this *AppConfig) validate() error {
 	for _, s := range this.Services {
@@ -187,7 +187,7 @@ func (this *AppConfig) validate() error {
 	return nil
 }
 
-// Perform semantic validations of this ServiceConfig.
+// validate performs semantic validations of this ServiceConfig.
 // Return the first possible error.
 func (this *ServiceConfig) validate() error {
 	for _, c := range this.Components {
@@ -199,7 +199,7 @@ func (this *ServiceConfig) validate() error {
 	return nil
 }
 
-// Perform semantic validations of this ComponentConfig.
+// validate performs semantic validations of this ComponentConfig.
 // Return the first possible error.
 func (this *ComponentConfig) validate() error {
 	// Detect duplicate volume "path"
