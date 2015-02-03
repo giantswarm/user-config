@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/giantswarm/docker-types-go"
 )
 
 type AppConfig struct {
@@ -77,7 +79,7 @@ type DependencyConfig struct {
 	Alias string `json:"alias,omitempty"`
 
 	// Port of the required component
-	Port DockerPort `json:"port"`
+	Port dockertypes.DockerPort `json:"port"`
 
 	// Wether the component should run on the same machine
 	SameMachine bool `json:"same_machine,omitempty"`
@@ -131,16 +133,16 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return ErrInvalidFormat
+	return dockertypes.ErrInvalidFormat
 }
 
 type InstanceConfig struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
-	Image DockerImage `json:"image"`
+	Image dockertypes.DockerImage `json:"image"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
-	Ports []DockerPort `json:"ports,omitempty"`
+	Ports []dockertypes.DockerPort `json:"ports,omitempty"`
 
 	// Docker env to inject into docker containers.
 	Env EnvList `json:"env,omitempty"`
@@ -152,7 +154,7 @@ type InstanceConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains map[string]DockerPort `json:"domains,omitempty"`
+	Domains map[string]dockertypes.DockerPort `json:"domains,omitempty"`
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty"`
