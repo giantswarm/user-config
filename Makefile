@@ -25,7 +25,7 @@ get-deps: .gobuild
 
 	#
 	# Pin internal libraries
-	@builder get dep git@github.com:giantswarm/docker-types-go.git $(D0_PATH)/docker-types-go
+	@builder get dep -b 0.1.0 git@github.com:giantswarm/docker-types-go.git $(D0_PATH)/docker-types-go
 
 	#
 	# Fetch public dependencies via `go get`
