@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/giantswarm/docker-types-go"
 	. "github.com/giantswarm/user-config"
 )
 
@@ -17,8 +18,8 @@ func ExampleConfig() AppConfig {
 					ComponentConfig{
 						ComponentName: "service1component1",
 						InstanceConfig: InstanceConfig{
-							Image: MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
-							Ports: []DockerPort{MustParseDockerPort("80/tcp")},
+							Image: dockertypes.MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
+							Ports: []dockertypes.DockerPort{dockertypes.MustParseDockerPort("80/tcp")},
 						},
 					},
 				},
@@ -87,7 +88,7 @@ func TestDiffComponentRename(t *testing.T) {
 func TestDiffComponentUpdateImage(t *testing.T) {
 	oldCfg := ExampleConfig()
 	newCfg := ExampleConfig()
-	newCfg.Services[0].Components[0].Image = MustParseDockerImage("landingpage2")
+	newCfg.Services[0].Components[0].Image = dockertypes.MustParseDockerImage("landingpage2")
 
 	expectedDiffItems := []DiffInfo{
 		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
@@ -127,7 +128,7 @@ func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
 	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
 		ComponentName: "service1component1",
 		InstanceConfig: InstanceConfig{
-			Image: MustParseDockerImage("foobar"),
+			Image: dockertypes.MustParseDockerImage("foobar"),
 		},
 	})
 	newCfg.Services[0].ServiceName = "service1#changed"
@@ -148,7 +149,7 @@ func TestDiffMultipleChanges(t *testing.T) {
 	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
 		ComponentName: "service1component2",
 		InstanceConfig: InstanceConfig{
-			Image: MustParseDockerImage("foobar"),
+			Image: dockertypes.MustParseDockerImage("foobar"),
 		},
 	})
 
@@ -166,7 +167,7 @@ func TestDiffComponentMultipleChanges(t *testing.T) {
 	newCfg := ExampleConfig()
 
 	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 10}
-	newCfg.Services[0].Components[0].InstanceConfig.Image = MustParseDockerImage("new-site")
+	newCfg.Services[0].Components[0].InstanceConfig.Image = dockertypes.MustParseDockerImage("new-site")
 
 	expectedDiffItems := []DiffInfo{
 		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},

@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/giantswarm/docker-types-go"
 	userConfigPkg "github.com/giantswarm/user-config"
 )
 
@@ -345,7 +346,7 @@ var _ = Describe("user config validator", func() {
 					BeforeEach(func() {
 						componentConfig.ComponentName = "Test"
 						componentConfig.InstanceConfig = userConfigPkg.InstanceConfig{
-							Image: userConfigPkg.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
+							Image: dockertypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
 							Volumes: []userConfigPkg.VolumeConfig{
 								{
 									Path: "/mnt",
@@ -579,7 +580,7 @@ var _ = Describe("user config validator", func() {
 									{
 										ComponentName: "test-service-1-component-1",
 										InstanceConfig: userConfigPkg.InstanceConfig{
-											Image: userConfigPkg.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
+											Image: dockertypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
 										},
 									},
 								},
