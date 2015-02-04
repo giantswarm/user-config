@@ -14,7 +14,7 @@ import (
 )
 
 func TestMarshalUnmarshal(t *testing.T) {
-	app := ExampleConfig()
+	app := ExampleDefinition()
 
 	data, err := json.Marshal(app)
 	if err != nil {
