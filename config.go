@@ -1,7 +1,9 @@
 package userconfig
 
+type MetaDataConfig struct {
+	Stack string `json:"stack"`
+}
+
 type AppConfig struct {
-	Domains      DomainConfig      `json:"domains"`
-	Certificates map[string]string `json:"certificates"`
-	MetaData     map[string]string `json:"meta_data"`
+	MetaData MetaDataConfig `json:"meta_data"`
 }
