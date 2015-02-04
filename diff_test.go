@@ -8,8 +8,8 @@ import (
 	. "github.com/giantswarm/user-config"
 )
 
-func ExampleConfig() AppConfig {
-	return AppConfig{
+func ExampleConfig() AppDefinition {
+	return AppDefinition{
 		AppName: "app",
 		Services: []ServiceConfig{
 			ServiceConfig{
@@ -28,7 +28,7 @@ func ExampleConfig() AppConfig {
 	}
 }
 
-func testDiffCallWith(t *testing.T, newCfg, oldCfg AppConfig, expectedInfos []DiffInfo) {
+func testDiffCallWith(t *testing.T, newCfg, oldCfg AppDefinition, expectedInfos []DiffInfo) {
 	infos := Diff(newCfg, oldCfg)
 
 	if len(infos) != len(expectedInfos) {
