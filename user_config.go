@@ -85,6 +85,8 @@ type DependencyConfig struct {
 	SameMachine bool `json:"same_machine,omitempty"`
 }
 
+type DomainConfig map[string]dockertypes.DockerPort
+
 type ComponentConfig struct {
 	// Name of a service.
 	ComponentName string `json:"component_name"`
@@ -154,7 +156,7 @@ type InstanceConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains map[string]dockertypes.DockerPort `json:"domains,omitempty"`
+	Domains DomainConfig `json:"domains,omitempty"`
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty"`
