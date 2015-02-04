@@ -132,7 +132,7 @@ func TestUnmarshalEnvFullApp(t *testing.T) {
 
 func TestUnmarshalEnvFullAppUpperCase(t *testing.T) {
 	// Test the validator for full apps containing both array and structs with uppercase env keys
-	var appConfig userConfigPkg.AppConfig
+	var appConfig userConfigPkg.AppDefinition
 
 	byteSlice := []byte(`{
     "app_name": "envtest",
