@@ -35,7 +35,7 @@ type DiffInfo struct {
 }
 
 // Diff compares the two AppConfigs and returns a list of changes between the two.
-func Diff(newConfig, oldConfig AppConfig) []DiffInfo {
+func Diff(newConfig, oldConfig AppDefinition) []DiffInfo {
 	if newConfig.AppName != oldConfig.AppName {
 		return []DiffInfo{
 			DiffInfo{Type: InfoAppNameChanged, Name: []string{oldConfig.AppName}},
@@ -64,7 +64,7 @@ type node interface {
 	Diff(path []string, other node, changes chan<- DiffInfo)
 }
 
-type appNode AppConfig
+type appNode AppDefinition
 
 func (n appNode) Name() string { return n.AppName }
 func (n appNode) Children() []node {

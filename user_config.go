@@ -8,13 +8,13 @@ import (
 	"github.com/giantswarm/docker-types-go"
 )
 
-type AppConfig struct {
+type AppDefinition struct {
 	AppName     string            `json:"app_name"`
 	PublicPorts map[string]string `json:"public_ports,omitempty"`
 	Services    []ServiceConfig   `json:"services"`
 }
 
-func (ac *AppConfig) UnmarshalJSON(data []byte) error {
+func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
@@ -32,7 +32,7 @@ func (ac *AppConfig) UnmarshalJSON(data []byte) error {
 		return Mask(err)
 	}
 
-	result := AppConfig(appConfigCopy)
+	result := AppDefinition(appConfigCopy)
 
 	// Perform semantic checks
 	if err := result.validate(); err != nil {
