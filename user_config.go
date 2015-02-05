@@ -8,13 +8,13 @@ import (
 	"github.com/giantswarm/docker-types-go"
 )
 
-type AppConfig struct {
+type AppDefinition struct {
 	AppName     string            `json:"app_name"`
 	PublicPorts map[string]string `json:"public_ports,omitempty"`
 	Services    []ServiceConfig   `json:"services"`
 }
 
-func (ac *AppConfig) UnmarshalJSON(data []byte) error {
+func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
@@ -32,7 +32,7 @@ func (ac *AppConfig) UnmarshalJSON(data []byte) error {
 		return Mask(err)
 	}
 
-	result := AppConfig(appConfigCopy)
+	result := AppDefinition(appConfigCopy)
 
 	// Perform semantic checks
 	if err := result.validate(); err != nil {
@@ -84,6 +84,8 @@ type DependencyConfig struct {
 	// Wether the component should run on the same machine
 	SameMachine bool `json:"same_machine,omitempty"`
 }
+
+type DomainConfig map[string]dockertypes.DockerPort
 
 type ComponentConfig struct {
 	// Name of a service.
@@ -154,7 +156,7 @@ type InstanceConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains map[string]dockertypes.DockerPort `json:"domains,omitempty"`
+	Domains DomainConfig `json:"domains,omitempty"`
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty"`

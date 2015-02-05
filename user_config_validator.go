@@ -10,9 +10,9 @@ import (
 	"github.com/kr/pretty"
 )
 
-type appConfigCopy AppConfig
+type appConfigCopy AppDefinition
 
-func CheckForUnknownFields(b []byte, ac *AppConfig) error {
+func CheckForUnknownFields(b []byte, ac *AppDefinition) error {
 	var clean appConfigCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
 		return Mask(err)
@@ -38,7 +38,7 @@ func CheckForUnknownFields(b []byte, ac *AppConfig) error {
 
 	diff := pretty.Diff(dirtyMap, cleanMap)
 	for _, v := range diff {
-		*ac = AppConfig{}
+		*ac = AppDefinition{}
 
 		field := strings.Split(v, ":")
 		return errgo.WithCausef(nil, ErrUnknownJSONField, "Cannot parse app config. Unknown field '%s' detected.", field[0])
@@ -175,9 +175,9 @@ func getArrayEntry(config map[string]interface{}, key string) []interface{} {
 	return entryArr
 }
 
-// validate performs semantic validations of this AppConfig.
+// validate performs semantic validations of this AppDefinition.
 // Return the first possible error.
-func (this *AppConfig) validate() error {
+func (this *AppDefinition) validate() error {
 	for _, s := range this.Services {
 		if err := s.validate(); err != nil {
 			return err

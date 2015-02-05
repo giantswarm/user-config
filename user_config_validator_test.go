@@ -14,14 +14,14 @@ import (
 )
 
 func TestMarshalUnmarshal(t *testing.T) {
-	app := ExampleConfig()
+	app := ExampleDefinition()
 
 	data, err := json.Marshal(app)
 	if err != nil {
 		t.Fatalf("Marshal failed: %v", err)
 	}
 
-	var app2 userConfigPkg.AppConfig
+	var app2 userConfigPkg.AppDefinition
 	if err := json.Unmarshal(data, &app2); err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
@@ -40,12 +40,12 @@ var _ = Describe("user config validator", func() {
 	var (
 		err       error
 		byteSlice []byte
-		appConfig userConfigPkg.AppConfig
+		appConfig userConfigPkg.AppDefinition
 	)
 
 	BeforeEach(func() {
 		err = nil
-		appConfig = userConfigPkg.AppConfig{}
+		appConfig = userConfigPkg.AppDefinition{}
 
 	})
 
@@ -369,7 +369,7 @@ var _ = Describe("user config validator", func() {
 				})
 
 			})
-			Context("AppConfig", func() {
+			Context("AppDefinition", func() {
 				Describe("with valid field names", func() {
 					BeforeEach(func() {
 						byteSlice = []byte(`{

@@ -8,8 +8,8 @@ import (
 	. "github.com/giantswarm/user-config"
 )
 
-func ExampleConfig() AppConfig {
-	return AppConfig{
+func ExampleDefinition() AppDefinition {
+	return AppDefinition{
 		AppName: "app",
 		Services: []ServiceConfig{
 			ServiceConfig{
@@ -28,7 +28,7 @@ func ExampleConfig() AppConfig {
 	}
 }
 
-func testDiffCallWith(t *testing.T, newCfg, oldCfg AppConfig, expectedInfos []DiffInfo) {
+func testDiffCallWith(t *testing.T, newCfg, oldCfg AppDefinition, expectedInfos []DiffInfo) {
 	infos := Diff(newCfg, oldCfg)
 
 	if len(infos) != len(expectedInfos) {
@@ -48,8 +48,8 @@ func testDiffCallWith(t *testing.T, newCfg, oldCfg AppConfig, expectedInfos []Di
 }
 
 func TestDiffAppRename(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.AppName = "app#changed"
 
 	expectedDiffItems := []DiffInfo{
@@ -60,8 +60,8 @@ func TestDiffAppRename(t *testing.T) {
 }
 
 func TestDiffServiceRename(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.Services[0].ServiceName = "service1#changed"
 
 	expectedDiffItems := []DiffInfo{
@@ -73,8 +73,8 @@ func TestDiffServiceRename(t *testing.T) {
 }
 
 func TestDiffComponentRename(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
 
 	expectedDiffItems := []DiffInfo{
@@ -86,8 +86,8 @@ func TestDiffComponentRename(t *testing.T) {
 }
 
 func TestDiffComponentUpdateImage(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.Services[0].Components[0].Image = dockertypes.MustParseDockerImage("landingpage2")
 
 	expectedDiffItems := []DiffInfo{
@@ -97,8 +97,8 @@ func TestDiffComponentUpdateImage(t *testing.T) {
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
 }
 func TestDiffComponentUpdateArgs(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.Services[0].Components[0].Args = []string{"--env=test"}
 
 	expectedDiffItems := []DiffInfo{
@@ -109,8 +109,8 @@ func TestDiffComponentUpdateArgs(t *testing.T) {
 }
 
 func TestDiffComponentScalingChanged(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 0, Max: 1000}
 
 	expectedDiffItems := []DiffInfo{
@@ -122,8 +122,8 @@ func TestDiffComponentScalingChanged(t *testing.T) {
 
 // Changes in the service should not be alert if the e.g. the service was renamed (yeah, illogical, I know)
 func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 
 	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
 		ComponentName: "service1component1",
@@ -142,8 +142,8 @@ func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
 }
 
 func TestDiffMultipleChanges(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 
 	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
 	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
@@ -163,8 +163,8 @@ func TestDiffMultipleChanges(t *testing.T) {
 }
 
 func TestDiffComponentMultipleChanges(t *testing.T) {
-	oldCfg := ExampleConfig()
-	newCfg := ExampleConfig()
+	oldCfg := ExampleDefinition()
+	newCfg := ExampleDefinition()
 
 	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 10}
 	newCfg.Services[0].Components[0].InstanceConfig.Image = dockertypes.MustParseDockerImage("new-site")
