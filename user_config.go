@@ -137,7 +137,7 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return errgo.WithCausef(err, ErrInvalidEnvListFormat)
+	return errgo.WithCausef(err, ErrInvalidEnvListFormat, "")
 }
 
 type InstanceConfig struct {
