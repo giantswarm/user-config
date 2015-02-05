@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/giantswarm/docker-types-go"
+	"github.com/juju/errgo"
 )
 
 type AppDefinition struct {
@@ -102,10 +103,11 @@ type EnvList []string
 
 // UnmarshalJSON supports parsing an EnvList as array and as structure
 func (this *EnvList) UnmarshalJSON(data []byte) error {
+	var err error
 	// Try to parse as struct first
 	if len(data) > 1 && data[0] == '{' {
 		kvMap := make(map[string]string)
-		err := json.Unmarshal(data, &kvMap)
+		err = json.Unmarshal(data, &kvMap)
 		if err == nil {
 			// Success, wrap into array
 			// Sort the keys first so the outcome it always the same
@@ -127,7 +129,7 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 	// Try to parse are []string
 	if len(data) > 1 && data[0] == '[' {
 		list := []string{}
-		err := json.Unmarshal(data, &list)
+		err = json.Unmarshal(data, &list)
 		if err != nil {
 			return err
 		}
@@ -135,7 +137,7 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return dockertypes.ErrInvalidFormat
+	return errgo.WithCausef(err, ErrInvalidEnvListFormat)
 }
 
 type InstanceConfig struct {
