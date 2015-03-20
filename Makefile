@@ -14,6 +14,8 @@ SOURCE=$(shell find . -name '*.go')
 
 all: get-deps $(BIN)
 
+ci: clean all run-tests
+
 clean:
 	rm -rf $(BUILD_PATH) $(BIN)
 
