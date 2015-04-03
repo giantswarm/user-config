@@ -53,6 +53,16 @@ type ScalingPolicyConfig struct {
 	Max int `json:"max,omitempty"`
 }
 
+func (spc ScalingPolicyConfig) Min() int {
+	min := 1
+
+	if spc.Min > 1 {
+		min = spc.Min
+	}
+
+	return min
+}
+
 // User defined service.
 type ServiceConfig struct {
 	ServiceName string            `json:"service_name"`
