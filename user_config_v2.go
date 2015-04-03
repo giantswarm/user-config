@@ -2,10 +2,12 @@ package userconfig
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"reflect"
+	"strings"
 
-	"github.com/dchest/uniuri"
 	"github.com/giantswarm/docker-types-go"
+	"github.com/juju/errgo"
 )
 
 type NodeName string
@@ -17,7 +19,9 @@ func (nn NodeName) UnmarshalJSON(data []byte) error {
 		return errgo.Mask(err)
 	}
 
-	return input
+	nn = NodeName(input)
+
+	return nil
 }
 
 func (nn NodeName) MarshalJSON() ([]byte, error) {
@@ -25,7 +29,7 @@ func (nn NodeName) MarshalJSON() ([]byte, error) {
 }
 
 func (nn NodeName) String() string {
-	return nn
+	return string(nn)
 }
 
 func (nn NodeName) Base() string {
@@ -33,7 +37,7 @@ func (nn NodeName) Base() string {
 }
 
 func (nn NodeName) Root() string {
-	return strings.Split(nn.String(), filepath.Separator)[0]
+	return strings.Split(nn.String(), string(filepath.Separator))[0]
 }
 
 func (nn NodeName) Dir() string {
@@ -51,7 +55,7 @@ type Node struct {
 	Ports   []dockertypes.DockerPort `json:"ports,omitempty"`
 	Image   dockertypes.DockerImage  `json:"image,omitempty"`
 	Scale   ScalingPolicyConfig      `json:"scale,omitempty"`
-	Domains DomainConf               `json:"domains,omitempty"`
+	Domains DomainConfig             `json:"domains,omitempty"`
 	Links   []LinkConf               `json:"links,omitempty"`
 	Env     EnvList                  `json:"env,omitempty"`
 	Volumes []VolumeConfig           `json:"volumes,omitempty"`
@@ -59,7 +63,7 @@ type Node struct {
 }
 
 func (n Node) IsScalingNode() bool {
-	ref := Node{Node: n.Node, Scale: n.Scale}
+	ref := Node{Name: n.Name, Scale: n.Scale}
 	return reflect.DeepEqual(ref, n)
 }
 

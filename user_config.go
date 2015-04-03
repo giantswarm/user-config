@@ -53,7 +53,7 @@ type ScalingPolicyConfig struct {
 	Max int `json:"max,omitempty"`
 }
 
-func (spc ScalingPolicyConfig) Min() int {
+func (spc ScalingPolicyConfig) MinScale() int {
 	min := 1
 
 	if spc.Min > 1 {
