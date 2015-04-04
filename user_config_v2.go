@@ -67,4 +67,4 @@ func (n Node) IsScalingNode() bool {
 	return reflect.DeepEqual(ref, n)
 }
 
-type AppDefinitionV2 []Node
+type V2AppDefinition []Node
