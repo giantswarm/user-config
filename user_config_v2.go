@@ -113,3 +113,16 @@ func (n Node) IsScalingNode() bool {
 }
 
 type V2AppDefinition []Node
+
+func (ad V2AppDefinition) AppName() string {
+	for _, node := range ad {
+		if !node.IsScalingNode() {
+			return node.Name.Root()
+		}
+	}
+
+	// this should never happen
+	panic("cannot find app name")
+
+	return ""
+}
