@@ -145,6 +145,9 @@ type InstanceConfig struct {
 	// tags. E.g. dockerfile/redis:latest.
 	Image dockertypes.DockerImage `json:"image" description:"Name of a docker image to use when running a container. The image includes tags"`
 
+	// If given, overwrite the entrypoint of the docker image.
+	EntryPoint string `json:"entrypoint,omitempty" description:"If given, overwrite the entrypoint of the docker image"`
+
 	// List of ports a service exposes. E.g. 6379/tcp
 	Ports []dockertypes.DockerPort `json:"ports,omitempty" description:"List of ports this component exposes"`
 
