@@ -160,8 +160,8 @@ func TestUnmarshalEnvFullAppUpperCase(t *testing.T) {
 	}
 
 	got := fmt.Sprintf("%v", appConfig)
-	expected := "{envtest map[] [{envtest-service map[] <nil> [{env-struct <nil> {busybox [] [KEY=env-array] [] [] map[] []}} {env-struct <nil> {busybox [] [KEY=env-struct] [] [] map[] []}}]}]}"
+	expected := "{envtest map[] [{envtest-service map[] <nil> [{env-struct <nil> {busybox  [] [KEY=env-array] [] [] map[] []}} {env-struct <nil> {busybox  [] [KEY=env-struct] [] [] map[] []}}]}]}"
 	if got != expected {
-		t.Fatalf("Invalid result: got %s, expected %s", got, expected)
+		t.Fatalf("Invalid result: got \n%s\nexpected\n%s", got, expected)
 	}
 }
