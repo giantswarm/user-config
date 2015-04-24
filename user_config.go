@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	dockertypes "github.com/giantswarm/docker-types-go"
 	"github.com/juju/errgo"
@@ -43,6 +44,22 @@ func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 	*ac = result
 
 	return nil
+}
+
+// Parse a swarm app configuration file
+func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
+	var app AppDefinition
+	if err := json.Unmarshal(byteSlice, &app); err != nil {
+		if IsSyntaxError(err) {
+			if strings.Contains(err.Error(), "$") {
+				return AppDefinition{}, errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly. Aborting...")
+			}
+		}
+
+		return AppDefinition{}, Mask(err)
+	}
+
+	return app, nil
 }
 
 type ScalingPolicyConfig struct {
