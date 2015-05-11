@@ -52,7 +52,7 @@ func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 	if err := json.Unmarshal(byteSlice, &app); err != nil {
 		if IsSyntaxError(err) {
 			if strings.Contains(err.Error(), "$") {
-				return AppDefinition{}, errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly. Aborting...")
+				return AppDefinition{}, errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly.")
 			}
 		}
 
