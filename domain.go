@@ -3,9 +3,9 @@ package userconfig
 import (
 	"encoding/json"
 
-	"github.com/giantswarm/docker-types-go"
 	"github.com/alexanderritola/validate"
 	"github.com/alexanderritola/validate/web"
+	"github.com/giantswarm/docker-types-go"
 	"github.com/juju/errgo"
 )
 
@@ -18,7 +18,7 @@ type DomainConfig map[Domain]dockertypes.DockerPort
 // and ports is given. That way dependencies between packages requiring hard
 // custom types can be dropped.
 func (dc DomainConfig) ToSimple() map[string]string {
-  simpleDomains := map[string]string{}
+	simpleDomains := map[string]string{}
 
 	for d, p := range dc {
 		simpleDomains[d.String()] = p.Port

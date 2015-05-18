@@ -11,9 +11,9 @@ import (
 func TestUnmarshalValidDomains(t *testing.T) {
 	app := ExampleDefinition()
 	app.Services[0].Components[0].Domains = map[userconfig.Domain]dockertypes.DockerPort{
-		userconfig.Domain("i.am.correct.com"):     dockertypes.MustParseDockerPort("80/tcp"),
-		userconfig.Domain("i.am.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
-		userconfig.Domain("i.80.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
+		userconfig.Domain("i.am.correct.com"):       dockertypes.MustParseDockerPort("80/tcp"),
+		userconfig.Domain("i.am.correct.too.com"):   dockertypes.MustParseDockerPort("80/tcp"),
+		userconfig.Domain("i.80.correct.too.com"):   dockertypes.MustParseDockerPort("80/tcp"),
 		userconfig.Domain("i.am80.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
 	}
 
@@ -54,16 +54,16 @@ func TestDomainValidatorValidDomain(t *testing.T) {
 	}
 }
 
-func TestDomainValidatorValidDomainWithPort(t *testing.T) {
-	d := userconfig.Domain("i.am.correct.com:80")
+func TestDomainValidatorInvalidDomain(t *testing.T) {
+	d := userconfig.Domain("i.$am.invalid.com")
 
-	if err := d.Validate(); err != nil {
-		t.Fatalf("Valid domain detected to be invalid: %v", err)
+	if err := d.Validate(); err == nil {
+		t.Fatalf("Invalid domain detected to be valid: %v", d.String())
 	}
 }
 
-func TestDomainValidatorInvalidDomain(t *testing.T) {
-	d := userconfig.Domain("i.$am.invalid.com")
+func TestDomainValidatorInvalidDomainWithPort(t *testing.T) {
+	d := userconfig.Domain("i.am.invalid.com:80")
 
 	if err := d.Validate(); err == nil {
 		t.Fatalf("Invalid domain detected to be valid: %v", d.String())
