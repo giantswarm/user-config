@@ -1,6 +1,7 @@
 package userconfig
 
 import (
+	"encoding/json"
 	"github.com/juju/errgo"
 )
 
@@ -27,4 +28,10 @@ func IsErrDuplicateVolumePath(err error) bool {
 
 func IsErrInvalidEnvListFormat(err error) bool {
 	return errgo.Cause(err) == ErrInvalidEnvListFormat
+}
+
+// IsSyntaxError returns true if the cause of the given error in a json.SyntaxError
+func IsSyntaxError(err error) bool {
+	_, ok := errgo.Cause(err).(*json.SyntaxError)
+	return ok
 }
