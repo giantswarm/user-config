@@ -3,12 +3,25 @@ package userconfig
 import (
 	"encoding/json"
 
+	"github.com/giantswarm/docker-types-go"
 	"github.com/alexanderritola/validate"
 	"github.com/alexanderritola/validate/web"
 	"github.com/juju/errgo"
 )
 
 type Domain string
+
+type DomainConfig map[Domain]dockertypes.DockerPort
+
+func (dc DomainConfig) ToSimple() map[string]string {
+  simpleDomains := map[string]string{}
+
+	for d, p := range dc {
+		simpleDomains[d.String()] = p.Port
+	}
+
+	return simpleDomains
+}
 
 func (d *Domain) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.String())

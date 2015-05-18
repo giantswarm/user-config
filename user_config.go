@@ -103,8 +103,6 @@ type DependencyConfig struct {
 	SameMachine bool `json:"same_machine,omitempty" description:"Wether the component should run on the same machine"`
 }
 
-type DomainConfig map[Domain]dockertypes.DockerPort
-
 type ComponentConfig struct {
 	// Name of a component.
 	ComponentName string `json:"component_name" description:"Name of the component"`
