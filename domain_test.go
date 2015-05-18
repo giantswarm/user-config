@@ -13,6 +13,8 @@ func TestUnmarshalValidDomains(t *testing.T) {
 	app.Services[0].Components[0].Domains = map[userconfig.Domain]dockertypes.DockerPort{
 		userconfig.Domain("i.am.correct.com"):     dockertypes.MustParseDockerPort("80/tcp"),
 		userconfig.Domain("i.am.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
+		userconfig.Domain("i.80.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
+		userconfig.Domain("i.am80.correct.too.com"): dockertypes.MustParseDockerPort("80/tcp"),
 	}
 
 	data, err := json.Marshal(app)
