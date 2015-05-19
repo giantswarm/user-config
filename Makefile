@@ -27,7 +27,7 @@ get-deps: .gobuild
 
 	#
 	# Pin internal libraries
-	@builder get dep -b initial git@github.com:giantswarm/generic-types-go.git $(D0_PATH)/generic-types-go
+	@builder get dep -b 1.0.0 git@github.com:giantswarm/generic-types-go.git $(D0_PATH)/generic-types-go
 	#
 	# Fetch public dependencies via `go get`
 	GOPATH=$(GOPATH) go get -d -v github.com/giantswarm/$(PROJECT)
