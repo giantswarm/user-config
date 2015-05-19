@@ -212,6 +212,12 @@ func (this *ComponentConfig) validate() error {
 		paths[path] = path
 	}
 
+	for d, _ := range this.Domains {
+		if err := d.Validate(); err != nil {
+			return Mask(err)
+		}
+	}
+
 	// No errors found
 	return nil
 }

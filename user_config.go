@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	dockertypes "github.com/giantswarm/docker-types-go"
+	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
 )
 
@@ -97,13 +97,11 @@ type DependencyConfig struct {
 	Alias string `json:"alias,omitempty" description:"The name how this dependency should appear in the container"`
 
 	// Port of the required component
-	Port dockertypes.DockerPort `json:"port" description:"Port of the required component"`
+	Port generictypes.DockerPort `json:"port" description:"Port of the required component"`
 
 	// Wether the component should run on the same machine
 	SameMachine bool `json:"same_machine,omitempty" description:"Wether the component should run on the same machine"`
 }
-
-type DomainConfig map[string]dockertypes.DockerPort
 
 type ComponentConfig struct {
 	// Name of a component.
@@ -160,13 +158,13 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 type InstanceConfig struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
-	Image dockertypes.DockerImage `json:"image" description:"Name of a docker image to use when running a container. The image includes tags"`
+	Image generictypes.DockerImage `json:"image" description:"Name of a docker image to use when running a container. The image includes tags"`
 
 	// If given, overwrite the entrypoint of the docker image.
 	EntryPoint string `json:"entrypoint,omitempty" description:"If given, overwrite the entrypoint of the docker image"`
 
 	// List of ports a service exposes. E.g. 6379/tcp
-	Ports []dockertypes.DockerPort `json:"ports,omitempty" description:"List of ports this component exposes"`
+	Ports []generictypes.DockerPort `json:"ports,omitempty" description:"List of ports this component exposes"`
 
 	// Docker env to inject into docker containers.
 	Env EnvList `json:"env,omitempty" description:"List of environment variables used by this component"`

@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/giantswarm/docker-types-go"
-	userConfigPkg "github.com/giantswarm/user-config"
+	"github.com/giantswarm/generic-types-go"
+	"github.com/giantswarm/user-config"
 )
 
 func TestMarshalUnmarshal(t *testing.T) {
@@ -21,7 +21,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		t.Fatalf("Marshal failed: %v", err)
 	}
 
-	var app2 userConfigPkg.AppDefinition
+	var app2 userconfig.AppDefinition
 	if err := json.Unmarshal(data, &app2); err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
@@ -40,12 +40,12 @@ var _ = Describe("user config validator", func() {
 	var (
 		err       error
 		byteSlice []byte
-		appConfig userConfigPkg.AppDefinition
+		appConfig userconfig.AppDefinition
 	)
 
 	BeforeEach(func() {
 		err = nil
-		appConfig = userConfigPkg.AppDefinition{}
+		appConfig = userconfig.AppDefinition{}
 
 	})
 
@@ -163,7 +163,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeFalse())
+				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeFalse())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '5KB' detected.`))
 			})
 		})
@@ -202,7 +202,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeFalse())
+				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeFalse())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '-8KB' detected.`))
 			})
 		})
@@ -223,7 +223,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeTrue())
+				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["foo"]' detected.`))
 			})
 
@@ -266,7 +266,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should detect first occuring error and throw ErrUnknownJSONField", func() {
-				Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeTrue())
+				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["components"][1]["volume"]' detected.`))
 			})
 
@@ -300,7 +300,7 @@ var _ = Describe("user config validator", func() {
 			})
 
 			It("should detect first occuring error and throw IsErrDuplicateVolumePath", func() {
-				Expect(userConfigPkg.IsErrDuplicateVolumePath(err)).To(BeTrue())
+				Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' detected.`))
 			})
 
@@ -311,9 +311,9 @@ var _ = Describe("user config validator", func() {
 
 		Context("fix app-config fields", func() {
 			Context("ComponentConfig", func() {
-				var componentConfig userConfigPkg.ComponentConfig
+				var componentConfig userconfig.ComponentConfig
 				BeforeEach(func() {
-					componentConfig = userConfigPkg.ComponentConfig{}
+					componentConfig = userconfig.ComponentConfig{}
 				})
 
 				Describe("UnmarshalJSON parses deprecated notation", func() {
@@ -345,9 +345,9 @@ var _ = Describe("user config validator", func() {
 
 					BeforeEach(func() {
 						componentConfig.ComponentName = "Test"
-						componentConfig.InstanceConfig = userConfigPkg.InstanceConfig{
-							Image: dockertypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
-							Volumes: []userConfigPkg.VolumeConfig{
+						componentConfig.InstanceConfig = userconfig.InstanceConfig{
+							Image: generictypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
+							Volumes: []userconfig.VolumeConfig{
 								{
 									Path: "/mnt",
 									Size: "5 GB",
@@ -558,7 +558,7 @@ var _ = Describe("user config validator", func() {
 					})
 
 					It("should throw error", func() {
-						Expect(userConfigPkg.IsErrUnknownJsonField(err)).To(BeTrue())
+						Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
 						Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["comp_onents"]' detected.`))
 					})
 
@@ -573,14 +573,14 @@ var _ = Describe("user config validator", func() {
 
 					BeforeEach(func() {
 						appConfig.AppName = "Test"
-						appConfig.Services = []userConfigPkg.ServiceConfig{
+						appConfig.Services = []userconfig.ServiceConfig{
 							{
 								ServiceName: "test-service-1",
-								Components: []userConfigPkg.ComponentConfig{
+								Components: []userconfig.ComponentConfig{
 									{
 										ComponentName: "test-service-1-component-1",
-										InstanceConfig: userConfigPkg.InstanceConfig{
-											Image: dockertypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
+										InstanceConfig: userconfig.InstanceConfig{
+											Image: generictypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
 										},
 									},
 								},
