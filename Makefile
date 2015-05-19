@@ -27,13 +27,10 @@ get-deps: .gobuild
 
 	#
 	# Pin internal libraries
-	@builder get dep -b 0.1.0 git@github.com:giantswarm/docker-types-go.git $(D0_PATH)/docker-types-go
-	@builder get dep -b fix-import-paths git@github.com:giantswarm/validate.git $(BUILD_PATH)/src/github.com/alexanderritola/validate
-
+	@builder get dep -b initial git@github.com:giantswarm/generic-types-go.git $(D0_PATH)/generic-types-go
 	#
 	# Fetch public dependencies via `go get`
 	GOPATH=$(GOPATH) go get -d -v github.com/giantswarm/$(PROJECT)
-
 	#
 	# Build test packages (we only want those two, so we use `-d` in go get)
 	GOPATH=$(GOPATH) go get -d -v github.com/onsi/gomega

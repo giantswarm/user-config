@@ -1,17 +1,10 @@
 package userconfig
 
 import (
-	"encoding/json"
-
-	"github.com/alexanderritola/validate"
-	"github.com/alexanderritola/validate/web"
-	"github.com/giantswarm/docker-types-go"
-	"github.com/juju/errgo"
+	"github.com/giantswarm/generic-types-go"
 )
 
-type Domain string
-
-type DomainConfig map[Domain]dockertypes.DockerPort
+type DomainConfig map[generictypes.Domain]generictypes.DockerPort
 
 // ToSimple just maps the domain config with its custom types to a more simpler
 // map. This can be used for internal management once the validity of domains
@@ -25,38 +18,4 @@ func (dc DomainConfig) ToSimple() map[string]string {
 	}
 
 	return simpleDomains
-}
-
-func (d *Domain) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.String())
-}
-
-func (d *Domain) UnmarshalJSON(data []byte) error {
-	var input string
-
-	if err := json.Unmarshal(data, &input); err != nil {
-		return err
-	}
-
-	*d = Domain(input)
-
-	if err := d.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (d *Domain) String() string {
-	return string(*d)
-}
-
-func (d *Domain) Validate() error {
-	v := validate.NewValidator()
-
-	if err := v.Validate(web.NewDomain(d.String())); err != nil {
-		return errgo.Mask(errgo.Newf("Invalid domain: %s", d.String()), errgo.Any)
-	}
-
-	return nil
 }
