@@ -111,6 +111,8 @@ type ComponentConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty" description:"Scaling settings of the component"`
 
 	InstanceConfig
+
+	NamespaceConfig
 }
 
 // List of environment settings like "KEY=VALUE", "KEY2=VALUE2"
@@ -180,4 +182,10 @@ type InstanceConfig struct {
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
+}
+
+type NamespaceConfig struct {
+	// Name of the namespace a component will join.
+	// An empty name means that the component will not join any namespace and create its own.
+	NamespaceName string `json:"namespace,omitempty" description:"Name of the namespace to join"`
 }
