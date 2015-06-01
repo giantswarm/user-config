@@ -385,8 +385,7 @@ var _ = Describe("user config validator", func() {
 			                    "dependencies": [
 			                      { "name": "redis", "port": 6379, "same_machine": true }
 			                    ],
-			                    "domains": { "test.domain.io": "80" },
-			                    "namespace": "ns1"
+			                    "domains": { "test.domain.io": "80" }
 			                  },
 			                  {
 			                    "component_name": "redis",
@@ -445,11 +444,6 @@ var _ = Describe("user config validator", func() {
 						Expect(appConfig.Services[0].Components[1].Image.Namespace).To(Equal("dockerfile"))
 						Expect(appConfig.Services[0].Components[1].Image.Repository).To(Equal("redis"))
 						Expect(appConfig.Services[0].Components[1].Image.Version).To(Equal(""))
-					})
-
-					It("should parse correct namespace", func() {
-						Expect(appConfig.Services[0].Components[0].NamespaceName).To(Equal("ns1"))
-						Expect(appConfig.Services[0].Components[1].NamespaceName).To(Equal(""))
 					})
 				})
 

@@ -183,6 +183,9 @@ func (this *AppDefinition) validate() error {
 			return err
 		}
 	}
+	if err := this.validateNamespaces(); err != nil {
+		return Mask(err)
+	}
 
 	return nil
 }
@@ -219,5 +222,45 @@ func (this *ComponentConfig) validate() error {
 	}
 
 	// No errors found
+	return nil
+}
+
+type namespaceInfoCounter struct {
+	ServiceName string
+	Count       int
+}
+
+// validateNamespaces checks that
+// - namespaces do not cross service boundaries.
+// - namespaces must be used in more than 1 component.
+func (this *AppDefinition) validateNamespaces() error {
+	ns2info := make(map[string]*namespaceInfoCounter)
+	for _, s := range this.Services {
+		for _, c := range s.Components {
+			ns := c.NamespaceName
+			if ns != "" {
+				info, ok := ns2info[ns]
+				if !ok {
+					// First occurrence of the namespace
+					ns2info[ns] = &namespaceInfoCounter{s.ServiceName, 1}
+				} else {
+					// Found earlier use of namespace name
+					if info.ServiceName != s.ServiceName {
+						// Namespace is used in different services
+						return errgo.WithCausef(nil, ErrCrossServiceNamespace, "Cannot parse app config. Namespace '%s' is used in multiple services.", ns)
+					}
+					// Increase counter
+					info.Count++
+				}
+			}
+		}
+	}
+	// Test counters
+	for ns, info := range ns2info {
+		if info.Count == 1 {
+			// Namespace is used only once
+			return errgo.WithCausef(nil, ErrNamespaceUsedOnlyOnce, "Cannot parse app config. Namespace '%s' is used in only 1 component.", ns)
+		}
+	}
 	return nil
 }
