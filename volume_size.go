@@ -64,6 +64,11 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Empty returns true if the given volume size in "empty" (unspecified), false otherwise.
+func (this VolumeSize) Empty() bool {
+	return string(this) == ""
+}
+
 // Size gets the size part of a volume size as an integer.
 // E.g. "5 GB" -> 5
 func (this VolumeSize) Size() (int, error) {

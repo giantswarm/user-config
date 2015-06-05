@@ -12,8 +12,16 @@ var (
 	ErrInvalidEnvListFormat  = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
 	ErrCrossServiceNamespace = errgo.New("Namespace is used in different services.")
 	ErrNamespaceUsedOnlyOnce = errgo.New("Namespace is used in only 1 component.")
+	ErrInvalidVolumeConfig   = errgo.New("Invalid volume configuration.")
 
-	Mask = errgo.MaskFunc(IsErrInvalidEnvListFormat, IsErrUnknownJsonField, IsErrInvalidSize, IsErrDuplicateVolumePath, IsErrCrossServiceNamespace, IsErrNamespaceUsedOnlyOnce)
+	Mask = errgo.MaskFunc(IsErrInvalidEnvListFormat,
+		IsErrUnknownJsonField,
+		IsErrInvalidSize,
+		IsErrDuplicateVolumePath,
+		IsErrCrossServiceNamespace,
+		IsErrNamespaceUsedOnlyOnce,
+		IsErrInvalidVolumeConfig,
+	)
 )
 
 func IsErrUnknownJsonField(err error) bool {
@@ -38,6 +46,10 @@ func IsErrCrossServiceNamespace(err error) bool {
 
 func IsErrNamespaceUsedOnlyOnce(err error) bool {
 	return errgo.Cause(err) == ErrNamespaceUsedOnlyOnce
+}
+
+func IsErrInvalidVolumeConfig(err error) bool {
+	return errgo.Cause(err) == ErrInvalidVolumeConfig
 }
 
 // IsSyntaxError returns true if the cause of the given error in a json.SyntaxError

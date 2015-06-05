@@ -197,6 +197,12 @@ func (this *ServiceConfig) validate() error {
 		if err := c.validate(); err != nil {
 			return err
 		}
+		// Check volume refs
+		for _, v := range c.Volumes {
+			if err := v.validateRefs(this, &c); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -213,6 +219,12 @@ func (this *ComponentConfig) validate() error {
 			return errgo.WithCausef(nil, ErrDuplicateVolumePath, "Cannot parse app config. Duplicate volume '%s' detected.", path)
 		}
 		paths[path] = path
+	}
+	// Check volumes
+	for _, v := range this.Volumes {
+		if err := v.validate(); err != nil {
+			return err
+		}
 	}
 
 	for d, _ := range this.Domains {
@@ -263,4 +275,99 @@ func (this *AppDefinition) validateNamespaces() error {
 		}
 	}
 	return nil
+}
+
+// validate validates the settings of this VolumeConfig.
+// Valid combinations:
+// - Path & Size set, everything else empty
+// - VolumesFrom set, everything else empty
+// - VolumeFrom, VolumePath set, Path optionally set, everything else empty
+func (this *VolumeConfig) validate() error {
+	// Option 1
+	if this.Path != "" && !this.Size.Empty() {
+		if this.VolumesFrom != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volumes-from for path '%s' should be empty.", this.Path)
+		}
+		if this.VolumeFrom != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volume-from for path '%s' should be empty.", this.Path)
+		}
+		if this.VolumePath != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volume-path for path '%s' should be empty.", this.Path)
+		}
+		return nil
+	}
+	// Option 2
+	if this.VolumesFrom != "" {
+		if this.Path != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Path for volumes-from '%s' should be empty.", this.VolumesFrom)
+		}
+		if !this.Size.Empty() {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Size for volumes-from '%s' should be empty.", this.VolumesFrom)
+		}
+		if this.VolumeFrom != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volume-from for volumes-from '%s' should be empty.", this.VolumesFrom)
+		}
+		if this.VolumePath != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volume-path for volumes-from '%s' should be empty.", this.VolumesFrom)
+		}
+		return nil
+	}
+	// Option 3
+	if this.VolumeFrom != "" {
+		// Path is optional
+
+		if !this.Size.Empty() {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Size for volume-from '%s' should be empty.", this.VolumeFrom)
+		}
+		if this.VolumesFrom != "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volumes-from for volume-from '%s' should be empty.", this.VolumeFrom)
+		}
+		if this.VolumePath == "" {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Volume-path for volume-from '%s' should not be empty.", this.VolumeFrom)
+		}
+		return nil
+	}
+
+	// Ok, everything should be empty now
+	if this.Path != "" || !this.Size.Empty() || this.VolumePath != "" {
+		return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Path, volume-path or volumes-path should be set. %#v", this)
+	}
+
+	// All empty, ok
+	return nil
+}
+
+// validateRefs checks the existance of reference names in the given volume config.
+func (this *VolumeConfig) validateRefs(service *ServiceConfig, containingComponent *ComponentConfig) error {
+	compName := this.VolumesFrom
+	if compName == "" {
+		compName = this.VolumeFrom
+	}
+	if compName == "" {
+		// No references, all ok
+		return nil
+	}
+	// Check that other component name is not the containing component
+	if compName == containingComponent.ComponentName {
+		return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
+	}
+	// Another component is referenced, we should be in a namespace
+	ns := containingComponent.NamespaceName
+	if ns == "" {
+		return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to another component '%s' without a namespace declaration.", compName)
+	}
+	// Find the other component name
+	for _, c := range service.Components {
+		if c.ComponentName == compName {
+			// Found other component
+			// Check matching namespace
+			if ns != c.NamespaceName {
+				return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to another component '%s' in another namespace.", compName)
+			}
+			// all ok
+			return nil
+		}
+	}
+	// Not found
+	return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot find referenced component '%s'.", compName)
 }

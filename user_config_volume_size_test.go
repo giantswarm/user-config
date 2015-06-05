@@ -140,3 +140,20 @@ func TestVolumeSizeNew(t *testing.T) {
 		}
 	}
 }
+
+func TestVolumeSizeEmpty(t *testing.T) {
+	tests := []struct {
+		Size  userConfigPkg.VolumeSize
+		Empty bool
+	}{
+		{"", true},
+		{"5 GB", false},
+	}
+
+	for _, test := range tests {
+		empty := test.Size.Empty()
+		if empty != test.Empty {
+			t.Fatalf("Invalid result for '%s': got %v, expected %v", test.Size, empty, test.Empty)
+		}
+	}
+}
