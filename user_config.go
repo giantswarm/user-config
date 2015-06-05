@@ -204,3 +204,9 @@ func (this *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string
 	visitedComponents := make(map[string]string)
 	return this.getAllMountPoints(service, visitedComponents)
 }
+
+// FindComponent finds a component with given name if the list of components inside this service.
+// it returns nil if not found
+func (this *ServiceConfig) FindComponent(name string) *ComponentConfig {
+	return this.findComponent(name)
+}
