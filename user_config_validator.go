@@ -203,6 +203,10 @@ func (this *ServiceConfig) validate() error {
 				return err
 			}
 		}
+		// Check for duplicate mount points
+		if err := c.validateUniqueMountPoints(this); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -211,15 +215,6 @@ func (this *ServiceConfig) validate() error {
 // validate performs semantic validations of this ComponentConfig.
 // Return the first possible error.
 func (this *ComponentConfig) validate() error {
-	// Detect duplicate volume "path"
-	paths := make(map[string]string)
-	for _, v := range this.Volumes {
-		path := v.Path
-		if _, found := paths[path]; found {
-			return errgo.WithCausef(nil, ErrDuplicateVolumePath, "Cannot parse app config. Duplicate volume '%s' detected.", path)
-		}
-		paths[path] = path
-	}
 	// Check volumes
 	for _, v := range this.Volumes {
 		if err := v.validate(); err != nil {
@@ -347,6 +342,7 @@ func (this *VolumeConfig) validateRefs(service *ServiceConfig, containingCompone
 		// No references, all ok
 		return nil
 	}
+
 	// Check that other component name is not the containing component
 	if compName == containingComponent.ComponentName {
 		return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
@@ -357,17 +353,108 @@ func (this *VolumeConfig) validateRefs(service *ServiceConfig, containingCompone
 		return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to another component '%s' without a namespace declaration.", compName)
 	}
 	// Find the other component name
-	for _, c := range service.Components {
-		if c.ComponentName == compName {
-			// Found other component
-			// Check matching namespace
-			if ns != c.NamespaceName {
-				return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to another component '%s' in another namespace.", compName)
-			}
-			// all ok
-			return nil
+	other := service.findComponent(compName)
+	if other != nil {
+		// Found other component
+		// Check matching namespace
+		if ns != other.NamespaceName {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot refer to another component '%s' without a matching namespace declaration.", compName)
 		}
+		// Check matching "volume-path"
+		if this.VolumePath != "" {
+			found := false
+			for _, v := range other.Volumes {
+				if v.Path == this.VolumePath {
+					// Found it
+					found = true
+				}
+			}
+			if !found {
+				return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot find path '%s' on component '%s'.", this.VolumePath, compName)
+			}
+		}
+		// all ok
+		return nil
 	}
+
 	// Not found
 	return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse volume config. Cannot find referenced component '%s'.", compName)
+}
+
+// validateUniqueMountPoints checks that there are no duplicate volume mounts
+func (this *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) error {
+	mountPoints := make(map[string]string)
+	for _, v := range this.Volumes {
+		var paths []string
+		if v.Path != "" {
+			paths = []string{v.Path}
+		} else if v.VolumeFrom != "" {
+			paths = []string{v.VolumePath}
+		} else if v.VolumesFrom != "" {
+			other := service.findComponent(v.VolumesFrom)
+			if other == nil {
+				return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+			}
+			visitedComponents := make(map[string]string)
+			var err error
+			paths, err = other.getAllMountPoints(service, visitedComponents)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse app config. Missing path in component '%s'.", this.ComponentName)
+		}
+		for _, p := range paths {
+			if _, ok := mountPoints[p]; ok {
+				// Found duplicate mount point
+				return errgo.WithCausef(nil, ErrDuplicateVolumePath, "Cannot parse app config. Duplicate volume '%s' found in component '%s'.", p, this.ComponentName)
+			}
+			mountPoints[p] = p
+		}
+	}
+
+	// No duplicates detected
+	return nil
+}
+
+// getAllMountPoints creates a list of all mount points of a component.
+func (this *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComponents map[string]string) ([]string, error) {
+	// Prevent cycles
+	if _, ok := visitedComponents[this.ComponentName]; ok {
+		// Cycle detected
+		return nil, errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse app config. Cycle in referenced components detected in '%s'.", this.ComponentName)
+	}
+	visitedComponents[this.ComponentName] = this.ComponentName
+
+	// Get all mountpoints
+	mountPoints := []string{}
+	for _, v := range this.Volumes {
+		if v.Path != "" {
+			mountPoints = append(mountPoints, v.Path)
+		} else if v.VolumePath != "" {
+			mountPoints = append(mountPoints, v.VolumePath)
+		} else if v.VolumesFrom != "" {
+			other := service.findComponent(v.VolumesFrom)
+			if other == nil {
+				return nil, errgo.WithCausef(nil, ErrInvalidVolumeConfig, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+			}
+			p, err := other.getAllMountPoints(service, visitedComponents)
+			if err != nil {
+				return nil, err
+			}
+			mountPoints = append(mountPoints, p...)
+		}
+	}
+	return mountPoints, nil
+}
+
+// findComponent finds a component with given name if the list of components inside this service.
+// it returns nil if not found
+func (this *ServiceConfig) findComponent(name string) *ComponentConfig {
+	for _, c := range this.Components {
+		if c.ComponentName == name {
+			return &c
+		}
+	}
+	return nil
 }
