@@ -198,3 +198,9 @@ type NamespaceConfig struct {
 	// An empty name means that the component will not join any namespace and create its own.
 	NamespaceName string `json:"namespace,omitempty" description:"Name of the namespace to join"`
 }
+
+// getAllMountPoints creates a list of all mount points of a component.
+func (this *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
+	visitedComponents := make(map[string]string)
+	return this.getAllMountPoints(service, visitedComponents)
+}
