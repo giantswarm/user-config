@@ -244,17 +244,17 @@ func (this *AppDefinition) validateNamespaces() error {
 	ns2info := make(map[string]*namespaceInfoCounter)
 	for _, s := range this.Services {
 		for _, c := range s.Components {
-			ns := c.NamespaceName
-			if ns != "" {
-				info, ok := ns2info[ns]
+			nn := c.NamespaceName
+			if nn != "" {
+				info, ok := ns2info[nn]
 				if !ok {
 					// First occurrence of the namespace
-					ns2info[ns] = &namespaceInfoCounter{s.ServiceName, 1}
+					ns2info[nn] = &namespaceInfoCounter{s.ServiceName, 1}
 				} else {
 					// Found earlier use of namespace name
 					if info.ServiceName != s.ServiceName {
 						// Namespace is used in different services
-						return errgo.WithCausef(nil, CrossServiceNamespaceError, "Cannot parse app config. Namespace '%s' is used in multiple services.", ns)
+						return errgo.WithCausef(nil, CrossServiceNamespaceError, "Cannot parse app config. Namespace '%s' is used in multiple services.", nn)
 					}
 					// Increase counter
 					info.Count++
@@ -263,10 +263,10 @@ func (this *AppDefinition) validateNamespaces() error {
 		}
 	}
 	// Test counters
-	for ns, info := range ns2info {
+	for nn, info := range ns2info {
 		if info.Count == 1 {
 			// Namespace is used only once
-			return errgo.WithCausef(nil, NamespaceUsedOnlyOnceError, "Cannot parse app config. Namespace '%s' is used in only 1 component.", ns)
+			return errgo.WithCausef(nil, NamespaceUsedOnlyOnceError, "Cannot parse app config. Namespace '%s' is used in only 1 component.", nn)
 		}
 	}
 	return nil
@@ -274,9 +274,9 @@ func (this *AppDefinition) validateNamespaces() error {
 
 // validate validates the settings of this VolumeConfig.
 // Valid combinations:
-// - Path & Size set, everything else empty
-// - VolumesFrom set, everything else empty
-// - VolumeFrom, VolumePath set, Path optionally set, everything else empty
+// - Option1: Path & Size set, everything else empty
+// - Option 2: VolumesFrom set, everything else empty
+// - Option 3: VolumeFrom, VolumePath set, Path optionally set, everything else empty
 func (this *VolumeConfig) validate() error {
 	// Option 1
 	if this.Path != "" && !this.Size.Empty() {
@@ -308,7 +308,7 @@ func (this *VolumeConfig) validate() error {
 		return nil
 	}
 	// Option 3
-	if this.VolumeFrom != "" {
+	if this.VolumeFrom != "" && this.VolumePath != "" {
 		// Path is optional
 
 		if !this.Size.Empty() {
@@ -343,7 +343,7 @@ func (this *VolumeConfig) validateRefs(service *ServiceConfig, containingCompone
 		return nil
 	}
 
-	// Check that other component name is not the containing component
+	// Check that the component name (volume-from or volumes-from) is not the containing component
 	if compName == containingComponent.ComponentName {
 		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
 	}

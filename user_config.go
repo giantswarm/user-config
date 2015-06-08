@@ -200,13 +200,13 @@ type NamespaceConfig struct {
 }
 
 // getAllMountPoints creates a list of all mount points of a component.
-func (this *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
+func (cc *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
 	visitedComponents := make(map[string]string)
-	return this.getAllMountPoints(service, visitedComponents)
+	return cc.getAllMountPoints(service, visitedComponents)
 }
 
 // FindComponent finds a component with given name if the list of components inside this service.
 // it returns nil if not found
-func (this *ServiceConfig) FindComponent(name string) *ComponentConfig {
-	return this.findComponent(name)
+func (sc *ServiceConfig) FindComponent(name string) *ComponentConfig {
+	return sc.findComponent(name)
 }
