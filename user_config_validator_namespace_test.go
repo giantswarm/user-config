@@ -246,7 +246,7 @@ var _ = Describe("user config namespace validator", func() {
 				Expect(appConfig.Services).To(HaveLen(1))
 			})
 
-			It("should parse 2 components", func() {
+			It("should parse 4 components", func() {
 				Expect(appConfig.Services[0].Components).To(HaveLen(4))
 			})
 
@@ -378,51 +378,6 @@ var _ = Describe("user config namespace validator", func() {
 		                  "image": "registry/namespace/repository:version",
 		                  "namespace": "ns4",
 		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB", "volume-path": "/alt1"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
-
-				err = json.Unmarshal(byteSlice, &appConfig)
-			})
-
-			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-path for path '/data1' should be empty.`))
-			})
-
-		})
-
-		Describe("parsing invalid volume configs in namespaces #4", func() {
-			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
-			)
-
-			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
 		                  	{"path": "/data1", "size": "27 GB"}
 		                  ]
 		                },
@@ -449,7 +404,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #5", func() {
+		Describe("parsing invalid volume configs in namespaces #4", func() {
 			var (
 				err       error
 				byteSlice []byte
