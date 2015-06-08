@@ -139,8 +139,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrCrossServiceNamespace", func() {
-				Expect(userconfig.IsErrCrossServiceNamespace(err)).To(BeTrue())
+			It("should throw error CrossServiceNamespaceError", func() {
+				Expect(userconfig.IsCrossServiceNamespace(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Namespace 'ns2' is used in multiple services.`))
 			})
 
@@ -177,8 +177,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrNamespaceUsedOnlyOnce", func() {
-				Expect(userconfig.IsErrNamespaceUsedOnlyOnce(err)).To(BeTrue())
+			It("should throw error NamespaceUsedOnlyOnceError", func() {
+				Expect(userconfig.IsNamespaceUsedOnlyOnce(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Namespace 'ns3' is used in only 1 component.`))
 			})
 
@@ -307,8 +307,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volumes-from for path '/data1' should be empty.`))
 			})
 
@@ -352,8 +352,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
 			})
 
@@ -397,8 +397,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-path for path '/data1' should be empty.`))
 			})
 
@@ -442,8 +442,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'api' should be empty.`))
 			})
 
@@ -487,8 +487,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'api' should be empty.`))
 			})
 
@@ -532,8 +532,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'api' should be empty.`))
 			})
 
@@ -577,8 +577,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'api' should be empty.`))
 			})
 
@@ -622,8 +622,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
 			})
 
@@ -667,8 +667,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
 			})
 
@@ -712,8 +712,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on component 'api'.`))
 			})
 
@@ -758,8 +758,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrDuplicateVolumePath", func() {
-				Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
@@ -804,8 +804,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrDuplicateVolumePath", func() {
-				Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
@@ -858,8 +858,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrDuplicateVolumePath", func() {
-				Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
 			})
 
@@ -911,8 +911,8 @@ var _ = Describe("user config namespace validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error IsErrInvalidVolumeConfig", func() {
-				Expect(userconfig.IsErrInvalidVolumeConfig(err)).To(BeTrue())
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
 			})
 

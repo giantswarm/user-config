@@ -50,7 +50,7 @@ func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 	var app AppDefinition
 	if err := json.Unmarshal(byteSlice, &app); err != nil {
-		if IsSyntaxError(err) {
+		if IsSyntax(err) {
 			if strings.Contains(err.Error(), "$") {
 				return AppDefinition{}, errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly.")
 			}
@@ -163,7 +163,7 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return errgo.WithCausef(err, ErrInvalidEnvListFormat, "")
+	return errgo.WithCausef(err, InvalidEnvListFormatError, "")
 }
 
 type InstanceConfig struct {

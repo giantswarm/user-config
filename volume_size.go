@@ -46,7 +46,7 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 		}
 		// Re-test
 		if matches == nil || len(matches) < 1 || len(matches) > 3 {
-			return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
+			return errgo.WithCausef(nil, InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
 		}
 	}
 	unit := "GB"
@@ -58,7 +58,7 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	}
 	// Check size being a proper number
 	if _, err := strconv.ParseUint(matches[1], 10, 32); err != nil {
-		return errgo.WithCausef(nil, ErrInvalidSize, "Cannot parse app config. Invalid size '%s' detected.", sz)
+		return errgo.WithCausef(nil, InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
 	}
 	*this = VolumeSize(matches[1] + " " + unit)
 	return nil

@@ -6,54 +6,54 @@ import (
 )
 
 var (
-	ErrUnknownJSONField      = errgo.New("Unknown JSON field.")
-	ErrInvalidSize           = errgo.New("Invalid size.")
-	ErrDuplicateVolumePath   = errgo.New("Duplicate volume path.")
-	ErrInvalidEnvListFormat  = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
-	ErrCrossServiceNamespace = errgo.New("Namespace is used in different services.")
-	ErrNamespaceUsedOnlyOnce = errgo.New("Namespace is used in only 1 component.")
-	ErrInvalidVolumeConfig   = errgo.New("Invalid volume configuration.")
+	UnknownJSONFieldError      = errgo.New("Unknown JSON field.")
+	InvalidSizeError           = errgo.New("Invalid size.")
+	DuplicateVolumePathError   = errgo.New("Duplicate volume path.")
+	InvalidEnvListFormatError  = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	CrossServiceNamespaceError = errgo.New("Namespace is used in different services.")
+	NamespaceUsedOnlyOnceError = errgo.New("Namespace is used in only 1 component.")
+	InvalidVolumeConfigError   = errgo.New("Invalid volume configuration.")
 
-	Mask = errgo.MaskFunc(IsErrInvalidEnvListFormat,
-		IsErrUnknownJsonField,
-		IsErrInvalidSize,
-		IsErrDuplicateVolumePath,
-		IsErrCrossServiceNamespace,
-		IsErrNamespaceUsedOnlyOnce,
-		IsErrInvalidVolumeConfig,
+	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
+		IsUnknownJsonField,
+		IsInvalidSize,
+		IsDuplicateVolumePath,
+		IsCrossServiceNamespace,
+		IsNamespaceUsedOnlyOnce,
+		IsInvalidVolumeConfig,
 	)
 )
 
-func IsErrUnknownJsonField(err error) bool {
-	return errgo.Cause(err) == ErrUnknownJSONField
+func IsUnknownJsonField(err error) bool {
+	return errgo.Cause(err) == UnknownJSONFieldError
 }
 
-func IsErrInvalidSize(err error) bool {
-	return errgo.Cause(err) == ErrInvalidSize
+func IsInvalidSize(err error) bool {
+	return errgo.Cause(err) == InvalidSizeError
 }
 
-func IsErrDuplicateVolumePath(err error) bool {
-	return errgo.Cause(err) == ErrDuplicateVolumePath
+func IsDuplicateVolumePath(err error) bool {
+	return errgo.Cause(err) == DuplicateVolumePathError
 }
 
-func IsErrInvalidEnvListFormat(err error) bool {
-	return errgo.Cause(err) == ErrInvalidEnvListFormat
+func IsInvalidEnvListFormat(err error) bool {
+	return errgo.Cause(err) == InvalidEnvListFormatError
 }
 
-func IsErrCrossServiceNamespace(err error) bool {
-	return errgo.Cause(err) == ErrCrossServiceNamespace
+func IsCrossServiceNamespace(err error) bool {
+	return errgo.Cause(err) == CrossServiceNamespaceError
 }
 
-func IsErrNamespaceUsedOnlyOnce(err error) bool {
-	return errgo.Cause(err) == ErrNamespaceUsedOnlyOnce
+func IsNamespaceUsedOnlyOnce(err error) bool {
+	return errgo.Cause(err) == NamespaceUsedOnlyOnceError
 }
 
-func IsErrInvalidVolumeConfig(err error) bool {
-	return errgo.Cause(err) == ErrInvalidVolumeConfig
+func IsInvalidVolumeConfig(err error) bool {
+	return errgo.Cause(err) == InvalidVolumeConfigError
 }
 
-// IsSyntaxError returns true if the cause of the given error in a json.SyntaxError
-func IsSyntaxError(err error) bool {
+// IsSyntax returns true if the cause of the given error in a json.SyntaxError
+func IsSyntax(err error) bool {
 	_, ok := errgo.Cause(err).(*json.SyntaxError)
 	return ok
 }
