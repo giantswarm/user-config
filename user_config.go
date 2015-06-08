@@ -81,6 +81,12 @@ type ServiceConfig struct {
 	Components []ComponentConfig `json:"components" description:"List of components that are part of this service"`
 }
 
+// FindComponent finds a component with given name if the list of components inside this service.
+// it returns nil if not found
+func (sc *ServiceConfig) FindComponent(name string) *ComponentConfig {
+	return sc.findComponent(name)
+}
+
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
@@ -122,6 +128,12 @@ type ComponentConfig struct {
 	InstanceConfig
 
 	NamespaceConfig
+}
+
+// GetAllMountPoints creates a list of all mount points of a component.
+func (cc *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
+	visitedComponents := make(map[string]string)
+	return cc.getAllMountPoints(service, visitedComponents)
 }
 
 // List of environment settings like "KEY=VALUE", "KEY2=VALUE2"
@@ -197,16 +209,4 @@ type NamespaceConfig struct {
 	// Name of the namespace a component will join.
 	// An empty name means that the component will not join any namespace and create its own.
 	NamespaceName string `json:"namespace,omitempty" description:"Name of the namespace to join"`
-}
-
-// getAllMountPoints creates a list of all mount points of a component.
-func (cc *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
-	visitedComponents := make(map[string]string)
-	return cc.getAllMountPoints(service, visitedComponents)
-}
-
-// FindComponent finds a component with given name if the list of components inside this service.
-// it returns nil if not found
-func (sc *ServiceConfig) FindComponent(name string) *ComponentConfig {
-	return sc.findComponent(name)
 }
