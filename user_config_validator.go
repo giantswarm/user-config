@@ -323,13 +323,8 @@ func (this *VolumeConfig) validate() error {
 		return nil
 	}
 
-	// Ok, everything should be empty now
-	if this.Path != "" || !this.Size.Empty() || this.VolumePath != "" {
-		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path should be set. %#v", this)
-	}
-
-	// All empty, ok
-	return nil
+	// No valid option detected.
+	return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path must be set. %#v", this)
 }
 
 // validateRefs checks the existance of reference names in the given volume config.
