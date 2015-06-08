@@ -73,7 +73,7 @@ var _ = Describe("user config namespace validator", func() {
 				Expect(err).To(BeNil())
 			})
 
-			It("should parse one service", func() {
+			It("should parse two services", func() {
 				Expect(appConfig.Services).To(HaveLen(2))
 			})
 
