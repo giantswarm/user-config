@@ -1,13 +1,12 @@
-package userconfig_test
+package userconfig
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/giantswarm/generic-types-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/giantswarm/user-config"
 )
 
 func TestUserConfigNamespaceValidator(t *testing.T) {
@@ -17,12 +16,47 @@ func TestUserConfigNamespaceValidator(t *testing.T) {
 
 var _ = Describe("user config namespace validator", func() {
 
+	testComponent := func(name, pod string) ComponentConfig {
+		return ComponentConfig{
+			ComponentName: name,
+			InstanceConfig: InstanceConfig{
+				Image: generictypes.MustParseDockerImage("registry/namespace/repository:version"),
+			},
+			PodConfig: PodConfig{
+				PodName: pod,
+			},
+		}
+	}
+
+	addVols := func(config ComponentConfig, vol ...VolumeConfig) ComponentConfig {
+		if config.InstanceConfig.Volumes == nil {
+			config.InstanceConfig.Volumes = vol
+		} else {
+			config.InstanceConfig.Volumes = append(config.InstanceConfig.Volumes, vol...)
+		}
+		return config
+	}
+
+	testService := func(name string, components ...ComponentConfig) ServiceConfig {
+		return ServiceConfig{
+			ServiceName: name,
+			Components:  components,
+		}
+	}
+
+	testApp := func(services ...ServiceConfig) AppDefinition {
+		return AppDefinition{
+			AppName:  "test-app",
+			Services: services,
+		}
+	}
+
 	Describe("json.Unmarshal()", func() {
 		Describe("parsing valid namespaces", func() {
 			var (
 				err       error
 				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				appConfig AppDefinition
 			)
 
 			BeforeEach(func() {
@@ -35,12 +69,12 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "api",
 		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "a"
+		                  "pod": "a"
 		                },
 		                {
 		                  "component_name": "redis",
 		                  "image": "dockerfile/redis",
-		                  "namespace": "a"
+		                  "pod": "a"
 		                },
 		                {
 		                  "component_name": "redis2",
@@ -54,12 +88,12 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "api",
 		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "b"
+		                  "pod": "b"
 		                },
 		                {
 		                  "component_name": "redis",
 		                  "image": "dockerfile/redis",
-		                  "namespace": "b"
+		                  "pod": "b"
 		                }
 		              ]
 		            }
@@ -83,103 +117,61 @@ var _ = Describe("user config namespace validator", func() {
 			})
 
 			It("should parse namespace 'a' for 2 component, empty for third, 'b' for components in second service", func() {
-				Expect(appConfig.Services[0].Components[0].NamespaceName).To(Equal("a"))
-				Expect(appConfig.Services[0].Components[1].NamespaceName).To(Equal("a"))
-				Expect(appConfig.Services[0].Components[2].NamespaceName).To(Equal(""))
-				Expect(appConfig.Services[1].Components[0].NamespaceName).To(Equal("b"))
-				Expect(appConfig.Services[1].Components[1].NamespaceName).To(Equal("b"))
+				Expect(appConfig.Services[0].Components[0].PodName).To(Equal("a"))
+				Expect(appConfig.Services[0].Components[1].PodName).To(Equal("a"))
+				Expect(appConfig.Services[0].Components[2].PodName).To(Equal(""))
+				Expect(appConfig.Services[1].Components[0].PodName).To(Equal("b"))
+				Expect(appConfig.Services[1].Components[1].PodName).To(Equal("b"))
 			})
 
 		})
 
 		Describe("parsing (invalid) cross service namespaces", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns2"
-		                },
-		                {
-		                  "component_name": "redis",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns2"
-		                }
-		              ]
-		            },
-		            {
-		              "service_name": "session2",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns2"
-		                },
-		                {
-		                  "component_name": "redis",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns2"
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						testComponent("api", "ns2"),
+						testComponent("redis", "ns2"),
+					),
+					testService("session2",
+						testComponent("api", "ns2"),
+						testComponent("redis", "ns2"),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
-			It("should throw error CrossServiceNamespaceError", func() {
-				Expect(userconfig.IsCrossServiceNamespace(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Namespace 'ns2' is used in multiple services.`))
+			It("should throw error CrossServicePodError", func() {
+				Expect(IsCrossServicePod(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Pod 'ns2' is used in multiple services.`))
 			})
 
 		})
 
 		Describe("parsing (invalid) namespaces that are used only once", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns3"
-		                },
-		                {
-		                  "component_name": "redis",
-		                  "image": "dockerfile/redis"
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						testComponent("api", "ns3"),
+						testComponent("redis", ""),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
-			It("should throw error NamespaceUsedOnlyOnceError", func() {
-				Expect(userconfig.IsNamespaceUsedOnlyOnce(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Namespace 'ns3' is used in only 1 component.`))
+			It("should throw error PodUsedOnlyOnceError", func() {
+				Expect(IsPodUsedOnlyOnce(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Pod 'ns3' is used in only 1 component.`))
 			})
 
 		})
@@ -188,7 +180,7 @@ var _ = Describe("user config namespace validator", func() {
 			var (
 				err       error
 				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				appConfig AppDefinition
 			)
 
 			BeforeEach(func() {
@@ -201,7 +193,7 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "api",
 		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
+		                  "pod": "ns4",
 		                  "volumes": [
 		                  	{"path": "/data1", "size": "27 GB"}
 		                  ]
@@ -209,7 +201,7 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "alt1",
 		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
+		                  "pod": "ns4",
 		                  "volumes": [
 		                  	{"volumes-from": "api"}
 		                  ]
@@ -217,7 +209,7 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "alt2",
 		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
+		                  "pod": "ns4",
 		                  "volumes": [
 		                  	{"volume-from": "api", "volume-path": "/data1"}
 		                  ]
@@ -225,7 +217,7 @@ var _ = Describe("user config namespace validator", func() {
 		                {
 		                  "component_name": "alt3",
 		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
+		                  "pod": "ns4",
 		                  "volumes": [
 		                  	{"volume-from": "api", "volume-path": "/data1", "path": "/alt4"}
 		                  ]
@@ -257,7 +249,7 @@ var _ = Describe("user config namespace validator", func() {
 				Expect(appConfig.Services[0].Components[3].Volumes).To(HaveLen(1))
 
 				Expect(appConfig.Services[0].Components[0].Volumes[0].Path).To(Equal("/data1"))
-				Expect(appConfig.Services[0].Components[0].Volumes[0].Size).To(Equal(userconfig.VolumeSize("27 GB")))
+				Expect(appConfig.Services[0].Components[0].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
 				Expect(appConfig.Services[0].Components[1].Volumes[0].VolumesFrom).To(Equal("api"))
 				Expect(appConfig.Services[0].Components[2].Volumes[0].VolumeFrom).To(Equal("api"))
 				Expect(appConfig.Services[0].Components[2].Volumes[0].VolumePath).To(Equal("/data1"))
@@ -271,44 +263,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #1", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB", "volumes-from": "alt1"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumesFrom: "alt1"}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volumes-from for path '/data1' should be empty.`))
 			})
 
@@ -316,44 +286,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #2", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB", "volume-from": "alt1"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "alt1"}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
 			})
 
@@ -361,44 +309,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #3", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api", "path": "/alt1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", Path: "/alt1"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'api' should be empty.`))
 			})
 
@@ -406,44 +332,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #4", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api", "size": "5 GB"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", Size: VolumeSize("5 GB")}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'api' should be empty.`))
 			})
 
@@ -451,44 +355,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #5", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api", "volume-from": "api"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", VolumeFrom: "api"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'api' should be empty.`))
 			})
 
@@ -496,44 +378,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #6", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volume-from": "api", "volume-path": "/data1", "size": "5GB"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "api", VolumePath: "/data1", Size: VolumeSize("5GB")}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'api' should be empty.`))
 			})
 
@@ -541,44 +401,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #7", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "alt1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
 			})
 
@@ -586,44 +424,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #8", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volume-from": "alt1", "volume-path": "/data1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "alt1", VolumePath: "/data1"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
 			})
 
@@ -631,44 +447,22 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #9", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/data1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volume-from": "api", "volume-path": "/unknown"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "api", VolumePath: "/unknown"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on component 'api'.`))
 			})
 
@@ -676,45 +470,25 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #10", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/xdata1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"},
-		                  	{"path": "/xdata1", "size": "5GB"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"),
+							VolumeConfig{VolumesFrom: "api"},
+							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
+						),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
-				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
@@ -722,45 +496,25 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #11", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/xdata1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/xdata1", "size": "27 GB"},
-		                  	{"volume-from": "api", "volume-path": "/xdata1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"),
+							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
+							VolumeConfig{VolumeFrom: "api", VolumePath: "/xdata1"},
+						),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
-				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
@@ -768,53 +522,26 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #12", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"path": "/xdata1", "size": "27 GB"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt2",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"},
-		                  	{"volumes-from": "alt1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+						addVols(testComponent("alt2", "ns4"),
+							VolumeConfig{VolumesFrom: "api"},
+							VolumeConfig{VolumesFrom: "alt1"},
+						),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
-				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
 			})
 
@@ -822,52 +549,23 @@ var _ = Describe("user config namespace validator", func() {
 
 		Describe("parsing invalid volume configs in namespaces #13", func() {
 			var (
-				err       error
-				byteSlice []byte
-				appConfig userconfig.AppDefinition
+				err error
 			)
 
 			BeforeEach(func() {
-				byteSlice = []byte(`{
-		          "app_name": "test-app-name",
-		          "services": [
-		            {
-		              "service_name": "session1",
-		              "components": [
-		                {
-		                  "component_name": "api",
-		                  "image": "registry/namespace/repository:version",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "alt2"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt1",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "api"}
-		                  ]
-		                },
-		                {
-		                  "component_name": "alt2",
-		                  "image": "dockerfile/redis",
-		                  "namespace": "ns4",
-		                  "volumes": [
-		                  	{"volumes-from": "alt1"}
-		                  ]
-		                }
-		              ]
-		            }
-		          ]
-		        }`)
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{VolumesFrom: "alt2"}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+						addVols(testComponent("alt2", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
+					),
+				)
 
-				err = json.Unmarshal(byteSlice, &appConfig)
+				err = appConfig.validate()
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(userconfig.IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
 			})
 

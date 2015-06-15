@@ -6,20 +6,20 @@ import (
 )
 
 var (
-	UnknownJSONFieldError      = errgo.New("Unknown JSON field.")
-	InvalidSizeError           = errgo.New("Invalid size.")
-	DuplicateVolumePathError   = errgo.New("Duplicate volume path.")
-	InvalidEnvListFormatError  = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
-	CrossServiceNamespaceError = errgo.New("Namespace is used in different services.")
-	NamespaceUsedOnlyOnceError = errgo.New("Namespace is used in only 1 component.")
-	InvalidVolumeConfigError   = errgo.New("Invalid volume configuration.")
+	UnknownJSONFieldError     = errgo.New("Unknown JSON field.")
+	InvalidSizeError          = errgo.New("Invalid size.")
+	DuplicateVolumePathError  = errgo.New("Duplicate volume path.")
+	InvalidEnvListFormatError = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	CrossServicePodError      = errgo.New("Pod is used in different services.")
+	PodUsedOnlyOnceError      = errgo.New("Pod is used in only 1 component.")
+	InvalidVolumeConfigError  = errgo.New("Invalid volume configuration.")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
 		IsInvalidSize,
 		IsDuplicateVolumePath,
-		IsCrossServiceNamespace,
-		IsNamespaceUsedOnlyOnce,
+		IsCrossServicePod,
+		IsPodUsedOnlyOnce,
 		IsInvalidVolumeConfig,
 	)
 )
@@ -40,12 +40,12 @@ func IsInvalidEnvListFormat(err error) bool {
 	return errgo.Cause(err) == InvalidEnvListFormatError
 }
 
-func IsCrossServiceNamespace(err error) bool {
-	return errgo.Cause(err) == CrossServiceNamespaceError
+func IsCrossServicePod(err error) bool {
+	return errgo.Cause(err) == CrossServicePodError
 }
 
-func IsNamespaceUsedOnlyOnce(err error) bool {
-	return errgo.Cause(err) == NamespaceUsedOnlyOnceError
+func IsPodUsedOnlyOnce(err error) bool {
+	return errgo.Cause(err) == PodUsedOnlyOnceError
 }
 
 func IsInvalidVolumeConfig(err error) bool {

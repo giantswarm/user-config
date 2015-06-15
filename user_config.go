@@ -127,7 +127,7 @@ type ComponentConfig struct {
 
 	InstanceConfig
 
-	NamespaceConfig
+	PodConfig
 }
 
 // GetAllMountPoints creates a list of all mount points of a component.
@@ -205,8 +205,8 @@ type InstanceConfig struct {
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
 }
 
-type NamespaceConfig struct {
-	// Name of the namespace a component will join.
-	// An empty name means that the component will not join any namespace and create its own.
-	NamespaceName string `json:"namespace,omitempty" description:"Name of the namespace to join"`
+type PodConfig struct {
+	// Name of the pod a component will join.
+	// An empty name means that the component will not join any shared pod and create its own.
+	PodName string `json:"pod,omitempty" description:"Name of the pod to join"`
 }

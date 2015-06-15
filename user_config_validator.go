@@ -232,7 +232,7 @@ func (this *ComponentConfig) validate() error {
 	return nil
 }
 
-type namespaceInfoCounter struct {
+type podInfoCounter struct {
 	ServiceName string
 	Count       int
 }
@@ -241,20 +241,20 @@ type namespaceInfoCounter struct {
 // - namespaces do not cross service boundaries.
 // - namespaces must be used in more than 1 component.
 func (this *AppDefinition) validateNamespaces() error {
-	ns2info := make(map[string]*namespaceInfoCounter)
+	pod2info := make(map[string]*podInfoCounter)
 	for _, s := range this.Services {
 		for _, c := range s.Components {
-			nn := c.NamespaceName
-			if nn != "" {
-				info, ok := ns2info[nn]
+			pn := c.PodName
+			if pn != "" {
+				info, ok := pod2info[pn]
 				if !ok {
-					// First occurrence of the namespace
-					ns2info[nn] = &namespaceInfoCounter{s.ServiceName, 1}
+					// First occurrence of the pod
+					pod2info[pn] = &podInfoCounter{s.ServiceName, 1}
 				} else {
-					// Found earlier use of namespace name
+					// Found earlier use of pod name
 					if info.ServiceName != s.ServiceName {
-						// Namespace is used in different services
-						return errgo.WithCausef(nil, CrossServiceNamespaceError, "Cannot parse app config. Namespace '%s' is used in multiple services.", nn)
+						// Pod is used in different services
+						return errgo.WithCausef(nil, CrossServicePodError, "Cannot parse app config. Pod '%s' is used in multiple services.", pn)
 					}
 					// Increase counter
 					info.Count++
@@ -263,10 +263,10 @@ func (this *AppDefinition) validateNamespaces() error {
 		}
 	}
 	// Test counters
-	for nn, info := range ns2info {
+	for pn, info := range pod2info {
 		if info.Count == 1 {
 			// Namespace is used only once
-			return errgo.WithCausef(nil, NamespaceUsedOnlyOnceError, "Cannot parse app config. Namespace '%s' is used in only 1 component.", nn)
+			return errgo.WithCausef(nil, PodUsedOnlyOnceError, "Cannot parse app config. Pod '%s' is used in only 1 component.", pn)
 		}
 	}
 	return nil
@@ -342,18 +342,18 @@ func (this *VolumeConfig) validateRefs(service *ServiceConfig, containingCompone
 	if compName == containingComponent.ComponentName {
 		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
 	}
-	// Another component is referenced, we should be in a namespace
-	ns := containingComponent.NamespaceName
-	if ns == "" {
-		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a namespace declaration.", compName)
+	// Another component is referenced, we should be in a pod
+	pn := containingComponent.PodName
+	if pn == "" {
+		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a pod declaration.", compName)
 	}
 	// Find the other component name
 	other := service.findComponent(compName)
 	if other != nil {
 		// Found other component
-		// Check matching namespace
-		if ns != other.NamespaceName {
-			return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a matching namespace declaration.", compName)
+		// Check matching pod
+		if pn != other.PodName {
+			return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a matching pod declaration.", compName)
 		}
 		// Check matching "volume-path"
 		if this.VolumePath != "" {
