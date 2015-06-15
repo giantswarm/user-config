@@ -158,9 +158,10 @@ func normalizeVolumeSizes(config map[string]interface{}) {
 	}
 }
 
-// getArrayEntry tries to get an entry in the given map that is an array of objects.
-func getArrayEntry(config map[string]interface{}, key string) []interface{} {
-	entry, ok := config[key]
+// getArrayEntry tries to get an entry in the given map that is an array of
+// objects.
+func getArrayEntry(def map[string]interface{}, key string) []interface{} {
+	entry, ok := def[key]
 	if !ok {
 		// No key element found
 		return nil
