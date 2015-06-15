@@ -209,7 +209,13 @@ func (sc *ServiceConfig) validate() error {
 		}
 	}
 
+	// Check dependencies in pods
 	if err := sc.validateUniqueDependenciesInPods(); err != nil {
+		return Mask(err)
+	}
+
+	// Check scaling policies in pods
+	if err := sc.validateScalingPolicyInPods(); err != nil {
 		return Mask(err)
 	}
 
@@ -482,6 +488,53 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 				} else if dep1.Port.Equals(dep2.Port) {
 					// Same port, name must match (which is does not)
 					return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different) dependency with port '%s' in pod '%s'.", dep1.Port.String(), pn)
+				}
+			}
+		}
+	}
+
+	// No errors detected
+	return nil
+}
+
+// validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set of the same
+func (sc *ServiceConfig) validateScalingPolicyInPods() error {
+	// Collect all scaling policies per pod
+	pod2policies := make(map[string][]ScalingPolicyConfig)
+	for _, c := range sc.Components {
+		pn := c.PodConfig.PodName
+		if pn == "" {
+			// Not part of a shared pod
+			continue
+		}
+		if c.ScalingPolicy == nil {
+			// No scaling policy set
+			continue
+		}
+		list, ok := pod2policies[pn]
+		if !ok {
+			list = []ScalingPolicyConfig{}
+		}
+		list = append(list, *c.ScalingPolicy)
+		pod2policies[pn] = list
+	}
+
+	// Check each list for errors
+	for pn, list := range pod2policies {
+		for i, p1 := range list {
+			for j := i + 1; j < len(list); j++ {
+				p2 := list[j]
+				if p1.Min != 0 && p2.Min != 0 {
+					// Both minimums specified, must be the same
+					if p1.Min != p2.Min {
+						return errgo.WithCausef(nil, InvalidScalingConfigError, "Cannot parse app config. Different minimum scaling policies in pod '%s'.", pn)
+					}
+				}
+				if p1.Max != 0 && p2.Max != 0 {
+					// Both maximums specified, must be the same
+					if p1.Max != p2.Max {
+						return errgo.WithCausef(nil, InvalidScalingConfigError, "Cannot parse app config. Different maximum scaling policies in pod '%s'.", pn)
+					}
 				}
 			}
 		}

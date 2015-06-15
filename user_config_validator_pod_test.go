@@ -46,6 +46,14 @@ var _ = Describe("user config pod validator", func() {
 		return config
 	}
 
+	addScale := func(config ComponentConfig, min, max int) ComponentConfig {
+		config.ScalingPolicy = &ScalingPolicyConfig{
+			Min: min,
+			Max: max,
+		}
+		return config
+	}
+
 	testService := func(name string, components ...ComponentConfig) ServiceConfig {
 		return ServiceConfig{
 			ServiceName: name,
@@ -550,7 +558,27 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid dependency configs in pods, same name different sources", func() {
+		Describe("parsing dependency configs in pods, same name should result in same port", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same port different sources", func() {
 			var err error
 
 			BeforeEach(func() {
@@ -569,6 +597,69 @@ var _ = Describe("user config pod validator", func() {
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different) dependency with port '6379/tcp' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 1, 5),
+						addScale(testComponent("alt2", "ns4"), 0, 5),
+						addScale(testComponent("alt3", "ns4"), 1, 0),
+						testComponent("alt4", "ns4"),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+
+		})
+
+		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 1, 5),
+						addScale(testComponent("alt2", "ns4"), 2, 5),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidScalingConfigError", func() {
+				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod 'ns4'.`))
+			})
+
+		})
+
+		Describe("parsing invalid scaling configs in pods, maximum scaling values should be the same in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 2, 5),
+						addScale(testComponent("alt2", "ns4"), 2, 7),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidScalingConfigError", func() {
+				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod 'ns4'.`))
 			})
 
 		})

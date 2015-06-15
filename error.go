@@ -14,6 +14,7 @@ var (
 	PodUsedOnlyOnceError         = errgo.New("Pod is used in only 1 component.")
 	InvalidVolumeConfigError     = errgo.New("Invalid volume configuration.")
 	InvalidDependencyConfigError = errgo.New("Invalid dependency configuration.")
+	InvalidScalingConfigError    = errgo.New("Invalid scaling configuration.")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -23,6 +24,7 @@ var (
 		IsPodUsedOnlyOnce,
 		IsInvalidVolumeConfig,
 		IsInvalidDependencyConfig,
+		IsInvalidScalingConfig,
 	)
 )
 
@@ -56,6 +58,10 @@ func IsInvalidVolumeConfig(err error) bool {
 
 func IsInvalidDependencyConfig(err error) bool {
 	return errgo.Cause(err) == InvalidDependencyConfigError
+}
+
+func IsInvalidScalingConfig(err error) bool {
+	return errgo.Cause(err) == InvalidScalingConfigError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError
