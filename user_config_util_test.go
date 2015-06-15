@@ -1,6 +1,7 @@
 package userconfig_test
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -12,6 +13,7 @@ import (
 func TestUserConfigUtil(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "user config util")
+	fmt.Println()
 }
 
 var _ = Describe("user config util", func() {

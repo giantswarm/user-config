@@ -44,8 +44,14 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// V2Service is a runnable service inside a container.
-type V2Service struct {
+type ExposeDefinition struct {
+	Port     generictypes.DockerPort `json:"port" description:"Port of the stable API."`
+	Node     string                  `json:"node" description:"Node name of the node that exposes a given port."`
+	NodePort generictypes.DockerPort `json:"node_port" description:"Port of the given node."`
+}
+
+// Node is either a runnable service inside a container or a node definition.
+type NodeDefinition struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
 	Image generictypes.DockerImage `json:"image" description:"Name of a docker image to use when running a container. The image includes tags."`
@@ -70,17 +76,6 @@ type V2Service struct {
 
 	// Service names required by a service.
 	Links []DependencyConfig `json:"links,omitempty" description:"List of dependencies of this service."`
-}
-
-type ExposeDefinition struct {
-	Port     generictypes.DockerPort `json:"port" description:"Port of the stable API."`
-	Node     string                  `json:"node" description:"Node name of the node that exposes a given port."`
-	NodePort generictypes.DockerPort `json:"node_port" description:"Port of the given node."`
-}
-
-// Node is either a runnable service inside a container or a node definition.
-type NodeDefinition struct {
-	V2Service
 
 	Expose []ExposeDefinition   `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
 	Scale  *ScalingPolicyConfig `json:"scale,omitempty" description:"Scaling settings of the node"`

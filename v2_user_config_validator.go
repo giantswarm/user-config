@@ -47,11 +47,29 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	return nil
 }
 
+// getMapEntry tries to get an entry in the given map that is a string map of
+// objects.
+func getMapEntry(def map[string]interface{}, key string) map[string]interface{} {
+	entry, ok := def[key]
+	if !ok {
+		// No key element found
+		return nil
+	}
+
+	entryMap, ok := entry.(map[string]interface{})
+	if !ok {
+		// entry not right type
+		return nil
+	}
+
+	return entryMap
+}
+
 // v2NormalizeEnv normalizes all struct "env" elements under service/component
 // to its natural array format.  This normalization function is expected to
 // normalize "valid" data and passthrough everything else.
 func v2NormalizeEnv(def map[string]interface{}) {
-	nodes := getArrayEntry(def, "nodes")
+	nodes := getMapEntry(def, "nodes")
 	if nodes == nil {
 		// No services element
 		return
@@ -63,15 +81,10 @@ func v2NormalizeEnv(def map[string]interface{}) {
 			continue
 		}
 
-		env, ok := nodeMap["env"]
-		if !ok {
-			continue
-		}
-
-		envMap, ok := env.(map[string]interface{})
-		if !ok {
-			// Not of the map type
-			continue
+		envMap := getMapEntry(nodeMap, "env")
+		if envMap == nil {
+			// No services element
+			return
 		}
 
 		// 'env' is of map type, normalize it to an array
@@ -95,7 +108,7 @@ func v2NormalizeEnv(def map[string]interface{}) {
 // of "number GB" This normalization function is expected to normalize "valid"
 // data and passthrough everything else.
 func v2NormalizeVolumeSizes(def map[string]interface{}) {
-	nodes := getArrayEntry(def, "nodes")
+	nodes := getMapEntry(def, "nodes")
 	if nodes == nil {
 		// No services element
 		return
