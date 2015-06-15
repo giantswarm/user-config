@@ -453,7 +453,7 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 	return mountPoints, nil
 }
 
-// validateUniqueDependenciesInPods checks that there are no dependencies with same name and different port or same port and different name
+// validateUniqueDependenciesInPods checks that there are no dependencies with same alias and different port/name
 func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 	// Collect all dependencies per pod
 	pod2deps := make(map[string][]DependencyConfig)
@@ -478,16 +478,18 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 	// Check each list for duplicates
 	for pn, list := range pod2deps {
 		for i, dep1 := range list {
+			alias1 := dep1.getAlias()
 			for j := i + 1; j < len(list); j++ {
 				dep2 := list[j]
-				if dep1.Name == dep2.Name {
-					// Same name, Port must match
+				alias2 := dep2.getAlias()
+				if alias1 == alias2 {
+					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {
-						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different) dependency '%s' in pod '%s'.", dep1.Name, pn)
+						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod '%s'.", alias1, pn)
 					}
-				} else if dep1.Port.Equals(dep2.Port) {
-					// Same port, name must match (which is does not)
-					return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different) dependency with port '%s' in pod '%s'.", dep1.Port.String(), pn)
+					if dep1.Name != dep2.Name {
+						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod '%s'.", alias1, pn)
+					}
 				}
 			}
 		}
@@ -553,4 +555,13 @@ func (sc *ServiceConfig) findComponent(name string) *ComponentConfig {
 		}
 	}
 	return nil
+}
+
+// getAlias returns the alias of a dependency or its name if there is no alias
+func (dc *DependencyConfig) getAlias() string {
+	alias := dc.Alias
+	if alias == "" {
+		alias = dc.Name
+	}
+	return alias
 }

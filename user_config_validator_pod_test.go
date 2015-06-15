@@ -578,14 +578,14 @@ var _ = Describe("user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing invalid dependency configs in pods, same port different sources", func() {
+		Describe("parsing invalid dependency configs in pods, same name different ports", func() {
 			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
 					testService("session1",
 						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")}),
 						testComponent("redis1", ""),
 						testComponent("redis2", ""),
 					),
@@ -596,7 +596,51 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different) dependency with port '6379/tcp' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same alias different names", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same alias different ports", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod 'ns4'.`))
 			})
 		})
 
