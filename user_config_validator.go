@@ -183,7 +183,7 @@ func (this *AppDefinition) validate() error {
 			return err
 		}
 	}
-	if err := this.validateNamespaces(); err != nil {
+	if err := this.validatePods(); err != nil {
 		return Mask(err)
 	}
 
@@ -237,10 +237,10 @@ type podInfoCounter struct {
 	Count       int
 }
 
-// validateNamespaces checks that
-// - namespaces do not cross service boundaries.
-// - namespaces must be used in more than 1 component.
-func (this *AppDefinition) validateNamespaces() error {
+// validatePods checks that
+// - pods do not cross service boundaries.
+// - pods must be used in more than 1 component.
+func (this *AppDefinition) validatePods() error {
 	pod2info := make(map[string]*podInfoCounter)
 	for _, s := range this.Services {
 		for _, c := range s.Components {
@@ -265,7 +265,7 @@ func (this *AppDefinition) validateNamespaces() error {
 	// Test counters
 	for pn, info := range pod2info {
 		if info.Count == 1 {
-			// Namespace is used only once
+			// Pod is used only once
 			return errgo.WithCausef(nil, PodUsedOnlyOnceError, "Cannot parse app config. Pod '%s' is used in only 1 component.", pn)
 		}
 	}

@@ -95,10 +95,10 @@ type VolumeConfig struct {
 	Size VolumeSize `json:"size,omitempty" description:"Size of the volume. e.g. '5 GB'"`
 
 	// Name of another component to map all volumes from
-	VolumesFrom string `json:"volumes-from,omitempty" description:"Name of another component (in same namespace) to share volumes with"`
+	VolumesFrom string `json:"volumes-from,omitempty" description:"Name of another component (in same pod) to share volumes with"`
 
 	// Name of another component to map a specific volumes from
-	VolumeFrom string `json:"volume-from,omitempty" description:"Name of another component (in same namespace) to share a specific volume with"`
+	VolumeFrom string `json:"volume-from,omitempty" description:"Name of another component (in same pod) to share a specific volume with"`
 
 	// Path inside the other component to share
 	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`

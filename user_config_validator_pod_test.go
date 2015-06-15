@@ -9,12 +9,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestUserConfigNamespaceValidator(t *testing.T) {
+func TestUserConfigPodValidator(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "user config namespace validator")
+	RunSpecs(t, "user config pod validator")
 }
 
-var _ = Describe("user config namespace validator", func() {
+var _ = Describe("user config pod validator", func() {
 
 	testComponent := func(name, pod string) ComponentConfig {
 		return ComponentConfig{
@@ -52,7 +52,7 @@ var _ = Describe("user config namespace validator", func() {
 	}
 
 	Describe("json.Unmarshal()", func() {
-		Describe("parsing valid namespaces", func() {
+		Describe("parsing valid pods", func() {
 			var (
 				err       error
 				byteSlice []byte
@@ -116,7 +116,7 @@ var _ = Describe("user config namespace validator", func() {
 				Expect(appConfig.Services[1].Components).To(HaveLen(2))
 			})
 
-			It("should parse namespace 'a' for 2 component, empty for third, 'b' for components in second service", func() {
+			It("should parse pod 'a' for 2 component, empty for third, 'b' for components in second service", func() {
 				Expect(appConfig.Services[0].Components[0].PodName).To(Equal("a"))
 				Expect(appConfig.Services[0].Components[1].PodName).To(Equal("a"))
 				Expect(appConfig.Services[0].Components[2].PodName).To(Equal(""))
@@ -126,7 +126,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing (invalid) cross service namespaces", func() {
+		Describe("parsing (invalid) cross service pod", func() {
 			var (
 				err error
 			)
@@ -153,7 +153,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing (invalid) namespaces that are used only once", func() {
+		Describe("parsing (invalid) pods that are used only once", func() {
 			var (
 				err error
 			)
@@ -176,7 +176,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing valid volume configs in namespaces", func() {
+		Describe("parsing valid volume configs in pods", func() {
 			var (
 				err       error
 				byteSlice []byte
@@ -261,7 +261,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #1", func() {
+		Describe("parsing invalid volume configs in pods #1", func() {
 			var (
 				err error
 			)
@@ -284,7 +284,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #2", func() {
+		Describe("parsing invalid volume configs in pods #2", func() {
 			var (
 				err error
 			)
@@ -307,7 +307,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #3", func() {
+		Describe("parsing invalid volume configs in pods #3", func() {
 			var (
 				err error
 			)
@@ -330,7 +330,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #4", func() {
+		Describe("parsing invalid volume configs in pods #4", func() {
 			var (
 				err error
 			)
@@ -353,7 +353,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #5", func() {
+		Describe("parsing invalid volume configs in pods #5", func() {
 			var (
 				err error
 			)
@@ -376,7 +376,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #6", func() {
+		Describe("parsing invalid volume configs in pods #6", func() {
 			var (
 				err error
 			)
@@ -399,7 +399,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #7", func() {
+		Describe("parsing invalid volume configs in pods #7", func() {
 			var (
 				err error
 			)
@@ -422,7 +422,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #8", func() {
+		Describe("parsing invalid volume configs in pods #8", func() {
 			var (
 				err error
 			)
@@ -445,7 +445,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #9", func() {
+		Describe("parsing invalid volume configs in pods #9", func() {
 			var (
 				err error
 			)
@@ -468,7 +468,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #10", func() {
+		Describe("parsing invalid volume configs in pods #10", func() {
 			var (
 				err error
 			)
@@ -494,7 +494,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #11", func() {
+		Describe("parsing invalid volume configs in pods #11", func() {
 			var (
 				err error
 			)
@@ -520,7 +520,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #12", func() {
+		Describe("parsing invalid volume configs in pods #12", func() {
 			var (
 				err error
 			)
@@ -547,7 +547,7 @@ var _ = Describe("user config namespace validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in namespaces #13", func() {
+		Describe("parsing invalid volume configs in pods #13", func() {
 			var (
 				err error
 			)
