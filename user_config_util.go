@@ -54,15 +54,21 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 // fixJSONFieldNamesRecursive transforms the keys of the given map from
 // uppercased to underscore.
 func fixJSONFieldNamesRecursive(j map[string]interface{}, keyPrefix string) map[string]interface{} {
-	// Exclude some keys from fixing
+	// Exclude some keys from fixing. This also excludes all keys that are
+	// eventually stored under that given key.
 	if keyPrefix == "/services/components/env" {
 		return j
 	}
-	for k, v := range j {
 
-		delete(j, k)
-		k = FixFieldName(k)
-		j[k] = v
+	for k, v := range j {
+		// This is really tricky. Node names must be arbitrary strings. We are not
+		// allowed to fix them. Further everything inside the nodes needs to be
+		// fixed. So we just ignore the node names itself.
+		if keyPrefix != "/nodes" {
+			delete(j, k)
+			k = FixFieldName(k)
+			j[k] = v
+		}
 
 		if v == nil {
 			continue

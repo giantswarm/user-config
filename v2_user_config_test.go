@@ -16,15 +16,21 @@ func V2ExampleDefinition() userconfig.V2AppDefinition {
 	}
 }
 
-func V2ExampleDefinitionWithVolume(path, size string) userconfig.V2AppDefinition {
+func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefinition {
 	appDef := V2ExampleDefinition()
 	nodeA, ok := appDef.Nodes["node/a"]
 	if !ok {
 		panic("missing node")
 	}
-	nodeA.Volumes = []userconfig.VolumeConfig{
-		userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(size)},
+
+	if len(paths) != len(sizes) {
+		panic("list of path and size must be equal")
 	}
+	volumes := []userconfig.VolumeConfig{}
+	for i, path := range paths {
+		volumes = append(volumes, userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(sizes[i])})
+	}
+	nodeA.Volumes = volumes
 	appDef.Nodes["node/a"] = nodeA
 
 	return appDef

@@ -111,7 +111,7 @@ func TestParseV2AppDef(t *testing.T) {
 }
 
 func TestV2AppDefInvalidVolumeSizeUnit(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume("/data", "5 KB")
+	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"5 KB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
@@ -130,7 +130,7 @@ func TestV2AppDefInvalidVolumeSizeUnit(t *testing.T) {
 }
 
 func TestV2AppDefInvalidVolumeNegativeSize(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume("/data", "-5 GB")
+	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"-5 GB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
@@ -171,331 +171,80 @@ func TestV2AppDefInvalidFieldName(t *testing.T) {
 	}
 }
 
-//	Describe("parsing app-config with duplicate volume paths", func() {
-//		BeforeEach(func() {
-//			byteSlice = []byte(`{
-//	          "app_name": "test-app-name",
-//	          "services": [
-//	            {
-//	              "service_name": "session",
-//	              "components": [
-//	                {
-//	                  "component_name": "api",
-//	                  "image": "registry/namespace/repository:version",
-//	                  "volumes": [
-//	                    { "path": "/data", "size": "5 GB" },
-//	                    { "path": "/data", "size": "10 GB" }
-//	                   ]
-//	                }
-//	              ]
-//	            }
-//	          ]
-//	        }`)
+func TestV2AppDefFixFieldName(t *testing.T) {
+	b := []byte(`{
+		"Nodes": {
+			"node/fooBar": {
+				"Image": "registry/namespace/repository:version"
+			}
+		}
+	}`)
 
-//			err = json.Unmarshal(byteSlice, &appConfig)
-//		})
+	var appDef userconfig.V2AppDefinition
+	err := json.Unmarshal(b, &appDef)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
 
-//		It("should detect first occuring error and throw IsErrDuplicateVolumePath", func() {
-//			Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
-//			Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' detected.`))
-//		})
+	nodeFooBar, ok := appDef.Nodes["node/fooBar"]
+	if !ok {
+		t.Fatalf("missing node")
+	}
 
-//		It("should not parse given app name", func() {
-//			Expect(appConfig.AppName).To(Equal(""))
-//		})
-//	})
+	if nodeFooBar.Image.Registry != "registry" {
+		t.Fatalf("invalid registry: %s", nodeFooBar.Image.Registry)
+	}
+	if nodeFooBar.Image.Namespace != "namespace" {
+		t.Fatalf("invalid namespace: %s", nodeFooBar.Image.Namespace)
+	}
+	if nodeFooBar.Image.Repository != "repository" {
+		t.Fatalf("invalid repository: %s", nodeFooBar.Image.Repository)
+	}
+	if nodeFooBar.Image.Version != "version" {
+		t.Fatalf("invalid version: %s", nodeFooBar.Image.Version)
+	}
+}
 
-//	Context("fix app-config fields", func() {
-//		Context("ComponentConfig", func() {
-//			var componentConfig userconfig.ComponentConfig
-//			BeforeEach(func() {
-//				componentConfig = userconfig.ComponentConfig{}
-//			})
+func TestV2AppDefCannotFixFieldName(t *testing.T) {
+	b := []byte(`{
+		"nodes": {
+			"node/fooBar": {
+				"imaGe": "registry/namespace/repository:version"
+			}
+		}
+	}`)
 
-//			Describe("UnmarshalJSON parses deprecated notation", func() {
-//				BeforeEach(func() {
-//					// The "Path" is outdated should now be marshaled as "path"
-//					byteSlice = []byte(`
-//						{
-//							"component_name": "foo-bar",
-//							"volumes": [
-//								{"Path":"/mnt","Size":"5 GB"}
-//							],
-//							"image": "registry.giantswarm.io/userd"
-//						}
-//					`)
-//					err = json.Unmarshal(byteSlice, &componentConfig)
-//				})
-//				It("should not throw an error", func() {
-//					Expect(err).To(BeNil())
-//				})
-//				It("should contain one volume with a path=/mnt", func() {
-//					Expect(len(componentConfig.Volumes)).To(Equal(1))
-//					Expect(componentConfig.Volumes[0].Path).To(Equal("/mnt"))
-//				})
-//			})
+	var appDef userconfig.V2AppDefinition
+	err := json.Unmarshal(b, &appDef)
+	if err == nil {
+		t.Fatalf("json.Unmarshal NOT failed")
+	}
+	if err.Error() != `Cannot parse app definition. Unknown field '["nodes"]["node/fooBar"]["ima_ge"]' detected.` {
+		t.Fatalf("expected proper error, got: %s", err.Error())
+	}
+	if !userconfig.IsErrUnknownJsonField(err) {
+		t.Fatalf("expetced error to be ErrUnknownJSONField")
+	}
+}
 
-//			Describe("MarshalJSON makes all fields lower_case", func() {
+func TestV2AppDefInvalidVolumeDuplicatedPath(t *testing.T) {
+	a := V2ExampleDefinitionWithVolume([]string{"/data", "/data"}, []string{"5 GB", "10 GB"})
 
-//				var data []byte
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
 
-//				BeforeEach(func() {
-//					componentConfig.ComponentName = "Test"
-//					componentConfig.InstanceConfig = userconfig.InstanceConfig{
-//						Image: generictypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
-//						Volumes: []userconfig.VolumeConfig{
-//							{
-//								Path: "/mnt",
-//								Size: "5 GB",
-//							},
-//						},
-//					}
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err == nil {
+		t.Fatalf("json.Unmarshal NOT failed")
+	}
 
-//					data, err = json.Marshal(componentConfig)
-//				})
-
-//				It("should not throw an error", func() {
-//					Expect(err).To(BeNil())
-//				})
-
-//				It("should lowercase the path field", func() {
-//					Expect(strings.Contains(string(data), "\"path\":")).To(BeTrue())
-//				})
-
-//			})
-
-//		})
-//		Context("AppDefinition", func() {
-//			Describe("with valid field names", func() {
-//				BeforeEach(func() {
-//					byteSlice = []byte(`{
-//		            "app_name": "test-app-name",
-//		            "services": [
-//		              {
-//		                "service_name": "session",
-//		                "components": [
-//		                  {
-//		                    "component_name": "api",
-//		                    "image": "registry/namespace/repository:version",
-//		                    "ports": [ "80/tcp" ],
-//		                    "dependencies": [
-//		                      { "name": "redis", "port": 6379, "same_machine": true }
-//		                    ],
-//		                    "domains": { "test.domain.io": "80" }
-//		                  },
-//		                  {
-//		                    "component_name": "redis",
-//		                    "image": "dockerfile/redis",
-//		                    "ports": [ "6379/tcp" ],
-//		                    "volumes": [
-//		                      { "path": "/data", "size": "5 GB" }
-//		                    ]
-//		                  }
-//		                ]
-//		              }
-//		            ]
-//		          }`)
-
-//					err = json.Unmarshal(byteSlice, &appConfig)
-
-//				})
-
-//				It("should not throw error", func() {
-//					Expect(err).To(BeNil())
-//				})
-
-//				It("should properly parse given app name", func() {
-//					Expect(appConfig.AppName).To(Equal("test-app-name"))
-//				})
-
-//				It("should parse one service", func() {
-//					Expect(appConfig.Services).To(HaveLen(1))
-//				})
-
-//				It("should parse one service", func() {
-//					Expect(appConfig.Services[0].ServiceName).To(Equal("session"))
-//				})
-
-//				It("should parse two components", func() {
-//					Expect(appConfig.Services[0].Components).To(HaveLen(2))
-//				})
-
-//				It("should parse one domain for component", func() {
-//					Expect(appConfig.Services[0].Components[0].Domains).To(HaveLen(1))
-//				})
-
-//				It("should parse correct component domain", func() {
-//					Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"].Port).To(Equal("80"))
-//				})
-
-//				It("should parse correct component image 1", func() {
-//					Expect(appConfig.Services[0].Components[0].Image.Registry).To(Equal("registry"))
-//					Expect(appConfig.Services[0].Components[0].Image.Namespace).To(Equal("namespace"))
-//					Expect(appConfig.Services[0].Components[0].Image.Repository).To(Equal("repository"))
-//					Expect(appConfig.Services[0].Components[0].Image.Version).To(Equal("version"))
-//				})
-
-//				It("should parse correct component image 2", func() {
-//					Expect(appConfig.Services[0].Components[1].Image.Registry).To(Equal(""))
-//					Expect(appConfig.Services[0].Components[1].Image.Namespace).To(Equal("dockerfile"))
-//					Expect(appConfig.Services[0].Components[1].Image.Repository).To(Equal("redis"))
-//					Expect(appConfig.Services[0].Components[1].Image.Version).To(Equal(""))
-//				})
-//			})
-
-//			Describe("with deprecated field names", func() {
-//				BeforeEach(func() {
-//					// Components was the old name in the ServiceConfig
-//					byteSlice = []byte(`{
-//		            "app_name": "test-app-name",
-//		            "services": [
-//		              {
-//		                "service_name": "session",
-//		                "Components": [
-//		                  {
-//		                    "component_name": "api",
-//		                    "image": "registry/namespace/repository:version",
-//		                    "ports": [ "80/tcp" ],
-//		                    "dependencies": [
-//		                      { "name": "redis", "port": 6379, "same_machine": true }
-//		                    ],
-//		                    "domains": { "test.domain.io": "80" }
-//		                  },
-//		                  {
-//		                    "component_name": "redis",
-//		                    "image": "dockerfile/redis",
-//		                    "ports": [ "6379/tcp" ],
-//		                    "volumes": [
-//		                      { "path": "/data", "size": "5 GB" }
-//		                    ]
-//		                  }
-//		                ]
-//		              }
-//		            ]
-//		          }`)
-
-//					err = json.Unmarshal(byteSlice, &appConfig)
-//				})
-
-//				It("should not throw error", func() {
-//					Expect(err).To(BeNil())
-//				})
-
-//				It("should properly parse given app name", func() {
-//					Expect(appConfig.AppName).To(Equal("test-app-name"))
-//				})
-
-//				It("should parse one service", func() {
-//					Expect(appConfig.Services).To(HaveLen(1))
-//				})
-
-//				It("should parse one service", func() {
-//					Expect(appConfig.Services[0].ServiceName).To(Equal("session"))
-//				})
-
-//				It("should parse two components", func() {
-//					Expect(appConfig.Services[0].Components).To(HaveLen(2))
-//				})
-
-//				It("should parse one domain for component", func() {
-//					Expect(appConfig.Services[0].Components[0].Domains).To(HaveLen(1))
-//				})
-
-//				It("should parse correct component domain", func() {
-//					Expect(appConfig.Services[0].Components[0].Domains["test.domain.io"].Port).To(Equal("80"))
-//				})
-
-//				It("should parse correct component image 1", func() {
-//					Expect(appConfig.Services[0].Components[0].Image.Registry).To(Equal("registry"))
-//					Expect(appConfig.Services[0].Components[0].Image.Namespace).To(Equal("namespace"))
-//					Expect(appConfig.Services[0].Components[0].Image.Repository).To(Equal("repository"))
-//					Expect(appConfig.Services[0].Components[0].Image.Version).To(Equal("version"))
-//				})
-
-//				It("should parse correct component image 2", func() {
-//					Expect(appConfig.Services[0].Components[1].Image.Registry).To(Equal(""))
-//					Expect(appConfig.Services[0].Components[1].Image.Namespace).To(Equal("dockerfile"))
-//					Expect(appConfig.Services[0].Components[1].Image.Repository).To(Equal("redis"))
-//					Expect(appConfig.Services[0].Components[1].Image.Version).To(Equal(""))
-//				})
-//			})
-
-//			Describe("with invalid field names", func() {
-//				BeforeEach(func() {
-//					byteSlice = []byte(`{
-//		            "app_name": "test-app-name",
-//		            "services": [
-//		              {
-//		                "service_name": "session",
-//		                "compOnents": [
-//		                  {
-//		                    "component_name": "api",
-//		                    "image": "registry/namespace/repository:version",
-//		                    "ports": [ "80/tcp" ],
-//		                    "dependencies": [
-//		                      { "name": "redis", "port": 6379, "same_machine": true }
-//		                    ],
-//		                    "domains": { "test.domain.io": "80" }
-//		                  },
-//		                  {
-//		                    "component_name": "redis",
-//		                    "image": "dockerfile/redis",
-//		                    "ports": [ "6379/tcp" ],
-//		                    "volumes": [
-//		                      { "path": "/data", "size": "5 GB" }
-//		                    ]
-//		                  }
-//		                ]
-//		              }
-//		            ]
-//		          }`)
-
-//					err = json.Unmarshal(byteSlice, &appConfig)
-//				})
-
-//				It("should throw error", func() {
-//					Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
-//					Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["comp_onents"]' detected.`))
-//				})
-
-//				It("should not parse given app name", func() {
-//					Expect(appConfig.AppName).To(Equal(""))
-//				})
-//			})
-
-//			Describe("MarshalJSON makes all fields lower_case", func() {
-
-//				var data []byte
-
-//				BeforeEach(func() {
-//					appConfig.AppName = "Test"
-//					appConfig.Services = []userconfig.ServiceConfig{
-//						{
-//							ServiceName: "test-service-1",
-//							Components: []userconfig.ComponentConfig{
-//								{
-//									ComponentName: "test-service-1-component-1",
-//									InstanceConfig: userconfig.InstanceConfig{
-//										Image: generictypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/foobar"),
-//									},
-//								},
-//							},
-//						},
-//					}
-//					data, err = json.Marshal(appConfig)
-//				})
-
-//				It("should not throw an error", func() {
-//					Expect(err).To(BeNil())
-//				})
-
-//				It("should lowercase the components field", func() {
-//					Expect(strings.Contains(string(data), "\"components\":")).To(BeTrue())
-//				})
-
-//			})
-//		})
-
-//	})
-
-//})
+	if err.Error() != "Cannot parse app definition. Duplicate volume '/data' detected." {
+		t.Fatalf("expected proper error, got: %s", err.Error())
+	}
+	if !userconfig.IsErrDuplicateVolumePath(err) {
+		t.Fatalf("expetced error to be ErrDuplicateVolumePath")
+	}
+}
