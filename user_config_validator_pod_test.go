@@ -37,6 +37,15 @@ var _ = Describe("user config pod validator", func() {
 		return config
 	}
 
+	addDeps := func(config ComponentConfig, dep ...DependencyConfig) ComponentConfig {
+		if config.InstanceConfig.Dependencies == nil {
+			config.InstanceConfig.Dependencies = dep
+		} else {
+			config.InstanceConfig.Dependencies = append(config.InstanceConfig.Dependencies, dep...)
+		}
+		return config
+	}
+
 	testService := func(name string, components ...ComponentConfig) ServiceConfig {
 		return ServiceConfig{
 			ServiceName: name,
@@ -127,9 +136,7 @@ var _ = Describe("user config pod validator", func() {
 		})
 
 		Describe("parsing (invalid) cross service pod", func() {
-			var (
-				err error
-			)
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -154,9 +161,7 @@ var _ = Describe("user config pod validator", func() {
 		})
 
 		Describe("parsing (invalid) pods that are used only once", func() {
-			var (
-				err error
-			)
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -261,10 +266,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #1", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi path+volumes-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -284,10 +287,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #2", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi path+volume-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -307,10 +308,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #3", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+path", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -330,10 +329,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #4", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+size", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -353,10 +350,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #5", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+volume-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -376,10 +371,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #6", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, invalid property combi volume-from+size", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -399,10 +392,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #7", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, volumes-from cannot refer to self", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -422,10 +413,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #8", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pod, volume-from cannot refer to self", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -445,10 +434,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #9", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, unknown path in volume-path", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -468,10 +455,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #10", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -494,10 +479,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #11", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, duplicate volume via volume-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -520,10 +503,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #12", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, duplicate volume via linked volumes-from", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -547,10 +528,8 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid volume configs in pods #13", func() {
-			var (
-				err error
-			)
+		Describe("parsing invalid volume configs in pods, cycle in volumes-from references", func() {
+			var err error
 
 			BeforeEach(func() {
 				appConfig := testApp(
@@ -567,6 +546,29 @@ var _ = Describe("user config pod validator", func() {
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
+			})
+
+		})
+
+		Describe("parsing invalid dependency configs in pods, same name different sources", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different) dependency with port '6379/tcp' in pod 'ns4'.`))
 			})
 
 		})
