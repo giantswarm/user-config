@@ -46,7 +46,7 @@ func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Parse a swarm app configuration file
+// ParseV1AppDefinition parses the v1 app definition.
 func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 	var app AppDefinition
 	if err := json.Unmarshal(byteSlice, &app); err != nil {
