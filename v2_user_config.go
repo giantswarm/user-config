@@ -40,7 +40,7 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 	result := V2AppDefinition(adc)
 
 	// Perform semantic checks
-	if err := result.validate(); err != nil {
+	if err := result.Validate(); err != nil {
 		return Mask(err)
 	}
 
@@ -51,7 +51,7 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 
 // validate performs semantic validations of this V2AppDefinition.
 // Return the first possible error.
-func (ad *V2AppDefinition) validate() error {
+func (ad *V2AppDefinition) Validate() error {
 	if len(ad.Nodes) == 0 {
 		return Mask(errgo.WithCausef(nil, InvalidAppDefinitionError, "nodes must not be empty"))
 	}
@@ -63,26 +63,39 @@ func (ad *V2AppDefinition) validate() error {
 	return nil
 }
 
-type NodeDefinitions map[NodeName]NodeDefinition
+type NodeDefinitions map[NodeName]*NodeDefinition
 
 func (nds NodeDefinitions) validate() error {
-	nodes := map[string]bool{}
-
-	for name, node := range nds {
-		if err := name.validate(); err != nil {
+	for nodeName, node := range nds {
+		if err := nodeName.validate(); err != nil {
 			return Mask(err)
 		}
 
-		if err := node.validate(); err != nil {
+		// because of defaulting when validating we need to reference the to the
+		// address of the node. so its changes effect the app definition after
+		// parsing.
+		if err := nds[nodeName].validate(); err != nil {
 			return err
 		}
 
-		// detect duplicated nodes
-		if _, ok := nodes[name.String()]; ok {
-			return Mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "duplicated node name: %s", name))
-		}
+		// detect invalid links
+		for _, link := range node.Links {
+			nodeFound := false
 
-		nodes[name.String()] = true
+			for nn, n := range nds {
+				if link.Name == nn.String() {
+					nodeFound = true
+
+					if !n.Ports.contains(link.Port) {
+						return Mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", nodeName, link.Port))
+					}
+				}
+			}
+
+			if !nodeFound {
+				return Mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name))
+			}
+		}
 	}
 
 	return nil
@@ -135,7 +148,7 @@ type NodeDefinition struct {
 
 	Expose []ExposeDefinition `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
 
-	Scale *ScalingPolicyConfig `json:"scale,omitempty" description:"Scaling settings of the node"`
+	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the node"`
 }
 
 // validate performs semantic validations of this NodeDefinition.
@@ -154,6 +167,18 @@ func (nd *NodeDefinition) validate() error {
 	}
 
 	if err := nd.Volumes.validate(); err != nil {
+		return Mask(err)
+	}
+
+	// default scale definition if not set
+	if nd.Scale == nil {
+		nd.Scale = &ScaleDefinition{
+			Min: MinScaleSize,
+			Max: MaxScaleSize,
+		}
+	}
+
+	if err := nd.Scale.validate(); err != nil {
 		return Mask(err)
 	}
 

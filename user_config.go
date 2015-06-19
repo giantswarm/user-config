@@ -62,37 +62,13 @@ func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 	return app, nil
 }
 
-type ScalingPolicyConfig struct {
-	// Minimum instances to launch.
-	Min int `json:"min,omitempty" description:"Minimum number of instances to launch"`
-
-	// Maximum instances to launch.
-	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
-}
-
-func (sd *ScalingPolicyConfig) validate(min, max int) error {
-	if sd.Min < min {
-		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be less than '%d'", sd.Min, min))
-	}
-
-	if sd.Max > max {
-		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale max '%d' cannot be greater than '%d'", sd.Max, max))
-	}
-
-	if sd.Min > sd.Max {
-		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be greater than scale max '%d'", sd.Min, sd.Max))
-	}
-
-	return nil
-}
-
 // User defined service.
 type ServiceConfig struct {
 	ServiceName string            `json:"service_name" description:"Name of the service"`
 	PublicPorts map[string]string `json:"public_ports,omitempty" description:"Port mappings"`
 
 	// Config defining how many instances should be launched.
-	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty" description:"Scaling settings of all components in this service"`
+	ScalingPolicy *ScaleDefinition `json:"scaling_policy,omitempty" description:"Scaling settings of all components in this service"`
 
 	Components []ComponentConfig `json:"components" description:"List of components that are part of this service"`
 }
@@ -137,7 +113,7 @@ type ComponentConfig struct {
 	ComponentName string `json:"component_name" description:"Name of the component"`
 
 	// Config defining how many instances should be launched.
-	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty" description:"Scaling settings of the component"`
+	ScalingPolicy *ScaleDefinition `json:"scaling_policy,omitempty" description:"Scaling settings of the component"`
 
 	InstanceConfig
 

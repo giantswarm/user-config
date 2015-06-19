@@ -2,29 +2,10 @@ package userconfig_test
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
 
 	"github.com/giantswarm/user-config"
 )
-
-func TestMarshalUnmarshalV2AppDef(t *testing.T) {
-	a := V2ExampleDefinition()
-
-	data, err := json.Marshal(a)
-	if err != nil {
-		t.Fatalf("json.Marshal failed: %v", err)
-	}
-
-	var b userconfig.V2AppDefinition
-	if err := json.Unmarshal(data, &b); err != nil {
-		t.Fatalf("json.Unmarshal failed: %v", err)
-	}
-
-	if !reflect.DeepEqual(a, b) {
-		t.Fatalf("objects differ:\n%v\n%v", a, b)
-	}
-}
 
 func TestParseV2AppDef(t *testing.T) {
 	b := []byte(`{
@@ -33,7 +14,7 @@ func TestParseV2AppDef(t *testing.T) {
 				"image": "registry/namespace/repository:version",
 				"ports": [ "80/tcp" ],
 				"links": [
-					{ "name": "redis", "port": 6379, "same_machine": true }
+					{ "name": "node/b", "port": 6379, "same_machine": true }
 				],
 				"domains": { "test.domain.io": "80" }
 			},
@@ -128,7 +109,7 @@ func TestV2AppDefInvalidFieldName(t *testing.T) {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsUnknownJsonField(err) {
-		t.Fatalf("expetced error to be ErrUnknownJSONField")
+		t.Fatalf("expetced error to be UnknownJSONFieldError")
 	}
 }
 
@@ -184,6 +165,6 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsUnknownJsonField(err) {
-		t.Fatalf("expetced error to be ErrUnknownJSONField")
+		t.Fatalf("expetced error to be UnknownJSONFieldError")
 	}
 }

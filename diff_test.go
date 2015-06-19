@@ -111,7 +111,7 @@ func TestDiffComponentUpdateArgs(t *testing.T) {
 func TestDiffComponentScalingChanged(t *testing.T) {
 	oldCfg := ExampleDefinition()
 	newCfg := ExampleDefinition()
-	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 0, Max: 1000}
+	newCfg.Services[0].Components[0].ScalingPolicy = &ScaleDefinition{Min: 0, Max: 1000}
 
 	expectedDiffItems := []DiffInfo{
 		DiffInfo{Type: InfoComponentScalingUpdated, Name: []string{"app", "service1", "service1component1"}},
@@ -166,7 +166,7 @@ func TestDiffComponentMultipleChanges(t *testing.T) {
 	oldCfg := ExampleDefinition()
 	newCfg := ExampleDefinition()
 
-	newCfg.Services[0].Components[0].ScalingPolicy = &ScalingPolicyConfig{Min: 10}
+	newCfg.Services[0].Components[0].ScalingPolicy = &ScaleDefinition{Min: 10}
 	newCfg.Services[0].Components[0].InstanceConfig.Image = generictypes.MustParseDockerImage("new-site")
 
 	expectedDiffItems := []DiffInfo{
