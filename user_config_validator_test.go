@@ -162,8 +162,8 @@ var _ = Describe("user config validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeFalse())
+			It("should throw error UnknownJSONFieldError", func() {
+				Expect(userconfig.IsUnknownJsonField(err)).To(BeFalse())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '5KB' detected.`))
 			})
 		})
@@ -201,8 +201,8 @@ var _ = Describe("user config validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeFalse())
+			It("should throw error UnknownJSONFieldError", func() {
+				Expect(userconfig.IsUnknownJsonField(err)).To(BeFalse())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Invalid size '-8KB' detected.`))
 			})
 		})
@@ -222,8 +222,8 @@ var _ = Describe("user config validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should throw error ErrUnknownJSONField", func() {
-				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
+			It("should throw error UnknownJSONFieldError", func() {
+				Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["foo"]' detected.`))
 			})
 
@@ -265,8 +265,8 @@ var _ = Describe("user config validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should detect first occuring error and throw ErrUnknownJSONField", func() {
-				Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
+			It("should detect first occuring error and throw UnknownJSONFieldError", func() {
+				Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["components"][1]["volume"]' detected.`))
 			})
 
@@ -299,9 +299,9 @@ var _ = Describe("user config validator", func() {
 				err = json.Unmarshal(byteSlice, &appConfig)
 			})
 
-			It("should detect first occuring error and throw IsErrDuplicateVolumePath", func() {
-				Expect(userconfig.IsErrDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' detected.`))
+			It("should detect first occuring error and throw DuplicateVolumePathError", func() {
+				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' found in component 'api'.`))
 			})
 
 			It("should not parse given app name", func() {
@@ -558,7 +558,7 @@ var _ = Describe("user config validator", func() {
 					})
 
 					It("should throw error", func() {
-						Expect(userconfig.IsErrUnknownJsonField(err)).To(BeTrue())
+						Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
 						Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["comp_onents"]' detected.`))
 					})
 

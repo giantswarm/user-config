@@ -37,21 +37,21 @@ func TestVolumeSizeUnmarshal(t *testing.T) {
 		{"8    Gb   ", nil, "8 GB"},
 
 		// Invalid ones
-		{"-0 G", userConfigPkg.ErrInvalidSize, ""},
-		{"-9223372036854775806 G", userConfigPkg.ErrInvalidSize, ""},
-		{"- 9223372036854775806 G", userConfigPkg.ErrInvalidSize, ""},
-		{"-0 GB", userConfigPkg.ErrInvalidSize, ""},
-		{"-9223372036854775806 GB", userConfigPkg.ErrInvalidSize, ""},
-		{"- 9223372036854775806 GB", userConfigPkg.ErrInvalidSize, ""},
-		{"-0G", userConfigPkg.ErrInvalidSize, ""},
-		{"-9223372036854775806G", userConfigPkg.ErrInvalidSize, ""},
-		{"- 9223372036854775806G", userConfigPkg.ErrInvalidSize, ""},
-		{"-0GB", userConfigPkg.ErrInvalidSize, ""},
-		{"-9223372036854775806GB", userConfigPkg.ErrInvalidSize, ""},
-		{"- 9223372036854775806GB", userConfigPkg.ErrInvalidSize, ""},
-		{"-9223372036854775806", userConfigPkg.ErrInvalidSize, ""},
-		{"GB 10", userConfigPkg.ErrInvalidSize, ""},
-		{" 0x10 GB", userConfigPkg.ErrInvalidSize, ""},
+		{"-0 G", userConfigPkg.InvalidSizeError, ""},
+		{"-9223372036854775806 G", userConfigPkg.InvalidSizeError, ""},
+		{"- 9223372036854775806 G", userConfigPkg.InvalidSizeError, ""},
+		{"-0 GB", userConfigPkg.InvalidSizeError, ""},
+		{"-9223372036854775806 GB", userConfigPkg.InvalidSizeError, ""},
+		{"- 9223372036854775806 GB", userConfigPkg.InvalidSizeError, ""},
+		{"-0G", userConfigPkg.InvalidSizeError, ""},
+		{"-9223372036854775806G", userConfigPkg.InvalidSizeError, ""},
+		{"- 9223372036854775806G", userConfigPkg.InvalidSizeError, ""},
+		{"-0GB", userConfigPkg.InvalidSizeError, ""},
+		{"-9223372036854775806GB", userConfigPkg.InvalidSizeError, ""},
+		{"- 9223372036854775806GB", userConfigPkg.InvalidSizeError, ""},
+		{"-9223372036854775806", userConfigPkg.InvalidSizeError, ""},
+		{"GB 10", userConfigPkg.InvalidSizeError, ""},
+		{" 0x10 GB", userConfigPkg.InvalidSizeError, ""},
 	}
 
 	for _, test := range tests {
@@ -137,6 +137,23 @@ func TestVolumeSizeNew(t *testing.T) {
 		vs := userConfigPkg.NewVolumeSize(test.Size, test.Unit)
 		if string(vs) != test.Expected {
 			t.Fatalf("Invalid result: got %v, expected %v", string(vs), test.Expected)
+		}
+	}
+}
+
+func TestVolumeSizeEmpty(t *testing.T) {
+	tests := []struct {
+		Size  userConfigPkg.VolumeSize
+		Empty bool
+	}{
+		{"", true},
+		{"5 GB", false},
+	}
+
+	for _, test := range tests {
+		empty := test.Size.Empty()
+		if empty != test.Empty {
+			t.Fatalf("Invalid result for '%s': got %v, expected %v", test.Size, empty, test.Empty)
 		}
 	}
 }

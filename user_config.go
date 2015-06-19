@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/giantswarm/generic-types-go"
+	generictypes "github.com/giantswarm/generic-types-go" // Added `generictypes` alias here as a workaround for swagger in api docs
 	"github.com/juju/errgo"
 )
 
@@ -50,7 +50,7 @@ func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 	var app AppDefinition
 	if err := json.Unmarshal(byteSlice, &app); err != nil {
-		if IsSyntaxError(err) {
+		if IsSyntax(err) {
 			if strings.Contains(err.Error(), "$") {
 				return AppDefinition{}, errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly.")
 			}
@@ -81,12 +81,27 @@ type ServiceConfig struct {
 	Components []ComponentConfig `json:"components" description:"List of components that are part of this service"`
 }
 
+// FindComponent finds a component with given name if the list of components inside this service.
+// it returns nil if not found
+func (sc *ServiceConfig) FindComponent(name string) *ComponentConfig {
+	return sc.findComponent(name)
+}
+
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
-	Path string `json:"path" description:"Path of the volume to mount (inside the container)`
+	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
 
 	// Storage size in GB, e.g. "5 GB".
-	Size VolumeSize `json:"size" description:"Size of the volume. e.g. '5 GB'"`
+	Size VolumeSize `json:"size,omitempty" description:"Size of the volume. e.g. '5 GB'"`
+
+	// Name of another component to map all volumes from
+	VolumesFrom string `json:"volumes-from,omitempty" description:"Name of another component (in same pod) to share volumes with"`
+
+	// Name of another component to map a specific volumes from
+	VolumeFrom string `json:"volume-from,omitempty" description:"Name of another component (in same pod) to share a specific volume with"`
+
+	// Path inside the other component to share
+	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
 }
 
 type DependencyConfig struct {
@@ -111,6 +126,14 @@ type ComponentConfig struct {
 	ScalingPolicy *ScalingPolicyConfig `json:"scaling_policy,omitempty" description:"Scaling settings of the component"`
 
 	InstanceConfig
+
+	PodConfig
+}
+
+// GetAllMountPoints creates a list of all mount points of a component.
+func (cc *ComponentConfig) GetAllMountPoints(service *ServiceConfig) ([]string, error) {
+	visitedComponents := make(map[string]string)
+	return cc.getAllMountPoints(service, visitedComponents)
 }
 
 // List of environment settings like "KEY=VALUE", "KEY2=VALUE2"
@@ -152,7 +175,7 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return errgo.WithCausef(err, ErrInvalidEnvListFormat, "")
+	return errgo.WithCausef(err, InvalidEnvListFormatError, "")
 }
 
 type InstanceConfig struct {
@@ -180,4 +203,10 @@ type InstanceConfig struct {
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
+}
+
+type PodConfig struct {
+	// Name of the pod a component will join.
+	// An empty name means that the component will not join any shared pod and create its own.
+	PodName string `json:"pod,omitempty" description:"Name of the pod to join"`
 }
