@@ -631,6 +631,32 @@ var _ = Describe("user config pod validator", func() {
 			})
 		})
 
+		Describe("parsing invalid dependency configs in pods, one with aliases, other with (conflicting) name", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+					testService("storage",
+						testComponent("redis", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod 'ns4'.`))
+			})
+		})
+
 		Describe("parsing invalid dependency configs in pods, same alias different ports", func() {
 			var err error
 
