@@ -6,32 +6,72 @@ import (
 )
 
 var (
-	ErrUnknownJSONField     = errgo.New("Unknown JSON field.")
-	ErrInvalidSize          = errgo.New("Invalid size.")
-	ErrDuplicateVolumePath  = errgo.New("Duplicate volume path.")
-	ErrInvalidEnvListFormat = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	UnknownJSONFieldError        = errgo.New("Unknown JSON field.")
+	InvalidSizeError             = errgo.New("Invalid size.")
+	DuplicateVolumePathError     = errgo.New("Duplicate volume path.")
+	InvalidEnvListFormatError    = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	CrossServicePodError         = errgo.New("Pod is used in different services.")
+	PodUsedOnlyOnceError         = errgo.New("Pod is used in only 1 component.")
+	InvalidVolumeConfigError     = errgo.New("Invalid volume configuration.")
+	InvalidDependencyConfigError = errgo.New("Invalid dependency configuration.")
+	InvalidScalingConfigError    = errgo.New("Invalid scaling configuration.")
+	InvalidPortConfigError       = errgo.New("Invalid port configuration.")
 
-	Mask = errgo.MaskFunc(IsErrInvalidEnvListFormat, IsErrUnknownJsonField, IsErrInvalidSize, IsErrDuplicateVolumePath)
+	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
+		IsUnknownJsonField,
+		IsInvalidSize,
+		IsDuplicateVolumePath,
+		IsCrossServicePod,
+		IsPodUsedOnlyOnce,
+		IsInvalidVolumeConfig,
+		IsInvalidDependencyConfig,
+		IsInvalidScalingConfig,
+		IsInvalidPortConfig,
+	)
 )
 
-func IsErrUnknownJsonField(err error) bool {
-	return errgo.Cause(err) == ErrUnknownJSONField
+func IsUnknownJsonField(err error) bool {
+	return errgo.Cause(err) == UnknownJSONFieldError
 }
 
-func IsErrInvalidSize(err error) bool {
-	return errgo.Cause(err) == ErrInvalidSize
+func IsInvalidSize(err error) bool {
+	return errgo.Cause(err) == InvalidSizeError
 }
 
-func IsErrDuplicateVolumePath(err error) bool {
-	return errgo.Cause(err) == ErrDuplicateVolumePath
+func IsDuplicateVolumePath(err error) bool {
+	return errgo.Cause(err) == DuplicateVolumePathError
 }
 
-func IsErrInvalidEnvListFormat(err error) bool {
-	return errgo.Cause(err) == ErrInvalidEnvListFormat
+func IsInvalidEnvListFormat(err error) bool {
+	return errgo.Cause(err) == InvalidEnvListFormatError
 }
 
-// IsSyntaxError returns true if the cause of the given error in a json.SyntaxError
-func IsSyntaxError(err error) bool {
+func IsCrossServicePod(err error) bool {
+	return errgo.Cause(err) == CrossServicePodError
+}
+
+func IsPodUsedOnlyOnce(err error) bool {
+	return errgo.Cause(err) == PodUsedOnlyOnceError
+}
+
+func IsInvalidVolumeConfig(err error) bool {
+	return errgo.Cause(err) == InvalidVolumeConfigError
+}
+
+func IsInvalidDependencyConfig(err error) bool {
+	return errgo.Cause(err) == InvalidDependencyConfigError
+}
+
+func IsInvalidScalingConfig(err error) bool {
+	return errgo.Cause(err) == InvalidScalingConfigError
+}
+
+func IsInvalidPortConfig(err error) bool {
+	return errgo.Cause(err) == InvalidPortConfigError
+}
+
+// IsSyntax returns true if the cause of the given error in a json.SyntaxError
+func IsSyntax(err error) bool {
 	_, ok := errgo.Cause(err).(*json.SyntaxError)
 	return ok
 }
