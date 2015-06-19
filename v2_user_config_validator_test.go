@@ -109,44 +109,6 @@ func TestParseV2AppDef(t *testing.T) {
 	}
 }
 
-func TestV2AppDefInvalidVolumeSizeUnit(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"5 KB"})
-
-	raw, err := json.Marshal(a)
-	if err != nil {
-		t.Fatalf("json.Marshal failed: %v", err)
-	}
-
-	var b userconfig.V2AppDefinition
-	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
-	}
-
-	if err.Error() != "Cannot parse app config. Invalid size '5 KB' detected." {
-		t.Fatalf("expected proper error, got: %s", err.Error())
-	}
-}
-
-func TestV2AppDefInvalidVolumeNegativeSize(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"-5 GB"})
-
-	raw, err := json.Marshal(a)
-	if err != nil {
-		t.Fatalf("json.Marshal failed: %v", err)
-	}
-
-	var b userconfig.V2AppDefinition
-	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
-	}
-
-	if err.Error() != "Cannot parse app config. Invalid size '-5 GB' detected." {
-		t.Fatalf("expected proper error, got: %s", err.Error())
-	}
-}
-
 func TestV2AppDefInvalidFieldName(t *testing.T) {
 	b := []byte(`{
 		"nodes": {
@@ -223,27 +185,5 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	}
 	if !userconfig.IsUnknownJsonField(err) {
 		t.Fatalf("expetced error to be ErrUnknownJSONField")
-	}
-}
-
-func TestV2AppDefInvalidVolumeDuplicatedPath(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data", "/data"}, []string{"5 GB", "10 GB"})
-
-	raw, err := json.Marshal(a)
-	if err != nil {
-		t.Fatalf("json.Marshal failed: %v", err)
-	}
-
-	var b userconfig.V2AppDefinition
-	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
-	}
-
-	if err.Error() != "duplicated volume path: /data" {
-		t.Fatalf("expected proper error, got: %s", err.Error())
-	}
-	if !userconfig.IsInvalidVolumeConfig(err) {
-		t.Fatalf("expetced error to be InvalidVolumeConfigError")
 	}
 }

@@ -12,16 +12,20 @@ var (
 )
 
 func init() {
-	if MinVolumeSize == 0 {
-		MinVolumeSize = defaultMinVolumeSize
-	}
-	if MaxVolumeSize == 0 {
-		MaxVolumeSize = defaultMaxVolumeSize
-	}
+	SetDefaultMinVolumeSize()
+	SetDefaultMaxVolumeSize()
+}
+
+func SetDefaultMinVolumeSize() {
+	MinVolumeSize = defaultMinVolumeSize
 }
 
 func SetMinVolumeSize(min int) {
 	MinVolumeSize = min
+}
+
+func SetDefaultMaxVolumeSize() {
+	MaxVolumeSize = defaultMaxVolumeSize
 }
 
 func SetMaxVolumeSize(max int) {
@@ -45,7 +49,7 @@ type VolumeConfig struct {
 	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
 }
 
-func (vd VolumeConfig) v2Validate() error {
+func (vd VolumeConfig) V2Validate() error {
 	if vd.Path == "" {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size cannot be empty"))
 	}
@@ -72,7 +76,7 @@ func (vds VolumeDefinitions) validate() error {
 	paths := map[string]string{}
 
 	for _, v := range vds {
-		if err := v.v2Validate(); err != nil {
+		if err := v.V2Validate(); err != nil {
 			return Mask(err)
 		}
 
