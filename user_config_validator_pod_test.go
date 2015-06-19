@@ -46,6 +46,15 @@ var _ = Describe("user config pod validator", func() {
 		return config
 	}
 
+	addPorts := func(config ComponentConfig, ports ...generictypes.DockerPort) ComponentConfig {
+		if config.InstanceConfig.Ports == nil {
+			config.InstanceConfig.Ports = ports
+		} else {
+			config.InstanceConfig.Ports = append(config.InstanceConfig.Ports, ports...)
+		}
+		return config
+	}
+
 	addScale := func(config ComponentConfig, min, max int) ComponentConfig {
 		config.ScalingPolicy = &ScalingPolicyConfig{
 			Min: min,
@@ -708,5 +717,46 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
+		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
+						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80")),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidPortConfigError", func() {
+				Expect(IsInvalidPortConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+			})
+
+		})
+
+		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod (mixed with/without protocol)", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
+						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80/tcp")),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidPortConfigError", func() {
+				Expect(IsInvalidPortConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+			})
+
+		})
 	})
 })

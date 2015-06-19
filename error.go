@@ -15,6 +15,7 @@ var (
 	InvalidVolumeConfigError     = errgo.New("Invalid volume configuration.")
 	InvalidDependencyConfigError = errgo.New("Invalid dependency configuration.")
 	InvalidScalingConfigError    = errgo.New("Invalid scaling configuration.")
+	InvalidPortConfigError       = errgo.New("Invalid port configuration.")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -25,6 +26,7 @@ var (
 		IsInvalidVolumeConfig,
 		IsInvalidDependencyConfig,
 		IsInvalidScalingConfig,
+		IsInvalidPortConfig,
 	)
 )
 
@@ -62,6 +64,10 @@ func IsInvalidDependencyConfig(err error) bool {
 
 func IsInvalidScalingConfig(err error) bool {
 	return errgo.Cause(err) == InvalidScalingConfigError
+}
+
+func IsInvalidPortConfig(err error) bool {
+	return errgo.Cause(err) == InvalidPortConfigError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError

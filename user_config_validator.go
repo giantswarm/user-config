@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
 	"github.com/kr/pretty"
 )
@@ -207,6 +208,11 @@ func (sc *ServiceConfig) validate() error {
 		if err := c.validateUniqueMountPoints(sc); err != nil {
 			return Mask(err)
 		}
+	}
+
+	// Check for duplicate exposed ports in pods
+	if err := sc.validateUniquePortsInPods(); err != nil {
+		return Mask(err)
 	}
 
 	// Check dependencies in pods
@@ -490,6 +496,44 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 					if dep1.Name != dep2.Name {
 						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod '%s'.", alias1, pn)
 					}
+				}
+			}
+		}
+	}
+
+	// No errors detected
+	return nil
+}
+
+// validateUniquePortsInPods checks that there are no duplicate ports in a single pod
+func (sc *ServiceConfig) validateUniquePortsInPods() error {
+	// Collect all ports per pod
+	pod2ports := make(map[string][]generictypes.DockerPort)
+	for _, c := range sc.Components {
+		pn := c.PodConfig.PodName
+		if pn == "" {
+			// Not part of a shared pod
+			continue
+		}
+		if c.InstanceConfig.Ports == nil {
+			// No exposed ports
+			continue
+		}
+		list, ok := pod2ports[pn]
+		if !ok {
+			list = []generictypes.DockerPort{}
+		}
+		list = append(list, c.InstanceConfig.Ports...)
+		pod2ports[pn] = list
+	}
+
+	// Check each list for duplicates
+	for pn, list := range pod2ports {
+		for i, port1 := range list {
+			for j := i + 1; j < len(list); j++ {
+				port2 := list[j]
+				if port1.Equals(port2) {
+					return errgo.WithCausef(nil, InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod '%s'.", port1.String(), pn)
 				}
 			}
 		}
