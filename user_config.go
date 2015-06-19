@@ -70,6 +70,22 @@ type ScalingPolicyConfig struct {
 	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
 }
 
+func (sd *ScalingPolicyConfig) validate(min, max int) error {
+	if sd.Min < min {
+		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be less than '%d'", sd.Min, min))
+	}
+
+	if sd.Max > max {
+		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale max '%d' cannot be greater than '%d'", sd.Max, max))
+	}
+
+	if sd.Min > sd.Max {
+		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be greater than scale max '%d'", sd.Min, sd.Max))
+	}
+
+	return nil
+}
+
 // User defined service.
 type ServiceConfig struct {
 	ServiceName string            `json:"service_name" description:"Name of the service"`
@@ -87,23 +103,6 @@ func (sc *ServiceConfig) FindComponent(name string) *ComponentConfig {
 	return sc.findComponent(name)
 }
 
-type VolumeConfig struct {
-	// Path of the volume to mount, e.g. "/opt/service/".
-	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
-
-	// Storage size in GB, e.g. "5 GB".
-	Size VolumeSize `json:"size,omitempty" description:"Size of the volume. e.g. '5 GB'"`
-
-	// Name of another component to map all volumes from
-	VolumesFrom string `json:"volumes-from,omitempty" description:"Name of another component (in same pod) to share volumes with"`
-
-	// Name of another component to map a specific volumes from
-	VolumeFrom string `json:"volume-from,omitempty" description:"Name of another component (in same pod) to share a specific volume with"`
-
-	// Path inside the other component to share
-	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
-}
-
 type DependencyConfig struct {
 	// Name of a required component
 	Name string `json:"name" description:"Name of a required component"`
@@ -116,6 +115,21 @@ type DependencyConfig struct {
 
 	// Wether the component should run on the same machine
 	SameMachine bool `json:"same_machine,omitempty" description:"Wether the component should run on the same machine"`
+}
+
+func (ld DependencyConfig) validate() error {
+	if ld.Name == "" {
+		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "link name must not be empty"))
+	}
+
+	// for easy validation we create a port definitions type and use its
+	// validate method
+	pds := PortDefinitions{ld.Port}
+	if err := pds.validate(); err != nil {
+		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "invalid link: %s", err.Error()))
+	}
+
+	return nil
 }
 
 type ComponentConfig struct {
@@ -199,7 +213,7 @@ type InstanceConfig struct {
 	Args []string `json:"args,omitempty" description:"List of arguments passed to the entry point of this component"`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains DomainConfig `json:"domains,omitempty" description:"List of domains to bind exposed ports to"`
+	Domains DomainDefinitions `json:"domains,omitempty" description:"List of domains to bind exposed ports to"`
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`

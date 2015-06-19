@@ -16,6 +16,10 @@ var (
 	InvalidDependencyConfigError = errgo.New("Invalid dependency configuration.")
 	InvalidScalingConfigError    = errgo.New("Invalid scaling configuration.")
 	InvalidPortConfigError       = errgo.New("Invalid port configuration.")
+	InvalidDomainDefintionError  = errgo.New("invalid domain definition")
+	InvalidLinkDefinitionError   = errgo.New("invalid link definition")
+	InvalidAppDefinitionError    = errgo.New("invalid app definition")
+	InvalidNodeDefinitionError   = errgo.New("invalid node definition")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -27,6 +31,10 @@ var (
 		IsInvalidDependencyConfig,
 		IsInvalidScalingConfig,
 		IsInvalidPortConfig,
+		IsInvalidDomainDefinition,
+		IsInvalidLinkDefinition,
+		IsInvalidAppDefinition,
+		IsInvalidNodeDefinition,
 	)
 )
 
@@ -68,6 +76,22 @@ func IsInvalidScalingConfig(err error) bool {
 
 func IsInvalidPortConfig(err error) bool {
 	return errgo.Cause(err) == InvalidPortConfigError
+}
+
+func IsInvalidDomainDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidDomainDefintionError
+}
+
+func IsInvalidLinkDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidLinkDefinitionError
+}
+
+func IsInvalidAppDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidAppDefinitionError
+}
+
+func IsInvalidNodeDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidNodeDefinitionError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError

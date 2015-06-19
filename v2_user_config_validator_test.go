@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	//"github.com/giantswarm/generic-types-go"
 	"github.com/giantswarm/user-config"
 )
 
@@ -166,7 +165,7 @@ func TestV2AppDefInvalidFieldName(t *testing.T) {
 	if err.Error() != `Cannot parse app definition. Unknown field '["nodes"]["node/a"]["foo"]' detected.` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsErrUnknownJsonField(err) {
+	if !userconfig.IsUnknownJsonField(err) {
 		t.Fatalf("expetced error to be ErrUnknownJSONField")
 	}
 }
@@ -222,7 +221,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	if err.Error() != `Cannot parse app definition. Unknown field '["nodes"]["node/fooBar"]["ima_ge"]' detected.` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsErrUnknownJsonField(err) {
+	if !userconfig.IsUnknownJsonField(err) {
 		t.Fatalf("expetced error to be ErrUnknownJSONField")
 	}
 }
@@ -241,10 +240,10 @@ func TestV2AppDefInvalidVolumeDuplicatedPath(t *testing.T) {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
 
-	if err.Error() != "Cannot parse app definition. Duplicate volume '/data' detected." {
+	if err.Error() != "duplicated volume path: /data" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsErrDuplicateVolumePath(err) {
-		t.Fatalf("expetced error to be ErrDuplicateVolumePath")
+	if !userconfig.IsInvalidVolumeConfig(err) {
+		t.Fatalf("expetced error to be InvalidVolumeConfigError")
 	}
 }

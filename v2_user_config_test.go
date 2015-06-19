@@ -7,8 +7,8 @@ import (
 
 func V2ExampleDefinition() userconfig.V2AppDefinition {
 	return userconfig.V2AppDefinition{
-		Nodes: map[string]userconfig.NodeDefinition{
-			"node/a": userconfig.NodeDefinition{
+		Nodes: userconfig.NodeDefinitions{
+			userconfig.NodeName("node/a"): userconfig.NodeDefinition{
 				Image: generictypes.MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
 				Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 			},
@@ -26,7 +26,7 @@ func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefini
 	if len(paths) != len(sizes) {
 		panic("list of path and size must be equal")
 	}
-	volumes := []userconfig.VolumeConfig{}
+	volumes := userconfig.VolumeDefinitions{}
 	for i, path := range paths {
 		volumes = append(volumes, userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(sizes[i])})
 	}

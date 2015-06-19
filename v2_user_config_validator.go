@@ -41,7 +41,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 		*ac = V2AppDefinition{}
 
 		field := strings.Split(v, ":")
-		return errgo.WithCausef(nil, ErrUnknownJSONField, "Cannot parse app definition. Unknown field '%s' detected.", field[0])
+		return errgo.WithCausef(nil, UnknownJSONFieldError, "Cannot parse app definition. Unknown field '%s' detected.", field[0])
 	}
 
 	return nil
@@ -160,39 +160,4 @@ func v2NormalizeVolumeSizes(def map[string]interface{}) {
 			volumeMap["size"] = string(volumeSize)
 		}
 	}
-}
-
-// validate performs semantic validations of this V2AppDefinition.
-// Return the first possible error.
-func (ad *V2AppDefinition) validate() error {
-	for _, n := range ad.Nodes {
-		if err := n.validate(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// validate performs semantic validations of this NodeDefinition.
-// Return the first possible error.
-func (nd *NodeDefinition) validate() error {
-	// Detect duplicate volume "path"
-	paths := make(map[string]string)
-	for _, v := range nd.Volumes {
-		path := v.Path
-		if _, found := paths[path]; found {
-			return errgo.WithCausef(nil, ErrDuplicateVolumePath, "Cannot parse app definition. Duplicate volume '%s' detected.", path)
-		}
-		paths[path] = path
-	}
-
-	for d, _ := range nd.Domains {
-		if err := d.Validate(); err != nil {
-			return Mask(err)
-		}
-	}
-
-	// No errors found
-	return nil
 }
