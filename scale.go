@@ -4,34 +4,6 @@ import (
 	"github.com/juju/errgo"
 )
 
-var (
-	defaultMinScaleSize = 1
-	MinScaleSize        = 0
-	defaultMaxScaleSize = 10
-	MaxScaleSize        = 0
-)
-
-func init() {
-	SetDefaultMinScaleSize()
-	SetDefaultMaxScaleSize()
-}
-
-func SetDefaultMinScaleSize() {
-	MinScaleSize = defaultMinScaleSize
-}
-
-func SetMinScaleSize(min int) {
-	MinScaleSize = min
-}
-
-func SetDefaultMaxScaleSize() {
-	MaxScaleSize = defaultMaxScaleSize
-}
-
-func SetMaxScaleSize(max int) {
-	MaxScaleSize = max
-}
-
 type ScaleDefinition struct {
 	// Minimum instances to launch.
 	Min int `json:"min,omitempty" description:"Minimum number of instances to launch"`
@@ -40,13 +12,25 @@ type ScaleDefinition struct {
 	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
 }
 
-func (sd ScaleDefinition) validate() error {
-	if sd.Min < MinScaleSize {
-		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be less than '%d'", sd.Min, MinScaleSize))
+func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
+	if valCtx == nil {
+		return nil
 	}
 
-	if sd.Max > MaxScaleSize {
-		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale max '%d' cannot be greater than '%d'", sd.Max, MaxScaleSize))
+	if sd.Min == 0 {
+		sd.Min = valCtx.MinScaleSize
+	}
+
+	if sd.Max == 0 {
+		sd.Max = valCtx.MaxScaleSize
+	}
+
+	if sd.Min < valCtx.MinScaleSize {
+		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be less than '%d'", sd.Min, valCtx.MinScaleSize))
+	}
+
+	if sd.Max > valCtx.MaxScaleSize {
+		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale max '%d' cannot be greater than '%d'", sd.Max, valCtx.MaxScaleSize))
 	}
 
 	if sd.Min > sd.Max {

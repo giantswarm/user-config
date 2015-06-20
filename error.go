@@ -20,6 +20,7 @@ var (
 	InvalidLinkDefinitionError   = errgo.New("invalid link definition")
 	InvalidAppDefinitionError    = errgo.New("invalid app definition")
 	InvalidNodeDefinitionError   = errgo.New("invalid node definition")
+	InvalidImageDefinitionError  = errgo.New("invalid image definition")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -35,6 +36,7 @@ var (
 		IsInvalidLinkDefinition,
 		IsInvalidAppDefinition,
 		IsInvalidNodeDefinition,
+		IsInvalidImageDefinition,
 	)
 )
 
@@ -92,6 +94,10 @@ func IsInvalidAppDefinition(err error) bool {
 
 func IsInvalidNodeDefinition(err error) bool {
 	return errgo.Cause(err) == InvalidNodeDefinitionError
+}
+
+func IsInvalidImageDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidImageDefinitionError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError

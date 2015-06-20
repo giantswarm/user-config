@@ -39,8 +39,9 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 
 	result := V2AppDefinition(adc)
 
-	// Perform semantic checks
-	if err := result.Validate(); err != nil {
+	// validate app definition without validation context. validation context is
+	// given on server side to additionally validate specific definitions.
+	if err := result.Validate(nil); err != nil {
 		return Mask(err)
 	}
 
@@ -49,14 +50,27 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type ValidationContext struct {
+	Org string
+
+	MinScaleSize int
+	MaxScaleSize int
+
+	MinVolumeSize int
+	MaxVolumeSize int
+
+	PublicDockerRegistry  string
+	PrivateDockerRegistry string
+}
+
 // validate performs semantic validations of this V2AppDefinition.
 // Return the first possible error.
-func (ad *V2AppDefinition) Validate() error {
+func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 	if len(ad.Nodes) == 0 {
 		return Mask(errgo.WithCausef(nil, InvalidAppDefinitionError, "nodes must not be empty"))
 	}
 
-	if err := ad.Nodes.validate(); err != nil {
+	if err := ad.Nodes.validate(valCtx); err != nil {
 		return Mask(err)
 	}
 
@@ -65,7 +79,7 @@ func (ad *V2AppDefinition) Validate() error {
 
 type NodeDefinitions map[NodeName]*NodeDefinition
 
-func (nds NodeDefinitions) validate() error {
+func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	for nodeName, node := range nds {
 		if err := nodeName.validate(); err != nil {
 			return Mask(err)
@@ -74,7 +88,7 @@ func (nds NodeDefinitions) validate() error {
 		// because of defaulting when validating we need to reference the to the
 		// address of the node. so its changes effect the app definition after
 		// parsing.
-		if err := nds[nodeName].validate(); err != nil {
+		if err := nds[nodeName].validate(valCtx); err != nil {
 			return err
 		}
 
@@ -123,7 +137,7 @@ func (nn NodeName) validate() error {
 type NodeDefinition struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
-	Image generictypes.DockerImage `json:"image" description:"Name of a docker image to use when running a container. The image includes tags."`
+	Image ImageDefinition `json:"image" description:"Name of a docker image to use when running a container. The image includes tags."`
 
 	// If given, overwrite the entrypoint of the docker image.
 	EntryPoint string `json:"entrypoint,omitempty" description:"If given, overwrite the entrypoint of the docker image."`
@@ -153,7 +167,11 @@ type NodeDefinition struct {
 
 // validate performs semantic validations of this NodeDefinition.
 // Return the first possible error.
-func (nd *NodeDefinition) validate() error {
+func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
+	if err := nd.Image.Validate(valCtx); err != nil {
+		return Mask(err)
+	}
+
 	if err := nd.Ports.validate(); err != nil {
 		return Mask(err)
 	}
@@ -166,19 +184,16 @@ func (nd *NodeDefinition) validate() error {
 		return Mask(err)
 	}
 
-	if err := nd.Volumes.validate(); err != nil {
+	if err := nd.Volumes.validate(valCtx); err != nil {
 		return Mask(err)
 	}
 
 	// default scale definition if not set
 	if nd.Scale == nil {
-		nd.Scale = &ScaleDefinition{
-			Min: MinScaleSize,
-			Max: MaxScaleSize,
-		}
+		nd.Scale = &ScaleDefinition{}
 	}
 
-	if err := nd.Scale.validate(); err != nil {
+	if err := nd.Scale.validate(valCtx); err != nil {
 		return Mask(err)
 	}
 

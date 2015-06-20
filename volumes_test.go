@@ -8,10 +8,13 @@ import (
 )
 
 func TestVolumesInvalidMaxSize(t *testing.T) {
-	userconfig.SetMaxVolumeSize(17)
+	valCtx := &userconfig.ValidationContext{
+		MinVolumeSize: 1,
+		MaxVolumeSize: 100,
+	}
 
-	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("18")}
-	err := vd.V2Validate()
+	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("101")}
+	err := vd.V2Validate(valCtx)
 
 	if err == nil {
 		t.Fatalf("invalid max volume size not detected")
@@ -19,21 +22,20 @@ func TestVolumesInvalidMaxSize(t *testing.T) {
 	if !userconfig.IsInvalidVolumeConfig(err) {
 		t.Fatalf("expected error to be InvalidVolumeConfigError")
 	}
-
-	userconfig.SetDefaultMaxVolumeSize()
 }
 
 func TestVolumesValidMaxSize(t *testing.T) {
-	userconfig.SetMaxVolumeSize(17)
+	valCtx := &userconfig.ValidationContext{
+		MinVolumeSize: 1,
+		MaxVolumeSize: 100,
+	}
 
-	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("17")}
-	err := vd.V2Validate()
+	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("100")}
+	err := vd.V2Validate(valCtx)
 
 	if err != nil {
 		t.Fatalf("volumeDefinition.V2Validate(): %s", err.Error())
 	}
-
-	userconfig.SetDefaultMaxVolumeSize()
 }
 
 func TestVolumesDuplicatedPath(t *testing.T) {

@@ -12,11 +12,11 @@ func V2ExampleDefinition() userconfig.V2AppDefinition {
 	return userconfig.V2AppDefinition{
 		Nodes: userconfig.NodeDefinitions{
 			userconfig.NodeName("node/a"): &userconfig.NodeDefinition{
-				Image: generictypes.MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
+				Image: userconfig.NewImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
 				Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 			},
 			userconfig.NodeName("node/b"): &userconfig.NodeDefinition{
-				Image: generictypes.MustParseDockerImage("registry.giantswarm.io/giantswarm/b:0.10.0"),
+				Image: userconfig.NewImageDefinition("registry.giantswarm.io/giantswarm/b:0.10.0"),
 				Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 			},
 		},

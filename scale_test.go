@@ -1,7 +1,6 @@
 package userconfig_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/giantswarm/user-config"
@@ -9,20 +8,20 @@ import (
 
 func TestV2AppLinksScaleDefaults(t *testing.T) {
 	a := V2ExampleDefinition()
-	raw, err := json.Marshal(a)
-	if err != nil {
-		t.Fatalf("json.Marshal failed: %v", err)
+
+	valCtx := &userconfig.ValidationContext{
+		MinScaleSize: 1,
+		MaxScaleSize: 10,
 	}
 
-	var b userconfig.V2AppDefinition
-	err = json.Unmarshal(raw, &b)
+	err := a.Validate(valCtx)
 	if err != nil {
-		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+		t.Fatalf("validation failed: %s", err.Error())
 	}
-	if b.Nodes["node/a"].Scale.Min != userconfig.MinScaleSize {
-		t.Fatalf("expetced default min scale to be '%d'", userconfig.MinScaleSize)
+	if a.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
+		t.Fatalf("expetced default min scale to be '%d'", valCtx.MinScaleSize)
 	}
-	if b.Nodes["node/a"].Scale.Max != userconfig.MaxScaleSize {
-		t.Fatalf("expetced default max scale to be '%d'", userconfig.MaxScaleSize)
+	if a.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
+		t.Fatalf("expetced default max scale to be '%d'", valCtx.MaxScaleSize)
 	}
 }

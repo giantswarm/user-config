@@ -4,34 +4,6 @@ import (
 	"github.com/juju/errgo"
 )
 
-var (
-	defaultMinVolumeSize = 1
-	MinVolumeSize        = 0
-	defaultMaxVolumeSize = 100
-	MaxVolumeSize        = 0
-)
-
-func init() {
-	SetDefaultMinVolumeSize()
-	SetDefaultMaxVolumeSize()
-}
-
-func SetDefaultMinVolumeSize() {
-	MinVolumeSize = defaultMinVolumeSize
-}
-
-func SetMinVolumeSize(min int) {
-	MinVolumeSize = min
-}
-
-func SetDefaultMaxVolumeSize() {
-	MaxVolumeSize = defaultMaxVolumeSize
-}
-
-func SetMaxVolumeSize(max int) {
-	MaxVolumeSize = max
-}
-
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
@@ -49,7 +21,11 @@ type VolumeConfig struct {
 	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
 }
 
-func (vd VolumeConfig) V2Validate() error {
+func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
+	if valCtx == nil {
+		return nil
+	}
+
 	if vd.Path == "" {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size cannot be empty"))
 	}
@@ -59,12 +35,12 @@ func (vd VolumeConfig) V2Validate() error {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vd.Size))
 	}
 
-	if intSize < MinVolumeSize {
-		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, MinVolumeSize))
+	if intSize < valCtx.MinVolumeSize {
+		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, valCtx.MinVolumeSize))
 	}
 
-	if intSize > MaxVolumeSize {
-		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, MaxVolumeSize))
+	if intSize > valCtx.MaxVolumeSize {
+		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, valCtx.MaxVolumeSize))
 	}
 
 	return nil
@@ -72,11 +48,11 @@ func (vd VolumeConfig) V2Validate() error {
 
 type VolumeDefinitions []VolumeConfig
 
-func (vds VolumeDefinitions) validate() error {
+func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
 	paths := map[string]string{}
 
 	for _, v := range vds {
-		if err := v.V2Validate(); err != nil {
+		if err := v.V2Validate(valCtx); err != nil {
 			return Mask(err)
 		}
 
