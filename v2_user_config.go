@@ -115,6 +115,54 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
+	for nodeName, nodeDef := range *nds {
+		if name == nodeName.String() {
+			return nodeDef, nil
+		}
+	}
+
+	return nil, errgo.WithCausef(nil, NodeNotFoundError, name)
+}
+
+// GetAllMountPoints returns a list of all mount points of a node, that is
+// given by name
+func (nds *NodeDefinitions) MountPoints(name string) ([]string, error) {
+	visited := make(map[string]string)
+	return nds.mountPointsRecursive(name, visited)
+}
+
+// getAllMountPoints creates a list of all mount points of a component
+func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string]string) ([]string, error) {
+	// prevent cycles
+	if _, ok := visited[name]; ok {
+		return nil, errgo.WithCausef(nil, InvalidVolumeConfigError, "volume cycle detected in '%s'", name)
+	}
+	visited[name] = name
+
+	node, err := nds.FindByName(name)
+	if err != nil {
+		return nil, Mask(err)
+	}
+
+	// get all mountpoints
+	mountPoints := []string{}
+	for _, vol := range node.Volumes {
+		if vol.Path != "" {
+			mountPoints = append(mountPoints, vol.Path)
+		} else if vol.VolumePath != "" {
+			mountPoints = append(mountPoints, vol.VolumePath)
+		} else if vol.VolumesFrom != "" {
+			p, err := nds.mountPointsRecursive(vol.VolumesFrom, visited)
+			if err != nil {
+				return nil, err
+			}
+			mountPoints = append(mountPoints, p...)
+		}
+	}
+	return mountPoints, nil
+}
+
 type NodeName string
 
 func (nn NodeName) String() string {
