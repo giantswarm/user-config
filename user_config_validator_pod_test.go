@@ -472,6 +472,29 @@ var _ = Describe("user config pod validator", func() {
 
 		})
 
+		Describe("parsing invalid volume configs, duplicate volume via different postfixes", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", ""),
+							VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")},
+							VolumeConfig{Path: "/xdata1/", Size: VolumeSize("27 GB")},
+						),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'api'.`))
+			})
+
+		})
+
 		Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
 			var err error
 

@@ -3,6 +3,7 @@ package userconfig
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -398,9 +399,9 @@ func (cc *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) err
 	for _, v := range cc.Volumes {
 		var paths []string
 		if v.Path != "" {
-			paths = []string{v.Path}
+			paths = []string{normalizeFolder(v.Path)}
 		} else if v.VolumeFrom != "" {
-			paths = []string{v.VolumePath}
+			paths = []string{normalizeFolder(v.VolumePath)}
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
@@ -441,9 +442,9 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 	mountPoints := []string{}
 	for _, v := range cc.Volumes {
 		if v.Path != "" {
-			mountPoints = append(mountPoints, v.Path)
+			mountPoints = append(mountPoints, normalizeFolder(v.Path))
 		} else if v.VolumePath != "" {
-			mountPoints = append(mountPoints, v.VolumePath)
+			mountPoints = append(mountPoints, normalizeFolder(v.VolumePath))
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
@@ -609,4 +610,16 @@ func (dc *DependencyConfig) getAlias(serviceName string) string {
 		alias = depComponent
 	}
 	return alias
+}
+
+// normalizeFolder removes any trailing path separator from the given path.
+func normalizeFolder(path string) string {
+	if path == "" {
+		return ""
+	}
+	l := len(path)
+	if os.IsPathSeparator(path[l-1]) {
+		path = path[:l-1]
+	}
+	return path
 }
