@@ -57,8 +57,8 @@ type ValidationContext struct {
 	MinScaleSize int
 	MaxScaleSize int
 
-	MinVolumeSize int
-	MaxVolumeSize int
+	MinVolumeSize VolumeSize
+	MaxVolumeSize VolumeSize
 
 	PublicDockerRegistry  string
 	PrivateDockerRegistry string
@@ -150,9 +150,9 @@ func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string
 	mountPoints := []string{}
 	for _, vol := range node.Volumes {
 		if vol.Path != "" {
-			mountPoints = append(mountPoints, vol.Path)
+			mountPoints = append(mountPoints, normalizeFolder(vol.Path))
 		} else if vol.VolumePath != "" {
-			mountPoints = append(mountPoints, vol.VolumePath)
+			mountPoints = append(mountPoints, normalizeFolder(vol.VolumePath))
 		} else if vol.VolumesFrom != "" {
 			p, err := nds.mountPointsRecursive(vol.VolumesFrom, visited)
 			if err != nil {

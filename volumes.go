@@ -35,12 +35,22 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vd.Size))
 	}
 
-	if intSize < valCtx.MinVolumeSize {
-		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, valCtx.MinVolumeSize))
+	min, err := valCtx.MaxVolumeSize.Size()
+	if err != nil {
+		return Mask(err)
 	}
 
-	if intSize > valCtx.MaxVolumeSize {
-		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, valCtx.MaxVolumeSize))
+	if intSize < min {
+		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, min))
+	}
+
+	max, err := valCtx.MaxVolumeSize.Size()
+	if err != nil {
+		return Mask(err)
+	}
+
+	if intSize > max {
+		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, max))
 	}
 
 	return nil
@@ -57,10 +67,11 @@ func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
 		}
 
 		// detect duplicate volume path
-		if _, ok := paths[v.Path]; ok {
-			return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "duplicated volume path: %s", v.Path))
+		normalized := normalizeFolder(v.Path)
+		if _, ok := paths[normalized]; ok {
+			return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "duplicated volume path: %s", normalized))
 		}
-		paths[v.Path] = v.Path
+		paths[normalized] = normalized
 	}
 
 	return nil
