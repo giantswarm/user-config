@@ -19,6 +19,14 @@ func TestUnmarshalInvalidImage(t *testing.T) {
 	}
 }
 
+func TestTypeAssertDockerImage(t *testing.T) {
+	id := userconfig.MustParseImageDefinition("registry.giantswarm.io/myorg/foo")
+	dockerImage := id.GenericDockerImage()
+	if dockerImage.Registry != "registry.giantswarm.io" {
+		t.Fatalf("failed to type assert generictypes.DockerImage")
+	}
+}
+
 func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{
 		Org:                   "myorg",
@@ -26,8 +34,8 @@ func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.MustParseImageDefinition("registry.giantswarm.io/myorg/foo")
-	err := vd.Validate(valCtx)
+	id := userconfig.MustParseImageDefinition("registry.giantswarm.io/myorg/foo")
+	err := id.Validate(valCtx)
 
 	if err != nil {
 		t.Fatalf("validating image failed: %s", err.Error())
@@ -41,8 +49,8 @@ func TestImageValidOrgWithPrivateRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/myorg/foo")
-	err := vd.Validate(valCtx)
+	id := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/myorg/foo")
+	err := id.Validate(valCtx)
 
 	if err != nil {
 		t.Fatalf("validating image failed: %s", err.Error())
@@ -56,8 +64,8 @@ func TestImageInvalidOrgWithPublicRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.MustParseImageDefinition("registry.giantswarm.io/otherorg/foo")
-	err := vd.Validate(valCtx)
+	id := userconfig.MustParseImageDefinition("registry.giantswarm.io/otherorg/foo")
+	err := id.Validate(valCtx)
 
 	if err == nil {
 		t.Fatalf("invalid image not detected")
@@ -74,8 +82,8 @@ func TestImageInvalidOrgWithPrivateRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/otherorg/foo")
-	err := vd.Validate(valCtx)
+	id := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/otherorg/foo")
+	err := id.Validate(valCtx)
 
 	if err == nil {
 		t.Fatalf("invalid image not detected")

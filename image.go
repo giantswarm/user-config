@@ -15,6 +15,10 @@ func MustParseImageDefinition(id string) ImageDefinition {
 	}
 }
 
+func (id ImageDefinition) GenericDockerImage() generictypes.DockerImage {
+	return generictypes.MustParseDockerImage(id.String())
+}
+
 func (id ImageDefinition) Validate(valCtx *ValidationContext) error {
 	if valCtx == nil {
 		return nil
