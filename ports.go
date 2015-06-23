@@ -7,9 +7,17 @@ import (
 
 type PortDefinitions []generictypes.DockerPort
 
+// Validate tries to validate the current PortDefinitions. If valCtx is nil,
+// nothing can be validated. The given valCtx must provide at least one
+// protocol, or Validate returns an error. The currently valid one should only
+// be TCP.
 func (pds PortDefinitions) Validate(valCtx *ValidationContext) error {
 	if valCtx == nil {
 		return nil
+	}
+
+	if len(valCtx.Protocols) == 0 {
+		return errgo.Newf("missing protocol in validation context")
 	}
 
 	for _, port := range pds {
