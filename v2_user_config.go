@@ -235,19 +235,22 @@ type ExposeDefinition struct {
 
 // TODO Node.IsService() bool
 
-// ParseV2AppName removes any formatting from b and returns the first 4 bytes
+// V2GenerateAppName removes any formatting from b and returns the first 4 bytes
 // of its MD5 checksum.
-func ParseV2AppName(b []byte) (string, error) {
+func V2GenerateAppName(b []byte) (string, error) {
+	// parse and validate
 	appDef, err := ParseV2AppDefinition(b)
 	if err != nil {
 		return "", Mask(err)
 	}
 
+	// remove formatting
 	clean, err := json.Marshal(appDef)
 	if err != nil {
 		return "", Mask(err)
 	}
 
+	// create hash
 	s := md5.Sum(clean)
 	return fmt.Sprintf("%x", s[0:4]), nil
 }
