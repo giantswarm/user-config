@@ -13,7 +13,7 @@ func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.NewImageDefinition("registry.giantswarm.io/myorg/foo")
+	vd := userconfig.MustParseImageDefinition("registry.giantswarm.io/myorg/foo")
 	err := vd.Validate(valCtx)
 
 	if err != nil {
@@ -28,7 +28,7 @@ func TestImageValidOrgWithPrivateRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.NewImageDefinition("registry.private.giantswarm.io/myorg/foo")
+	vd := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/myorg/foo")
 	err := vd.Validate(valCtx)
 
 	if err != nil {
@@ -43,7 +43,7 @@ func TestImageInvalidOrgWithPublicRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.NewImageDefinition("registry.giantswarm.io/otherorg/foo")
+	vd := userconfig.MustParseImageDefinition("registry.giantswarm.io/otherorg/foo")
 	err := vd.Validate(valCtx)
 
 	if err == nil {
@@ -61,7 +61,7 @@ func TestImageInvalidOrgWithPrivateRegistry(t *testing.T) {
 		PrivateDockerRegistry: "registry.private.giantswarm.io",
 	}
 
-	vd := userconfig.NewImageDefinition("registry.private.giantswarm.io/otherorg/foo")
+	vd := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/otherorg/foo")
 	err := vd.Validate(valCtx)
 
 	if err == nil {

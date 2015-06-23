@@ -9,7 +9,7 @@ import (
 
 type ImageDefinition string
 
-func NewImageDefinition(id string) ImageDefinition {
+func MustParseImageDefinition(id string) ImageDefinition {
 	return ImageDefinition(generictypes.MustParseDockerImage(id).String())
 }
 
