@@ -20,7 +20,8 @@ type V2AppDefinition struct {
 }
 
 func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
-	// We fix the json buffer so CheckForUnknownFields doesn't complain about `Components`.
+	// We fix the json buffer so V2CheckForUnknownFields doesn't complain about
+	// `Nodes` (with uper N).
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
 		return err
@@ -125,14 +126,14 @@ func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
 	return nil, errgo.WithCausef(nil, NodeNotFoundError, name)
 }
 
-// GetAllMountPoints returns a list of all mount points of a node, that is
-// given by name
+// MountPoints returns a list of all mount points of a node, that is given by
+// name
 func (nds *NodeDefinitions) MountPoints(name string) ([]string, error) {
 	visited := make(map[string]string)
 	return nds.mountPointsRecursive(name, visited)
 }
 
-// getAllMountPoints creates a list of all mount points of a component
+// mountPointsRecursive creates a list of all mount points of a node
 func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string]string) ([]string, error) {
 	// prevent cycles
 	if _, ok := visited[name]; ok {
@@ -181,7 +182,8 @@ func (nn NodeName) validate() error {
 	return nil
 }
 
-// Node is either a runnable service inside a container or a node definition.
+// NodeDefinition represents either a runnable service inside a container or a
+// node configuration
 type NodeDefinition struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.

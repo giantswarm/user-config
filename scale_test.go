@@ -19,9 +19,9 @@ func TestV2AppLinksScaleDefaults(t *testing.T) {
 		t.Fatalf("validation failed: %s", err.Error())
 	}
 	if a.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
-		t.Fatalf("expetced default min scale to be '%d'", valCtx.MinScaleSize)
+		t.Fatalf("expected default min scale to be '%d'", valCtx.MinScaleSize)
 	}
 	if a.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
-		t.Fatalf("expetced default max scale to be '%d'", valCtx.MaxScaleSize)
+		t.Fatalf("expected default max scale to be '%d'", valCtx.MaxScaleSize)
 	}
 }
