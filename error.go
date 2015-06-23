@@ -7,6 +7,7 @@ import (
 
 var (
 	UnknownJSONFieldError        = errgo.New("Unknown JSON field.")
+	MissingJSONFieldError        = errgo.New("missing JSON field")
 	InvalidSizeError             = errgo.New("Invalid size.")
 	DuplicateVolumePathError     = errgo.New("Duplicate volume path.")
 	InvalidEnvListFormatError    = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
@@ -26,6 +27,7 @@ var (
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
+		IsMissingJsonField,
 		IsInvalidSize,
 		IsDuplicateVolumePath,
 		IsCrossServicePod,
@@ -46,6 +48,10 @@ var (
 
 func IsUnknownJsonField(err error) bool {
 	return errgo.Cause(err) == UnknownJSONFieldError
+}
+
+func IsMissingJsonField(err error) bool {
+	return errgo.Cause(err) == MissingJSONFieldError
 }
 
 func IsInvalidSize(err error) bool {
