@@ -1,10 +1,23 @@
 package userconfig_test
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/giantswarm/user-config"
 )
+
+func TestUnmarshalInvalidImage(t *testing.T) {
+	var newId userconfig.ImageDefinition
+	err := json.Unmarshal([]byte(`"foo-bar/image"`), &newId)
+	if err == nil {
+		t.Fatalf("invalid image not detected")
+	}
+	if !strings.Contains(err.Error(), "foo-bar") {
+		t.Fatalf("expected error to contain invalid image part")
+	}
+}
 
 func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{

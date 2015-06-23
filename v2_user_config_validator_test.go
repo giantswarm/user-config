@@ -58,17 +58,17 @@ func TestParseV2AppDef(t *testing.T) {
 		t.Fatalf("invalid port: %s", port.String())
 	}
 
-	if nodeA.Image.DockerImage().Registry != "registry" {
-		t.Fatalf("invalid registry: %s", nodeA.Image.DockerImage().Registry)
+	if nodeA.Image.Registry != "registry" {
+		t.Fatalf("invalid registry: %s", nodeA.Image.Registry)
 	}
-	if nodeA.Image.DockerImage().Namespace != "namespace" {
-		t.Fatalf("invalid namespace: %s", nodeA.Image.DockerImage().Namespace)
+	if nodeA.Image.Namespace != "namespace" {
+		t.Fatalf("invalid namespace: %s", nodeA.Image.Namespace)
 	}
-	if nodeA.Image.DockerImage().Repository != "repository" {
-		t.Fatalf("invalid repository: %s", nodeA.Image.DockerImage().Repository)
+	if nodeA.Image.Repository != "repository" {
+		t.Fatalf("invalid repository: %s", nodeA.Image.Repository)
 	}
-	if nodeA.Image.DockerImage().Version != "version" {
-		t.Fatalf("invalid version: %s", nodeA.Image.DockerImage().Version)
+	if nodeA.Image.Version != "version" {
+		t.Fatalf("invalid version: %s", nodeA.Image.Version)
 	}
 
 	nodeB, ok := appDef.Nodes["node/b"]
@@ -76,17 +76,17 @@ func TestParseV2AppDef(t *testing.T) {
 		t.Fatalf("missing node")
 	}
 
-	if nodeB.Image.DockerImage().Registry != "" {
-		t.Fatalf("invalid registry: %s", nodeB.Image.DockerImage().Registry)
+	if nodeB.Image.Registry != "" {
+		t.Fatalf("invalid registry: %s", nodeB.Image.Registry)
 	}
-	if nodeB.Image.DockerImage().Namespace != "dockerfile" {
-		t.Fatalf("invalid namespace: %s", nodeB.Image.DockerImage().Namespace)
+	if nodeB.Image.Namespace != "dockerfile" {
+		t.Fatalf("invalid namespace: %s", nodeB.Image.Namespace)
 	}
-	if nodeB.Image.DockerImage().Repository != "redis" {
-		t.Fatalf("invalid repository: %s", nodeB.Image.DockerImage().Repository)
+	if nodeB.Image.Repository != "redis" {
+		t.Fatalf("invalid repository: %s", nodeB.Image.Repository)
 	}
-	if nodeB.Image.DockerImage().Version != "" {
-		t.Fatalf("invalid version: %s", nodeB.Image.DockerImage().Version)
+	if nodeB.Image.Version != "" {
+		t.Fatalf("invalid version: %s", nodeB.Image.Version)
 	}
 }
 
@@ -133,17 +133,17 @@ func TestV2AppDefFixFieldName(t *testing.T) {
 		t.Fatalf("missing node")
 	}
 
-	if nodeFooBar.Image.DockerImage().Registry != "registry" {
-		t.Fatalf("invalid registry: %s", nodeFooBar.Image.DockerImage().Registry)
+	if nodeFooBar.Image.Registry != "registry" {
+		t.Fatalf("invalid registry: %s", nodeFooBar.Image.Registry)
 	}
-	if nodeFooBar.Image.DockerImage().Namespace != "namespace" {
-		t.Fatalf("invalid namespace: %s", nodeFooBar.Image.DockerImage().Namespace)
+	if nodeFooBar.Image.Namespace != "namespace" {
+		t.Fatalf("invalid namespace: %s", nodeFooBar.Image.Namespace)
 	}
-	if nodeFooBar.Image.DockerImage().Repository != "repository" {
-		t.Fatalf("invalid repository: %s", nodeFooBar.Image.DockerImage().Repository)
+	if nodeFooBar.Image.Repository != "repository" {
+		t.Fatalf("invalid repository: %s", nodeFooBar.Image.Repository)
 	}
-	if nodeFooBar.Image.DockerImage().Version != "version" {
-		t.Fatalf("invalid version: %s", nodeFooBar.Image.DockerImage().Version)
+	if nodeFooBar.Image.Version != "version" {
+		t.Fatalf("invalid version: %s", nodeFooBar.Image.Version)
 	}
 }
 

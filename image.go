@@ -1,31 +1,18 @@
 package userconfig
 
 import (
-	"encoding/json"
-
 	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
 )
 
-type ImageDefinition string
+type ImageDefinition struct {
+	generictypes.DockerImage
+}
 
 func MustParseImageDefinition(id string) ImageDefinition {
-	return ImageDefinition(generictypes.MustParseDockerImage(id).String())
-}
-
-func (id ImageDefinition) DockerImage() generictypes.DockerImage {
-	return generictypes.MustParseDockerImage(string(id))
-}
-
-func (id *ImageDefinition) UnmarshalJSON(data []byte) error {
-	var dockerImage generictypes.DockerImage
-	if err := json.Unmarshal(data, &dockerImage); err != nil {
-		return err
+	return ImageDefinition{
+		generictypes.MustParseDockerImage(id),
 	}
-
-	*id = ImageDefinition(dockerImage.String())
-
-	return nil
 }
 
 func (id ImageDefinition) Validate(valCtx *ValidationContext) error {
@@ -33,14 +20,13 @@ func (id ImageDefinition) Validate(valCtx *ValidationContext) error {
 		return nil
 	}
 
-	image := id.DockerImage()
-	if isGSRegistry(image, valCtx) && image.Namespace != valCtx.Org {
-		return Mask(errgo.WithCausef(nil, InvalidImageDefinitionError, "image namespace '%s' must match organization '%s'", image.Namespace, valCtx.Org))
+	if id.isGSRegistry(valCtx) && id.Namespace != valCtx.Org {
+		return Mask(errgo.WithCausef(nil, InvalidImageDefinitionError, "image namespace '%s' must match organization '%s'", id.Namespace, valCtx.Org))
 	}
 
 	return nil
 }
 
-func isGSRegistry(image generictypes.DockerImage, valCtx *ValidationContext) bool {
-	return image.Registry == valCtx.PublicDockerRegistry || image.Registry == valCtx.PrivateDockerRegistry
+func (id ImageDefinition) isGSRegistry(valCtx *ValidationContext) bool {
+	return id.Registry == valCtx.PublicDockerRegistry || id.Registry == valCtx.PrivateDockerRegistry
 }
