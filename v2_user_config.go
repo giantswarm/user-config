@@ -47,7 +47,8 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 }
 
 type ValidationContext struct {
-	Org string
+	Org       string
+	Protocols []string
 
 	MinScaleSize int
 	MaxScaleSize int
@@ -199,7 +200,7 @@ func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 		return Mask(err)
 	}
 
-	if err := nd.Ports.validate(); err != nil {
+	if err := nd.Ports.Validate(valCtx); err != nil {
 		return Mask(err)
 	}
 
@@ -207,7 +208,7 @@ func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 		return Mask(err)
 	}
 
-	if err := nd.Links.validate(); err != nil {
+	if err := nd.Links.Validate(valCtx); err != nil {
 		return Mask(err)
 	}
 
