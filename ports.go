@@ -7,9 +7,13 @@ import (
 
 type PortDefinitions []generictypes.DockerPort
 
-func (pds PortDefinitions) validate() error {
+func (pds PortDefinitions) Validate(valCtx *ValidationContext) error {
+	if valCtx == nil {
+		return nil
+	}
+
 	for _, port := range pds {
-		if port.Protocol != generictypes.ProtocolTCP {
+		if !contains(valCtx.Protocols, port.Protocol) {
 			return Mask(errgo.WithCausef(nil, InvalidPortConfigError, "invalid protocol '%s' for port '%s', expected %s", port.Protocol, port.Port, generictypes.ProtocolTCP))
 		}
 	}
@@ -22,6 +26,16 @@ func (pds PortDefinitions) contains(port generictypes.DockerPort) bool {
 		// generictypes.DockerPort implements Equals to properly compare the
 		// format "<port>/<protocol>"
 		if pd.Equals(port) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func contains(protocols []string, protocol string) bool {
+	for _, p := range protocols {
+		if p == protocol {
 			return true
 		}
 	}

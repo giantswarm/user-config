@@ -63,6 +63,16 @@ func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinit
 	return appDef
 }
 
+func NewValidationContext() *userconfig.ValidationContext {
+	return &userconfig.ValidationContext{
+		Protocols:     []string{generictypes.ProtocolTCP},
+		MinScaleSize:  1,
+		MaxScaleSize:  10,
+		MinVolumeSize: userconfig.NewVolumeSize(1, userconfig.GB),
+		MaxVolumeSize: userconfig.NewVolumeSize(100, userconfig.GB),
+	}
+}
+
 func TestV2AppValidLinks(t *testing.T) {
 	a := V2ExampleDefinitionWithLinks([]string{"node/b"}, []string{"80/tcp"})
 	_, err := json.Marshal(a)

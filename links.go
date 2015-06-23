@@ -6,11 +6,11 @@ import (
 
 type LinkDefinitions []DependencyConfig
 
-func (lds LinkDefinitions) validate() error {
+func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 	links := map[string]bool{}
 
 	for _, link := range lds {
-		if err := link.validate(); err != nil {
+		if err := link.Validate(valCtx); err != nil {
 			return Mask(err)
 		}
 

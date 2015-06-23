@@ -2,17 +2,11 @@ package userconfig_test
 
 import (
 	"testing"
-
-	"github.com/giantswarm/user-config"
 )
 
 func TestV2AppLinksScaleDefaults(t *testing.T) {
 	a := V2ExampleDefinition()
-
-	valCtx := &userconfig.ValidationContext{
-		MinScaleSize: 1,
-		MaxScaleSize: 10,
-	}
+	valCtx := NewValidationContext()
 
 	err := a.Validate(valCtx)
 	if err != nil {

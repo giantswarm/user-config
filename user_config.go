@@ -93,7 +93,7 @@ type DependencyConfig struct {
 	SameMachine bool `json:"same_machine,omitempty" description:"Wether the component should run on the same machine"`
 }
 
-func (ld DependencyConfig) validate() error {
+func (ld DependencyConfig) Validate(valCtx *ValidationContext) error {
 	if ld.Name == "" {
 		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "link name must not be empty"))
 	}
@@ -101,7 +101,7 @@ func (ld DependencyConfig) validate() error {
 	// for easy validation we create a port definitions type and use its
 	// validate method
 	pds := PortDefinitions{ld.Port}
-	if err := pds.validate(); err != nil {
+	if err := pds.Validate(valCtx); err != nil {
 		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "invalid link: %s", err.Error()))
 	}
 
