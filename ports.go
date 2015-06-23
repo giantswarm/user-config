@@ -14,7 +14,7 @@ func (pds PortDefinitions) Validate(valCtx *ValidationContext) error {
 
 	for _, port := range pds {
 		if !contains(valCtx.Protocols, port.Protocol) {
-			return Mask(errgo.WithCausef(nil, InvalidPortConfigError, "invalid protocol '%s' for port '%s', expected %s", port.Protocol, port.Port, generictypes.ProtocolTCP))
+			return Mask(errgo.WithCausef(nil, InvalidPortConfigError, "invalid protocol '%s' for port '%s', expected one of %v", port.Protocol, port.Port, valCtx.Protocols))
 		}
 	}
 
