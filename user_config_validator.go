@@ -160,9 +160,10 @@ func normalizeVolumeSizes(config map[string]interface{}) {
 	}
 }
 
-// getArrayEntry tries to get an entry in the given map that is an array of objects.
-func getArrayEntry(config map[string]interface{}, key string) []interface{} {
-	entry, ok := config[key]
+// getArrayEntry tries to get an entry in the given map that is an array of
+// objects.
+func getArrayEntry(def map[string]interface{}, key string) []interface{} {
+	entry, ok := def[key]
 	if !ok {
 		// No key element found
 		return nil
@@ -547,7 +548,7 @@ func (sc *ServiceConfig) validateUniquePortsInPods() error {
 // validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set of the same
 func (sc *ServiceConfig) validateScalingPolicyInPods() error {
 	// Collect all scaling policies per pod
-	pod2policies := make(map[string][]ScalingPolicyConfig)
+	pod2policies := make(map[string][]ScaleDefinition)
 	for _, c := range sc.Components {
 		pn := c.PodConfig.PodName
 		if pn == "" {
@@ -560,7 +561,7 @@ func (sc *ServiceConfig) validateScalingPolicyInPods() error {
 		}
 		list, ok := pod2policies[pn]
 		if !ok {
-			list = []ScalingPolicyConfig{}
+			list = []ScaleDefinition{}
 		}
 		list = append(list, *c.ScalingPolicy)
 		pod2policies[pn] = list

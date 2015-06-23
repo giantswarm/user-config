@@ -56,7 +56,7 @@ var _ = Describe("user config pod validator", func() {
 	}
 
 	addScale := func(config ComponentConfig, min, max int) ComponentConfig {
-		config.ScalingPolicy = &ScalingPolicyConfig{
+		config.ScalingPolicy = &ScaleDefinition{
 			Min: min,
 			Max: max,
 		}
