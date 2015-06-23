@@ -4,15 +4,10 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
-)
-
-var (
-	nodeNameRegExp = regexp.MustCompile("^[a-z0-9A-Z_/-]{0,99}$")
 )
 
 type V2AppDefinition struct {
@@ -82,7 +77,7 @@ type NodeDefinitions map[NodeName]*NodeDefinition
 
 func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	for nodeName, node := range nds {
-		if err := nodeName.validate(); err != nil {
+		if err := nodeName.Validate(); err != nil {
 			return Mask(err)
 		}
 
@@ -162,24 +157,6 @@ func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string
 		}
 	}
 	return mountPoints, nil
-}
-
-type NodeName string
-
-func (nn NodeName) String() string {
-	return string(nn)
-}
-
-func (nn NodeName) validate() error {
-	if nn == "" {
-		return Mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "name must not be empty"))
-	}
-
-	if !nodeNameRegExp.MatchString(nn.String()) {
-		return Mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "name '%s' must match regexp: %s", nn, nodeNameRegExp))
-	}
-
-	return nil
 }
 
 // NodeDefinition represents either a runnable service inside a container or a

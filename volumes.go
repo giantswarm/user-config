@@ -35,7 +35,7 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vd.Size))
 	}
 
-	min, err := valCtx.MaxVolumeSize.Size()
+	min, err := valCtx.MaxVolumeSize.SizeInGB()
 	if err != nil {
 		return Mask(err)
 	}
@@ -44,7 +44,7 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 		return Mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, min))
 	}
 
-	max, err := valCtx.MaxVolumeSize.Size()
+	max, err := valCtx.MaxVolumeSize.SizeInGB()
 	if err != nil {
 		return Mask(err)
 	}

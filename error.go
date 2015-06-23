@@ -21,6 +21,7 @@ var (
 	InvalidAppDefinitionError    = errgo.New("invalid app definition")
 	InvalidNodeDefinitionError   = errgo.New("invalid node definition")
 	InvalidImageDefinitionError  = errgo.New("invalid image definition")
+	InvalidNodeNameError         = errgo.New("invalid node name")
 	NodeNotFoundError            = errgo.New("node not found")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
@@ -38,6 +39,7 @@ var (
 		IsInvalidAppDefinition,
 		IsInvalidNodeDefinition,
 		IsInvalidImageDefinition,
+		IsInvalidNodeName,
 		IsNodeNotFound,
 	)
 )
@@ -100,6 +102,10 @@ func IsInvalidNodeDefinition(err error) bool {
 
 func IsInvalidImageDefinition(err error) bool {
 	return errgo.Cause(err) == InvalidImageDefinitionError
+}
+
+func IsInvalidNodeName(err error) bool {
+	return errgo.Cause(err) == InvalidNodeNameError
 }
 
 func IsNodeNotFound(err error) bool {
