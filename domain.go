@@ -28,7 +28,7 @@ func (dc DomainDefinitions) validate(exportedPorts PortDefinitions) error {
 		}
 
 		if !exportedPorts.contains(domainPort) {
-			return Mask(errgo.WithCausef(nil, InvalidDomainDefintionError, "port '%s' of domain '%s' must be exported", domainPort.Port, domainName))
+			return Mask(errgo.WithCausef(nil, InvalidDomainDefinitionError, "port '%s' of domain '%s' must be exported", domainPort.Port, domainName))
 		}
 	}
 
