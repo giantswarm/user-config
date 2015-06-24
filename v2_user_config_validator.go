@@ -36,15 +36,38 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 		return Mask(err)
 	}
 
-	diff := pretty.Diff(dirtyMap, cleanMap)
-	for _, v := range diff {
+	diffs := pretty.Diff(dirtyMap, cleanMap)
+	for _, diff := range diffs {
 		*ac = V2AppDefinition{}
-
-		field := strings.Split(v, ":")
-		return errgo.WithCausef(nil, UnknownJSONFieldError, "Cannot parse app definition. Unknown field '%s' detected.", field[0])
+		return prettyJSONFieldError(diff)
 	}
 
 	return nil
+}
+
+func prettyJSONFieldError(diff string) error {
+	parts := strings.Split(diff, ":")
+	if len(parts) != 2 {
+		return errgo.WithCausef(nil, InternalError, "invalid diff format")
+	}
+	path := parts[0]
+
+	reason := strings.Split(parts[1], "!=")
+	if len(parts) != 2 {
+		return errgo.WithCausef(nil, InternalError, "invalid diff format")
+	}
+	missing := strings.Contains(reason[0], "missing")
+	unknown := strings.Contains(reason[1], "missing")
+
+	if missing {
+		return errgo.WithCausef(nil, MissingJSONFieldError, "missing JSON field: %s", path)
+	}
+
+	if unknown {
+		return errgo.WithCausef(nil, UnknownJSONFieldError, "unknown JSON field: %s", path)
+	}
+
+	return errgo.WithCausef(nil, InternalError, "invalid diff format")
 }
 
 // getMapEntry tries to get an entry in the given map that is a string map of

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
@@ -38,12 +37,10 @@ func CheckForUnknownFields(b []byte, ac *AppDefinition) error {
 		return Mask(err)
 	}
 
-	diff := pretty.Diff(dirtyMap, cleanMap)
-	for _, v := range diff {
+	diffs := pretty.Diff(dirtyMap, cleanMap)
+	for _, diff := range diffs {
 		*ac = AppDefinition{}
-
-		field := strings.Split(v, ":")
-		return errgo.WithCausef(nil, UnknownJSONFieldError, "Cannot parse app config. Unknown field '%s' detected.", field[0])
+		return prettyJSONFieldError(diff)
 	}
 
 	return nil

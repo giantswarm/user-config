@@ -90,29 +90,6 @@ func TestParseV2AppDef(t *testing.T) {
 	}
 }
 
-func TestV2AppDefInvalidFieldName(t *testing.T) {
-	b := []byte(`{
-		"nodes": {
-			"node/a": {
-				"image": "registry/namespace/repository:version",
-				"foo": [ "80/tcp" ]
-			}
-		}
-	}`)
-
-	var appDef userconfig.V2AppDefinition
-	err := json.Unmarshal(b, &appDef)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
-	}
-	if err.Error() != `Cannot parse app definition. Unknown field '["nodes"]["node/a"]["foo"]' detected.` {
-		t.Fatalf("expected proper error, got: %s", err.Error())
-	}
-	if !userconfig.IsUnknownJsonField(err) {
-		t.Fatalf("expetced error to be UnknownJSONFieldError")
-	}
-}
-
 func TestV2AppDefFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"Nodes": {
@@ -150,7 +127,7 @@ func TestV2AppDefFixFieldName(t *testing.T) {
 func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"nodes": {
-			"node/fooBar": {
+			"foo/bar": {
 				"imaGe": "registry/namespace/repository:version"
 			}
 		}
@@ -161,7 +138,51 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `Cannot parse app definition. Unknown field '["nodes"]["node/fooBar"]["ima_ge"]' detected.` {
+	if err.Error() != `unknown JSON field: ["nodes"]["foo/bar"]["ima_ge"]` {
+		t.Fatalf("expected proper error, got: %s", err.Error())
+	}
+	if !userconfig.IsUnknownJsonField(err) {
+		t.Fatalf("expetced error to be UnknownJSONFieldError")
+	}
+}
+
+func TestUnmarshalV2AppDefMissingField(t *testing.T) {
+	// "image" is missing
+	b := []byte(`{
+		"nodes": {
+			"foo/bar": {}
+		}
+	}`)
+
+	var appDef userconfig.V2AppDefinition
+	err := json.Unmarshal(b, &appDef)
+	if err == nil {
+		t.Fatalf("json.Unmarshal NOT failed")
+	}
+	if err.Error() != `missing JSON field: ["nodes"]["foo/bar"]["image"]` {
+		t.Fatalf("expected proper error, got: %s", err.Error())
+	}
+	if !userconfig.IsMissingJsonField(err) {
+		t.Fatalf("expetced error to be MissingJSONFieldError")
+	}
+}
+
+func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
+	b := []byte(`{
+		"nodes": {
+			"foo/bar": {
+				"image": "registry/namespace/repository:version",
+				"unknown": "unknown"
+			}
+		}
+	}`)
+
+	var appDef userconfig.V2AppDefinition
+	err := json.Unmarshal(b, &appDef)
+	if err == nil {
+		t.Fatalf("json.Unmarshal NOT failed")
+	}
+	if err.Error() != `unknown JSON field: ["nodes"]["foo/bar"]["unknown"]` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsUnknownJsonField(err) {

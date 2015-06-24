@@ -209,6 +209,7 @@ var _ = Describe("user config validator", func() {
 
 		Describe("parsing app-config with unknown field", func() {
 			BeforeEach(func() {
+				// unknown JSON field "foo"
 				byteSlice = []byte(`{
 		          "app_name": "test-app-name",
 		          "foo":1,
@@ -224,7 +225,7 @@ var _ = Describe("user config validator", func() {
 
 			It("should throw error UnknownJSONFieldError", func() {
 				Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["foo"]' detected.`))
+				Expect(err.Error()).To(Equal(`unknown JSON field: ["foo"]`))
 			})
 
 			It("should not parse given app name", func() {
@@ -234,6 +235,7 @@ var _ = Describe("user config validator", func() {
 
 		Describe("parsing app-config with unknown fields", func() {
 			BeforeEach(func() {
+				// unknown JSON field "volumne"
 				byteSlice = []byte(`{
 		          "app_name": "test-app-name",
 		          "services": [
@@ -267,7 +269,7 @@ var _ = Describe("user config validator", func() {
 
 			It("should detect first occuring error and throw UnknownJSONFieldError", func() {
 				Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["components"][1]["volume"]' detected.`))
+				Expect(err.Error()).To(Equal(`unknown JSON field: ["services"][0]["components"][1]["volume"]`))
 			})
 
 			It("should not parse given app name", func() {
@@ -559,7 +561,7 @@ var _ = Describe("user config validator", func() {
 
 					It("should throw error", func() {
 						Expect(userconfig.IsUnknownJsonField(err)).To(BeTrue())
-						Expect(err.Error()).To(Equal(`Cannot parse app config. Unknown field '["services"][0]["comp_onents"]' detected.`))
+						Expect(err.Error()).To(Equal(`unknown JSON field: ["services"][0]["comp_onents"]`))
 					})
 
 					It("should not parse given app name", func() {

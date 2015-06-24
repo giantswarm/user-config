@@ -7,6 +7,7 @@ import (
 
 var (
 	UnknownJSONFieldError        = errgo.New("Unknown JSON field.")
+	MissingJSONFieldError        = errgo.New("missing JSON field")
 	InvalidSizeError             = errgo.New("Invalid size.")
 	DuplicateVolumePathError     = errgo.New("Duplicate volume path.")
 	InvalidEnvListFormatError    = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
@@ -23,9 +24,11 @@ var (
 	InvalidImageDefinitionError  = errgo.New("invalid image definition")
 	InvalidNodeNameError         = errgo.New("invalid node name")
 	NodeNotFoundError            = errgo.New("node not found")
+	InternalError                = errgo.New("internal error")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
+		IsMissingJsonField,
 		IsInvalidSize,
 		IsDuplicateVolumePath,
 		IsCrossServicePod,
@@ -41,11 +44,16 @@ var (
 		IsInvalidImageDefinition,
 		IsInvalidNodeName,
 		IsNodeNotFound,
+		IsInternal,
 	)
 )
 
 func IsUnknownJsonField(err error) bool {
 	return errgo.Cause(err) == UnknownJSONFieldError
+}
+
+func IsMissingJsonField(err error) bool {
+	return errgo.Cause(err) == MissingJSONFieldError
 }
 
 func IsInvalidSize(err error) bool {
@@ -110,6 +118,10 @@ func IsInvalidNodeName(err error) bool {
 
 func IsNodeNotFound(err error) bool {
 	return errgo.Cause(err) == NodeNotFoundError
+}
+
+func IsInternal(err error) bool {
+	return errgo.Cause(err) == InternalError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError
