@@ -48,13 +48,13 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 func prettyJSONFieldError(diff string) error {
 	parts := strings.Split(diff, ":")
 	if len(parts) != 2 {
-		panic("invalid diff format")
+		return errgo.WithCausef(nil, InternalError, "invalid diff format")
 	}
 	path := parts[0]
 
 	reason := strings.Split(parts[1], "!=")
 	if len(parts) != 2 {
-		panic("invalid diff format")
+		return errgo.WithCausef(nil, InternalError, "invalid diff format")
 	}
 	missing := strings.Contains(reason[0], "missing")
 	unknown := strings.Contains(reason[1], "missing")
@@ -67,7 +67,7 @@ func prettyJSONFieldError(diff string) error {
 		return errgo.WithCausef(nil, UnknownJSONFieldError, "unknown JSON field: %s", path)
 	}
 
-	panic("invalid diff format")
+	return errgo.WithCausef(nil, InternalError, "invalid diff format")
 }
 
 // getMapEntry tries to get an entry in the given map that is a string map of
