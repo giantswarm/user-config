@@ -100,3 +100,60 @@ func TestV2AppLinksInvalidNode(t *testing.T) {
 		t.Fatalf("expetced error to be InvalidNodeDefinitionError")
 	}
 }
+
+func TestV2AppSetDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+	valCtx := NewValidationContext()
+
+	if err := a.Validate(valCtx); err != nil {
+		t.Fatalf("validating app failed: %#v", err)
+	}
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	if b.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
+		t.Fatalf("min scale size not set")
+	}
+
+	if b.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
+		t.Fatalf("max scale size not set")
+	}
+}
+
+func TestV2AppHideDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+	valCtx := NewValidationContext()
+
+	if err := a.Validate(valCtx); err != nil {
+		t.Fatalf("validating app failed: %#v", err)
+	}
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	c, err := b.HideDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("hiding defaults failed: %s", err.Error())
+	}
+
+	if c.Nodes["node/a"].Scale != nil {
+		t.Fatalf("scale not hidden")
+	}
+}

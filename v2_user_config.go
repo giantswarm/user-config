@@ -74,6 +74,18 @@ func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+// HideDefaults uses the given validation context to determine what definition
+// details should be hidden. The caller can clean the definition that way to
+// not confuse the user with information he has not set by himself.
+func (ad *V2AppDefinition) HideDefaults(valCtx *ValidationContext) (*V2AppDefinition, error) {
+	if valCtx == nil {
+		return &V2AppDefinition{}, errgo.WithCausef(nil, MissingValidationContextError, "cannot hide defaults")
+	}
+
+	ad.Nodes = ad.Nodes.hideDefaults(valCtx)
+	return ad, nil
+}
+
 type NodeDefinitions map[NodeName]*NodeDefinition
 
 func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
@@ -86,7 +98,7 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		// address of the node. so its changes effect the app definition after
 		// parsing.
 		if err := nds[nodeName].validate(valCtx); err != nil {
-			return err
+			return Mask(err)
 		}
 
 		// detect invalid links
@@ -110,6 +122,14 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	}
 
 	return nil
+}
+
+func (nds NodeDefinitions) hideDefaults(valCtx *ValidationContext) NodeDefinitions {
+	for nodeName, node := range nds {
+		nds[nodeName] = node.hideDefaults(valCtx)
+	}
+
+	return nds
 }
 
 func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
@@ -226,6 +246,13 @@ func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 	}
 
 	return nil
+}
+
+// validate performs semantic validations of this NodeDefinition.
+// Return the first possible error.
+func (nd *NodeDefinition) hideDefaults(valCtx *ValidationContext) *NodeDefinition {
+	nd.Scale = nd.Scale.hideDefaults(valCtx)
+	return nd
 }
 
 type ExposeDefinition struct {

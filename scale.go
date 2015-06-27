@@ -39,3 +39,11 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 
 	return nil
 }
+
+func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinition {
+	if sd.Min == valCtx.MinScaleSize && sd.Max == valCtx.MaxScaleSize {
+		return nil
+	}
+
+	return sd
+}
