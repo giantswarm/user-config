@@ -29,13 +29,13 @@ var (
 // AggregateStatus returns the 'higher' of the two status, given the following order:
 //  ok < stopping < starting < down < failed
 func AggregateStatus(status1, status2 Status) Status {
-
 	for _, nextStatus := range StatusOrder {
 		if status1 == nextStatus || status2 == nextStatus {
 			return nextStatus
 		}
 	}
-	panic("Unknown status: " + status1 + ", " + status2)
+
+	panic("unknown status: " + status1 + ", " + status2)
 }
 
 // Inactive means an app is failed or down.
