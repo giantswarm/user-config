@@ -17,14 +17,6 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 		return nil
 	}
 
-	if sd.Min == 0 {
-		sd.Min = valCtx.MinScaleSize
-	}
-
-	if sd.Max == 0 {
-		sd.Max = valCtx.MaxScaleSize
-	}
-
 	if sd.Min < valCtx.MinScaleSize {
 		return Mask(errgo.WithCausef(nil, InvalidScalingConfigError, "scale min '%d' cannot be less than '%d'", sd.Min, valCtx.MinScaleSize))
 	}
@@ -38,6 +30,16 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 	}
 
 	return nil
+}
+
+func (sd *ScaleDefinition) setDefaults(valCtx *ValidationContext) {
+	if sd.Min == 0 {
+		sd.Min = valCtx.MinScaleSize
+	}
+
+	if sd.Max == 0 {
+		sd.Max = valCtx.MaxScaleSize
+	}
 }
 
 func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinition {

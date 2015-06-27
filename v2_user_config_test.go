@@ -105,6 +105,10 @@ func TestV2AppSetDefaults(t *testing.T) {
 	a := V2ExampleDefinition()
 	valCtx := NewValidationContext()
 
+	if err := a.SetDefaults(valCtx); err != nil {
+		t.Fatalf("setting defaults failed: %#v", err)
+	}
+
 	if err := a.Validate(valCtx); err != nil {
 		t.Fatalf("validating app failed: %#v", err)
 	}
@@ -132,6 +136,10 @@ func TestV2AppSetDefaults(t *testing.T) {
 func TestV2AppHideDefaults(t *testing.T) {
 	a := V2ExampleDefinition()
 	valCtx := NewValidationContext()
+
+	if err := a.SetDefaults(valCtx); err != nil {
+		t.Fatalf("setting defaults failed: %#v", err)
+	}
 
 	if err := a.Validate(valCtx); err != nil {
 		t.Fatalf("validating app failed: %#v", err)

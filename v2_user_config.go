@@ -86,6 +86,16 @@ func (ad *V2AppDefinition) HideDefaults(valCtx *ValidationContext) (*V2AppDefini
 	return ad, nil
 }
 
+// SetDefaults sets necessary default values if not given by the user.
+func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
+	if valCtx == nil {
+		return errgo.WithCausef(nil, MissingValidationContextError, "cannot set defaults")
+	}
+
+	ad.Nodes.setDefaults(valCtx)
+	return nil
+}
+
 type NodeDefinitions map[NodeName]*NodeDefinition
 
 func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
@@ -130,6 +140,12 @@ func (nds NodeDefinitions) hideDefaults(valCtx *ValidationContext) NodeDefinitio
 	}
 
 	return nds
+}
+
+func (nds NodeDefinitions) setDefaults(valCtx *ValidationContext) {
+	for nodeName, _ := range nds {
+		nds[nodeName].setDefaults(valCtx)
+	}
 }
 
 func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
@@ -236,23 +252,30 @@ func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 		return Mask(err)
 	}
 
-	// default scale definition if not set
-	if nd.Scale == nil {
-		nd.Scale = &ScaleDefinition{}
-	}
-
-	if err := nd.Scale.validate(valCtx); err != nil {
-		return Mask(err)
+	if nd.Scale != nil {
+		if err := nd.Scale.validate(valCtx); err != nil {
+			return Mask(err)
+		}
 	}
 
 	return nil
 }
 
-// validate performs semantic validations of this NodeDefinition.
-// Return the first possible error.
 func (nd *NodeDefinition) hideDefaults(valCtx *ValidationContext) *NodeDefinition {
-	nd.Scale = nd.Scale.hideDefaults(valCtx)
+	if nd.Scale != nil {
+		nd.Scale = nd.Scale.hideDefaults(valCtx)
+	}
+
 	return nd
+}
+
+func (nd *NodeDefinition) setDefaults(valCtx *ValidationContext) {
+	// set default scale definition if not set
+	if nd.Scale == nil {
+		nd.Scale = &ScaleDefinition{}
+	}
+
+	nd.Scale.setDefaults(valCtx)
 }
 
 type ExposeDefinition struct {
