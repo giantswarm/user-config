@@ -101,6 +101,30 @@ func TestV2AppLinksInvalidNode(t *testing.T) {
 	}
 }
 
+// That test is usefull to ensure that `swarm cat` works as expected. There was
+// an issue where the app def was marshaled and unmarshaled twice on its way
+// from appd to api to cli. There the scale was defaulted although none was set
+// by the user. This was caused by a wrong implementation in the app def
+// validation.
+func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	if b.Nodes["node/a"].Scale != nil {
+		t.Fatalf("scale not hidden")
+	}
+}
+
 func TestV2AppSetDefaults(t *testing.T) {
 	a := V2ExampleDefinition()
 	valCtx := NewValidationContext()
