@@ -18,11 +18,11 @@ func (nn NodeName) String() string {
 
 func (nn NodeName) Validate() error {
 	if nn == "" {
-		return Mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name must not be empty"))
+		return mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name must not be empty"))
 	}
 
 	if !nodeNameRegExp.MatchString(nn.String()) {
-		return Mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name '%s' must match regexp: %s", nn, nodeNameRegExp))
+		return mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name '%s' must match regexp: %s", nn, nodeNameRegExp))
 	}
 
 	return nil

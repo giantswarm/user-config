@@ -31,14 +31,14 @@ func (ac *AppDefinition) UnmarshalJSON(data []byte) error {
 	// were no errors.
 	var appConfigCopy appConfigCopy
 	if err := json.Unmarshal(data, &appConfigCopy); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	result := AppDefinition(appConfigCopy)
 
 	// Perform semantic checks
 	if err := result.validate(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	*ac = result
@@ -56,7 +56,7 @@ func ParseV1AppDefinition(byteSlice []byte) (AppDefinition, error) {
 			}
 		}
 
-		return AppDefinition{}, Mask(err)
+		return AppDefinition{}, mask(err)
 	}
 
 	return app, nil
@@ -95,14 +95,14 @@ type DependencyConfig struct {
 
 func (ld DependencyConfig) Validate(valCtx *ValidationContext) error {
 	if ld.Name == "" {
-		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "link name must not be empty"))
+		return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "link name must not be empty"))
 	}
 
 	// for easy validation we create a port definitions type and use its
 	// validate method
 	pds := PortDefinitions{ld.Port}
 	if err := pds.Validate(valCtx); err != nil {
-		return Mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "invalid link: %s", err.Error()))
+		return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "invalid link: %s", err.Error()))
 	}
 
 	return nil

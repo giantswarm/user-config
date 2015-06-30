@@ -11,7 +11,7 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 
 	for _, link := range lds {
 		if err := link.Validate(valCtx); err != nil {
-			return Mask(err)
+			return mask(err)
 		}
 
 		// detect duplicated link name
@@ -20,7 +20,7 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 			name = link.Name
 		}
 		if _, ok := links[name]; ok {
-			return Mask(errgo.WithCausef(nil, InvalidLinkDefinitionError, "duplicated link: %s", name))
+			return mask(errgo.WithCausef(nil, InvalidLinkDefinitionError, "duplicated link: %s", name))
 		}
 		links[name] = true
 	}

@@ -25,7 +25,7 @@ func (id ImageDefinition) Validate(valCtx *ValidationContext) error {
 	}
 
 	if id.isGSRegistry(valCtx) && id.Namespace != valCtx.Org {
-		return Mask(errgo.WithCausef(nil, InvalidImageDefinitionError, "image namespace '%s' must match organization '%s'", id.Namespace, valCtx.Org))
+		return mask(errgo.WithCausef(nil, InvalidImageDefinitionError, "image namespace '%s' must match organization '%s'", id.Namespace, valCtx.Org))
 	}
 
 	return nil

@@ -27,7 +27,7 @@ var (
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
 
-	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
+	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
 		IsMissingJsonField,
 		IsInvalidSize,

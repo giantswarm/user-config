@@ -16,17 +16,17 @@ type appConfigCopy AppDefinition
 func CheckForUnknownFields(b []byte, ac *AppDefinition) error {
 	var clean appConfigCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	cleanBytes, err := json.Marshal(clean)
 	if err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	var dirtyMap map[string]interface{}
 	if err := json.Unmarshal(b, &dirtyMap); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 	// Normalize fields to common format
 	normalizeEnv(dirtyMap)
@@ -34,7 +34,7 @@ func CheckForUnknownFields(b []byte, ac *AppDefinition) error {
 
 	var cleanMap map[string]interface{}
 	if err := json.Unmarshal(cleanBytes, &cleanMap); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
@@ -180,11 +180,11 @@ func getArrayEntry(def map[string]interface{}, key string) []interface{} {
 func (ad *AppDefinition) validate() error {
 	for _, s := range ad.Services {
 		if err := s.validate(); err != nil {
-			return Mask(err)
+			return mask(err)
 		}
 	}
 	if err := ad.validatePods(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	return nil
@@ -195,33 +195,33 @@ func (ad *AppDefinition) validate() error {
 func (sc *ServiceConfig) validate() error {
 	for _, c := range sc.Components {
 		if err := c.validate(); err != nil {
-			return Mask(err)
+			return mask(err)
 		}
 		// Check volume refs
 		for _, v := range c.Volumes {
 			if err := v.validateVolumeRefs(sc, &c); err != nil {
-				return Mask(err)
+				return mask(err)
 			}
 		}
 		// Check for duplicate mount points
 		if err := c.validateUniqueMountPoints(sc); err != nil {
-			return Mask(err)
+			return mask(err)
 		}
 	}
 
 	// Check for duplicate exposed ports in pods
 	if err := sc.validateUniquePortsInPods(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	// Check dependencies in pods
 	if err := sc.validateUniqueDependenciesInPods(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	// Check scaling policies in pods
 	if err := sc.validateScalingPolicyInPods(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	return nil
@@ -233,13 +233,13 @@ func (cc *ComponentConfig) validate() error {
 	// Check volumes
 	for _, v := range cc.Volumes {
 		if err := v.validate(); err != nil {
-			return err
+			return mask(err)
 		}
 	}
 
 	for d, _ := range cc.Domains {
 		if err := d.Validate(); err != nil {
-			return Mask(err)
+			return mask(err)
 		}
 	}
 
@@ -339,7 +339,7 @@ func (vc *VolumeConfig) validate() error {
 	}
 
 	// No valid option detected.
-	return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path must be set. %#v", vc)
+	return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path must be set. %#v", vc))
 }
 
 // validateVolumeRefs checks the existance of reference names in the given volume config.
@@ -355,12 +355,12 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 
 	// Check that the component name (volume-from or volumes-from) is not the containing component
 	if compName == containingComponent.ComponentName {
-		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
+		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own component '%s'.", compName))
 	}
 	// Another component is referenced, we should be in a pod
 	pn := containingComponent.PodName
 	if pn == "" {
-		return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a pod declaration.", compName)
+		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a pod declaration.", compName))
 	}
 	// Find the other component name
 	other := service.findComponent(compName)
@@ -368,7 +368,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 		// Found other component
 		// Check matching pod
 		if pn != other.PodName {
-			return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a matching pod declaration.", compName)
+			return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a matching pod declaration.", compName))
 		}
 		// Check matching "volume-path"
 		if vc.VolumePath != "" {
@@ -380,7 +380,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 				}
 			}
 			if !found {
-				return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot find path '%s' on component '%s'.", vc.VolumePath, compName)
+				return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot find path '%s' on component '%s'.", vc.VolumePath, compName))
 			}
 		}
 		// all ok
@@ -388,7 +388,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 	}
 
 	// Not found
-	return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot find referenced component '%s'.", compName)
+	return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Cannot find referenced component '%s'.", compName))
 }
 
 // validateUniqueMountPoints checks that there are no duplicate volume mounts
@@ -403,7 +403,7 @@ func (cc *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) err
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
-				return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+				return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom))
 			}
 			visitedComponents := make(map[string]string)
 			var err error
@@ -417,7 +417,7 @@ func (cc *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) err
 		for _, p := range paths {
 			if _, ok := mountPoints[p]; ok {
 				// Found duplicate mount point
-				return errgo.WithCausef(nil, DuplicateVolumePathError, "Cannot parse app config. Duplicate volume '%s' found in component '%s'.", p, cc.ComponentName)
+				return mask(errgo.WithCausef(nil, DuplicateVolumePathError, "Cannot parse app config. Duplicate volume '%s' found in component '%s'.", p, cc.ComponentName))
 			}
 			mountPoints[p] = p
 		}
@@ -432,7 +432,7 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 	// Prevent cycles
 	if _, ok := visitedComponents[cc.ComponentName]; ok {
 		// Cycle detected
-		return nil, errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cycle in referenced components detected in '%s'.", cc.ComponentName)
+		return nil, mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cycle in referenced components detected in '%s'.", cc.ComponentName))
 	}
 	visitedComponents[cc.ComponentName] = cc.ComponentName
 
@@ -446,7 +446,7 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
-				return nil, errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+				return nil, mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom))
 			}
 			p, err := other.getAllMountPoints(service, visitedComponents)
 			if err != nil {
@@ -490,10 +490,10 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {
-						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod '%s'.", alias1, pn)
+						return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod '%s'.", alias1, pn))
 					}
 					if dep1.Name != dep2.Name {
-						return errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod '%s'.", alias1, pn)
+						return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod '%s'.", alias1, pn))
 					}
 				}
 			}
@@ -532,7 +532,7 @@ func (sc *ServiceConfig) validateUniquePortsInPods() error {
 			for j := i + 1; j < len(list); j++ {
 				port2 := list[j]
 				if port1.Equals(port2) {
-					return errgo.WithCausef(nil, InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod '%s'.", port1.String(), pn)
+					return mask(errgo.WithCausef(nil, InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod '%s'.", port1.String(), pn))
 				}
 			}
 		}
