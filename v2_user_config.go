@@ -226,7 +226,9 @@ type NodeDefinition struct {
 
 	Expose []ExposeDefinition `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
 
-	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the node"`
+	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the node."`
+
+	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this node and its children."`
 }
 
 // validate performs semantic validations of this NodeDefinition.

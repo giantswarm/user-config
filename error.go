@@ -23,6 +23,7 @@ var (
 	InvalidNodeDefinitionError    = errgo.New("invalid node definition")
 	InvalidImageDefinitionError   = errgo.New("invalid image definition")
 	InvalidNodeNameError          = errgo.New("invalid node name")
+	InvalidPodConfigError         = errgo.New("invalid pod configuration")
 	NodeNotFoundError             = errgo.New("node not found")
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
@@ -38,6 +39,7 @@ var (
 		IsInvalidDependencyConfig,
 		IsInvalidScalingConfig,
 		IsInvalidPortConfig,
+		IsInvalidPodConfig,
 		IsInvalidDomainDefinition,
 		IsInvalidLinkDefinition,
 		IsInvalidAppDefinition,
@@ -88,6 +90,10 @@ func IsInvalidDependencyConfig(err error) bool {
 
 func IsInvalidScalingConfig(err error) bool {
 	return errgo.Cause(err) == InvalidScalingConfigError
+}
+
+func IsInvalidPodConfig(err error) bool {
+	return errgo.Cause(err) == InvalidPodConfigError
 }
 
 func IsInvalidPortConfig(err error) bool {
