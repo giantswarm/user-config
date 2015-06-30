@@ -131,6 +131,10 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		}
 	}
 
+	if err := nds.validatePods(); err != nil {
+		return Mask(err)
+	}
+
 	return nil
 }
 
@@ -156,6 +160,52 @@ func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
 	}
 
 	return nil, errgo.WithCausef(nil, NodeNotFoundError, name)
+}
+
+// ChildNodes returns a map of all nodes that are a direct child of a node with
+// the given name.
+func (nds *NodeDefinitions) ChildNodes(name string) NodeDefinitions {
+	children := make(NodeDefinitions)
+	for nodeName, nodeDef := range *nds {
+		if isChildOf(name, nodeName.String()) {
+			children[nodeName] = nodeDef
+		}
+	}
+
+	return children
+}
+
+// ChildNodesRecursive returns a list of all nodes that are a direct child of a node with
+// the given name and all child nodes of this children (recursive).
+func (nds *NodeDefinitions) ChildNodesRecursive(name string) NodeDefinitions {
+	allChildren := make(NodeDefinitions)
+	nds.appendChildrenOf(allChildren, name)
+	return allChildren
+}
+
+func (nds *NodeDefinitions) appendChildrenOf(allChildren NodeDefinitions, name string) {
+	children := nds.ChildNodes(name)
+	for childName, childDef := range children {
+		allChildren[childName] = childDef
+		nds.appendChildrenOf(allChildren, childName.String())
+	}
+}
+
+// isChildOf returns true if the given child name is a direct child of the given parent name.
+// E.g.
+// - isChildOf("a", "a/b") -> true
+// - isChildOf("a", "a/b/c") -> false
+func isChildOf(parentName, childName string) bool {
+	prefix := parentName + "/"
+	if !strings.HasPrefix(childName, prefix) {
+		return false
+	}
+	name := childName[len(prefix):]
+	if strings.Contains(name, "/") {
+		// Grand child
+		return false
+	}
+	return true
 }
 
 // MountPoints returns a list of all mount points of a node, that is given by

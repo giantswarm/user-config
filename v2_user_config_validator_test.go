@@ -26,8 +26,7 @@ func TestParseV2AppDef(t *testing.T) {
 					{ "path": "/data2", "size": "8" },
 					{ "path": "/data3", "size": "8  G" },
 					{ "path": "/data4", "size": "8GB" }
-				],
-				"pod": "children"
+				]
 			}
 		}
 	}`)
