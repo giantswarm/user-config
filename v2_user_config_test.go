@@ -100,3 +100,92 @@ func TestV2AppLinksInvalidNode(t *testing.T) {
 		t.Fatalf("expetced error to be InvalidNodeDefinitionError")
 	}
 }
+
+// That test is usefull to ensure that `swarm cat` works as expected. There was
+// an issue where the app def was marshaled and unmarshaled twice on its way
+// from appd to api to cli. There the scale was defaulted although none was set
+// by the user. This was caused by a wrong implementation in the app def
+// validation.
+func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	if b.Nodes["node/a"].Scale != nil {
+		t.Fatalf("scale not hidden")
+	}
+}
+
+func TestV2AppSetDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+	valCtx := NewValidationContext()
+
+	if err := a.SetDefaults(valCtx); err != nil {
+		t.Fatalf("setting defaults failed: %#v", err)
+	}
+
+	if err := a.Validate(valCtx); err != nil {
+		t.Fatalf("validating app failed: %#v", err)
+	}
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	if b.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
+		t.Fatalf("min scale size not set")
+	}
+
+	if b.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
+		t.Fatalf("max scale size not set")
+	}
+}
+
+func TestV2AppHideDefaults(t *testing.T) {
+	a := V2ExampleDefinition()
+	valCtx := NewValidationContext()
+
+	if err := a.SetDefaults(valCtx); err != nil {
+		t.Fatalf("setting defaults failed: %#v", err)
+	}
+
+	if err := a.Validate(valCtx); err != nil {
+		t.Fatalf("validating app failed: %#v", err)
+	}
+
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var b userconfig.V2AppDefinition
+	err = json.Unmarshal(raw, &b)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %s", err.Error())
+	}
+
+	c, err := b.HideDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("hiding defaults failed: %s", err.Error())
+	}
+
+	if c.Nodes["node/a"].Scale != nil {
+		t.Fatalf("scale not hidden")
+	}
+}

@@ -6,25 +6,26 @@ import (
 )
 
 var (
-	UnknownJSONFieldError        = errgo.New("Unknown JSON field.")
-	MissingJSONFieldError        = errgo.New("missing JSON field")
-	InvalidSizeError             = errgo.New("Invalid size.")
-	DuplicateVolumePathError     = errgo.New("Duplicate volume path.")
-	InvalidEnvListFormatError    = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
-	CrossServicePodError         = errgo.New("Pod is used in different services.")
-	PodUsedOnlyOnceError         = errgo.New("Pod is used in only 1 component.")
-	InvalidVolumeConfigError     = errgo.New("Invalid volume configuration.")
-	InvalidDependencyConfigError = errgo.New("Invalid dependency configuration.")
-	InvalidScalingConfigError    = errgo.New("Invalid scaling configuration.")
-	InvalidPortConfigError       = errgo.New("Invalid port configuration.")
-	InvalidDomainDefinitionError = errgo.New("invalid domain definition")
-	InvalidLinkDefinitionError   = errgo.New("invalid link definition")
-	InvalidAppDefinitionError    = errgo.New("invalid app definition")
-	InvalidNodeDefinitionError   = errgo.New("invalid node definition")
-	InvalidImageDefinitionError  = errgo.New("invalid image definition")
-	InvalidNodeNameError         = errgo.New("invalid node name")
-	NodeNotFoundError            = errgo.New("node not found")
-	InternalError                = errgo.New("internal error")
+	UnknownJSONFieldError         = errgo.New("Unknown JSON field.")
+	MissingJSONFieldError         = errgo.New("missing JSON field")
+	InvalidSizeError              = errgo.New("Invalid size.")
+	DuplicateVolumePathError      = errgo.New("Duplicate volume path.")
+	InvalidEnvListFormatError     = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	CrossServicePodError          = errgo.New("Pod is used in different services.")
+	PodUsedOnlyOnceError          = errgo.New("Pod is used in only 1 component.")
+	InvalidVolumeConfigError      = errgo.New("Invalid volume configuration.")
+	InvalidDependencyConfigError  = errgo.New("Invalid dependency configuration.")
+	InvalidScalingConfigError     = errgo.New("Invalid scaling configuration.")
+	InvalidPortConfigError        = errgo.New("Invalid port configuration.")
+	InvalidDomainDefinitionError  = errgo.New("invalid domain definition")
+	InvalidLinkDefinitionError    = errgo.New("invalid link definition")
+	InvalidAppDefinitionError     = errgo.New("invalid app definition")
+	InvalidNodeDefinitionError    = errgo.New("invalid node definition")
+	InvalidImageDefinitionError   = errgo.New("invalid image definition")
+	InvalidNodeNameError          = errgo.New("invalid node name")
+	NodeNotFoundError             = errgo.New("node not found")
+	InternalError                 = errgo.New("internal error")
+	MissingValidationContextError = errgo.New("missing validation context")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -45,6 +46,7 @@ var (
 		IsInvalidNodeName,
 		IsNodeNotFound,
 		IsInternal,
+		IsMissingValidationContext,
 	)
 )
 
@@ -122,6 +124,10 @@ func IsNodeNotFound(err error) bool {
 
 func IsInternal(err error) bool {
 	return errgo.Cause(err) == InternalError
+}
+
+func IsMissingValidationContext(err error) bool {
+	return errgo.Cause(err) == MissingValidationContextError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError
