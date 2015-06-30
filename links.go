@@ -1,9 +1,5 @@
 package userconfig
 
-import (
-	"github.com/juju/errgo"
-)
-
 type LinkDefinitions []DependencyConfig
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
@@ -20,7 +16,7 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 			name = link.Name
 		}
 		if _, ok := links[name]; ok {
-			return mask(errgo.WithCausef(nil, InvalidLinkDefinitionError, "duplicated link: %s", name))
+			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", name)
 		}
 		links[name] = true
 	}

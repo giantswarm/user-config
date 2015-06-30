@@ -2,8 +2,6 @@ package userconfig
 
 import (
 	"regexp"
-
-	"github.com/juju/errgo"
 )
 
 var (
@@ -18,11 +16,11 @@ func (nn NodeName) String() string {
 
 func (nn NodeName) Validate() error {
 	if nn == "" {
-		return mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name must not be empty"))
+		return maskf(InvalidNodeNameError, "node name must not be empty")
 	}
 
 	if !nodeNameRegExp.MatchString(nn.String()) {
-		return mask(errgo.WithCausef(nil, InvalidNodeNameError, "node name '%s' must match regexp: %s", nn, nodeNameRegExp))
+		return maskf(InvalidNodeNameError, "node name '%s' must match regexp: %s", nn, nodeNameRegExp)
 	}
 
 	return nil

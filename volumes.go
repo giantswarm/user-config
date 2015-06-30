@@ -1,9 +1,5 @@
 package userconfig
 
-import (
-	"github.com/juju/errgo"
-)
-
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
@@ -27,12 +23,12 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 	}
 
 	if vd.Path == "" {
-		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size cannot be empty"))
+		return maskf(InvalidVolumeConfigError, "volume size cannot be empty")
 	}
 
 	intSize, err := vd.Size.SizeInGB()
 	if err != nil {
-		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vd.Size))
+		return maskf(InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vd.Size)
 	}
 
 	min, err := valCtx.MaxVolumeSize.SizeInGB()
@@ -41,7 +37,7 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 	}
 
 	if intSize < min {
-		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, min))
+		return maskf(InvalidVolumeConfigError, "volume size '%d' cannot be less than '%d'", intSize, min)
 	}
 
 	max, err := valCtx.MaxVolumeSize.SizeInGB()
@@ -50,7 +46,7 @@ func (vd VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 	}
 
 	if intSize > max {
-		return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, max))
+		return maskf(InvalidVolumeConfigError, "volume size '%d' cannot be greater than '%d'", intSize, max)
 	}
 
 	return nil
@@ -69,7 +65,7 @@ func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
 		// detect duplicate volume path
 		normalized := normalizeFolder(v.Path)
 		if _, ok := paths[normalized]; ok {
-			return mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "duplicated volume path: %s", normalized))
+			return maskf(InvalidVolumeConfigError, "duplicated volume path: %s", normalized)
 		}
 		paths[normalized] = normalized
 	}

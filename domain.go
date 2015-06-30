@@ -2,7 +2,6 @@ package userconfig
 
 import (
 	"github.com/giantswarm/generic-types-go"
-	"github.com/juju/errgo"
 )
 
 type DomainDefinitions map[generictypes.Domain]generictypes.DockerPort
@@ -28,7 +27,7 @@ func (dc DomainDefinitions) validate(exportedPorts PortDefinitions) error {
 		}
 
 		if !exportedPorts.contains(domainPort) {
-			return mask(errgo.WithCausef(nil, InvalidDomainDefinitionError, "port '%s' of domain '%s' must be exported", domainPort.Port, domainName))
+			return maskf(InvalidDomainDefinitionError, "port '%s' of domain '%s' must be exported", domainPort.Port, domainName)
 		}
 	}
 

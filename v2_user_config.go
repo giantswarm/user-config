@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/giantswarm/generic-types-go"
-	"github.com/juju/errgo"
 )
 
 type V2AppDefinition struct {
@@ -64,7 +63,7 @@ type ValidationContext struct {
 // Return the first possible error.
 func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 	if len(ad.Nodes) == 0 {
-		return mask(errgo.WithCausef(nil, InvalidAppDefinitionError, "nodes must not be empty"))
+		return maskf(InvalidAppDefinitionError, "nodes must not be empty")
 	}
 
 	if err := ad.Nodes.validate(valCtx); err != nil {
@@ -79,7 +78,7 @@ func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 // not confuse the user with information he has not set by himself.
 func (ad *V2AppDefinition) HideDefaults(valCtx *ValidationContext) (*V2AppDefinition, error) {
 	if valCtx == nil {
-		return &V2AppDefinition{}, mask(errgo.WithCausef(nil, MissingValidationContextError, "cannot hide defaults"))
+		return &V2AppDefinition{}, maskf(MissingValidationContextError, "cannot hide defaults")
 	}
 
 	ad.Nodes = ad.Nodes.hideDefaults(valCtx)
@@ -89,7 +88,7 @@ func (ad *V2AppDefinition) HideDefaults(valCtx *ValidationContext) (*V2AppDefini
 // SetDefaults sets necessary default values if not given by the user.
 func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 	if valCtx == nil {
-		return mask(errgo.WithCausef(nil, MissingValidationContextError, "cannot set defaults"))
+		return maskf(MissingValidationContextError, "cannot set defaults")
 	}
 
 	ad.Nodes.setDefaults(valCtx)
@@ -120,13 +119,13 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 					nodeFound = true
 
 					if !n.Ports.contains(link.Port) {
-						return mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", nodeName, link.Port))
+						return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", nodeName, link.Port)
 					}
 				}
 			}
 
 			if !nodeFound {
-				return mask(errgo.WithCausef(nil, InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name))
+				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name)
 			}
 		}
 	}
@@ -155,7 +154,7 @@ func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
 		}
 	}
 
-	return nil, mask(errgo.WithCausef(nil, NodeNotFoundError, name))
+	return nil, maskf(NodeNotFoundError, name)
 }
 
 // MountPoints returns a list of all mount points of a node, that is given by
@@ -169,7 +168,7 @@ func (nds *NodeDefinitions) MountPoints(name string) ([]string, error) {
 func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string]string) ([]string, error) {
 	// prevent cycles
 	if _, ok := visited[name]; ok {
-		return nil, mask(errgo.WithCausef(nil, InvalidVolumeConfigError, "volume cycle detected in '%s'", name))
+		return nil, maskf(InvalidVolumeConfigError, "volume cycle detected in '%s'", name)
 	}
 	visited[name] = name
 
@@ -312,7 +311,7 @@ func ParseV2AppDefinition(b []byte) (V2AppDefinition, error) {
 	if err := json.Unmarshal(b, &appDef); err != nil {
 		if IsSyntax(err) {
 			if strings.Contains(err.Error(), "$") {
-				return V2AppDefinition{}, mask(errgo.WithCausef(nil, err, "Cannot parse swarm.json. Maybe not all variables replaced properly."))
+				return V2AppDefinition{}, maskf(err, "Cannot parse swarm.json. Maybe not all variables replaced properly.")
 			}
 		}
 

@@ -95,14 +95,14 @@ type DependencyConfig struct {
 
 func (ld DependencyConfig) Validate(valCtx *ValidationContext) error {
 	if ld.Name == "" {
-		return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "link name must not be empty"))
+		return maskf(InvalidDependencyConfigError, "link name must not be empty")
 	}
 
 	// for easy validation we create a port definitions type and use its
 	// validate method
 	pds := PortDefinitions{ld.Port}
 	if err := pds.Validate(valCtx); err != nil {
-		return mask(errgo.WithCausef(nil, InvalidDependencyConfigError, "invalid link: %s", err.Error()))
+		return maskf(InvalidDependencyConfigError, "invalid link: %s", err.Error())
 	}
 
 	return nil
