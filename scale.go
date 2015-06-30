@@ -47,5 +47,13 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 		return nil
 	}
 
+	if sd.Min == valCtx.MinScaleSize {
+		sd.Min = 0
+	}
+
+	if sd.Max == valCtx.MaxScaleSize {
+		sd.Max = 0
+	}
+
 	return sd
 }
