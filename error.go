@@ -93,8 +93,11 @@ func IsPodUsedOnlyOnce(err error) bool {
 	return errgo.Cause(err) == PodUsedOnlyOnceError
 }
 
+// IsInvalidVolumeConfig returns true if the given error is of type
+// InvalidVolumeConfigError, or DuplicateVolumePathError. False otherwise.
 func IsInvalidVolumeConfig(err error) bool {
-	return errgo.Cause(err) == InvalidVolumeConfigError
+	cause := errgo.Cause(err)
+	return cause == InvalidVolumeConfigError || cause == DuplicateVolumePathError
 }
 
 func IsInvalidDependencyConfig(err error) bool {

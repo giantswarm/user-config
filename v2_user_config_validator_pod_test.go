@@ -290,510 +290,490 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		/*
-			Describe("parsing invalid volume configs in pods, invalid property combi path+volume-from", func() {
-				var err error
+		Describe("parsing invalid volume configs in pods, invalid property combi path+volume-from", func() {
+			var err error
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "alt1"}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
-						),
-					)
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "node/a/b2"})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
 
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+path", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", Path: "/alt1"}),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'api' should be empty.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
 			})
 
-			Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+size", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", Size: VolumeSize("5 GB")}),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+path", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Path: "/alt1"})
 
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'api' should be empty.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+volume-from", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api", VolumeFrom: "api"}),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'api' should be empty.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'node/a/b1' should be empty.`))
 			})
 
-			Describe("parsing invalid volume configs in pods, invalid property combi volume-from+size", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "api", VolumePath: "/data1", Size: VolumeSize("5GB")}),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+size", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Size: VolumeSize("5 GB")})
 
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'api' should be empty.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, volumes-from cannot refer to self", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'node/a/b1' should be empty.`))
 			})
 
-			Describe("parsing invalid volume configs in pod, volume-from cannot refer to self", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "alt1", VolumePath: "/data1"}),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+volume-from", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", VolumeFrom: "node/a/b1"})
 
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, unknown path in volume-path", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumeFrom: "api", VolumePath: "/unknown"}),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on component 'api'.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'node/a/b1' should be empty.`))
 			})
 
-			Describe("parsing invalid volume configs, duplicate volume via different postfixes", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", ""),
-								VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")},
-								VolumeConfig{Path: "/xdata1/", Size: VolumeSize("27 GB")},
-							),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, invalid property combi volume-from+size", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/data1", Size: VolumeSize("5GB")})
 
-				It("should throw error DuplicateVolumePathError", func() {
-					Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'api'.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"),
-								VolumeConfig{VolumesFrom: "api"},
-								VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
-							),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error DuplicateVolumePathError", func() {
-					Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'node/a/b1' should be empty.`))
 			})
 
-			Describe("parsing invalid volume configs in pods, duplicate volume via volume-from", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"),
-								VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
-								VolumeConfig{VolumeFrom: "api", VolumePath: "/xdata1"},
-							),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, volumes-from cannot refer to self", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
 
-				It("should throw error DuplicateVolumePathError", func() {
-					Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid volume configs in pods, duplicate volume via linked volumes-from", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
-							addVols(testComponent("alt2", "ns4"),
-								VolumeConfig{VolumesFrom: "api"},
-								VolumeConfig{VolumesFrom: "alt1"},
-							),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error DuplicateVolumePathError", func() {
-					Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
-				})
-
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
 			})
 
-			Describe("parsing invalid volume configs in pods, cycle in volumes-from references", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addVols(testComponent("api", "ns4"), VolumeConfig{VolumesFrom: "alt2"}),
-							addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
-							addVols(testComponent("alt2", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
-						),
-					)
+		Describe("parsing invalid volume configs in pod, volume-from cannot refer to self", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b2", VolumePath: "/data1"})
 
-				It("should throw error InvalidVolumeConfigError", func() {
-					Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
-				})
-
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing dependency configs in pods, same name should result in same port", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-							addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-							testComponent("redis", ""),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should not throw an error", func() {
-					Expect(err).To(BeNil())
-				})
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
 			})
 
-			Describe("parsing invalid dependency configs in pods, same name different ports", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
-							addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")}),
-							testComponent("redis1", ""),
-							testComponent("redis2", ""),
-						),
-					)
+		Describe("parsing invalid volume configs in pods, unknown path in volume-path", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/unknown"})
 
-				It("should throw error InvalidDependencyConfigError", func() {
-					Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod 'ns4'.`))
-				})
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid dependency configs in pods, same alias different names", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
-							addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
-							testComponent("redis1", ""),
-							testComponent("redis2", ""),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidDependencyConfigError", func() {
-					Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod 'ns4'.`))
-				})
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on node 'node/a/b1'.`))
 			})
 
-			Describe("parsing invalid dependency configs in pods, one with aliases, other with (conflicting) name", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")}),
-							addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")}),
-							testComponent("redis1", ""),
-							testComponent("redis2", ""),
-						),
-						testService("storage",
-							testComponent("redis", ""),
-							testComponent("redis2", ""),
-						),
-					)
+		Describe("parsing invalid volume configs, duplicate volume via different postfixes", func() {
+			var err error
 
-					err = appConfig.validate()
-				})
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = addVols(testNode(),
+					VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")},
+					VolumeConfig{Path: "/xdata1/", Size: VolumeSize("27 GB")},
+				)
 
-				It("should throw error InvalidDependencyConfigError", func() {
-					Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod 'ns4'.`))
-				})
+				err = nodes.validate(valCtx())
 			})
 
-			Describe("parsing invalid dependency configs in pods, same alias different ports", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-							addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")}),
-							testComponent("redis1", ""),
-							testComponent("redis2", ""),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidDependencyConfigError", func() {
-					Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod 'ns4'.`))
-				})
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a'.`))
 			})
 
-			Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addScale(testComponent("alt1", "ns4"), 1, 5),
-							addScale(testComponent("alt2", "ns4"), 0, 5),
-							addScale(testComponent("alt3", "ns4"), 1, 0),
-							testComponent("alt4", "ns4"),
+		/*Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"),
+							VolumeConfig{VolumesFrom: "api"},
+							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
 						),
-					)
+					),
+				)
 
-					err = appConfig.validate()
-				})
-
-				It("should not throw an error", func() {
-					Expect(err).To(BeNil())
-				})
-
+				err = appConfig.validate()
 			})
 
-			Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all components of a pod", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addScale(testComponent("alt1", "ns4"), 1, 5),
-							addScale(testComponent("alt2", "ns4"), 2, 5),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidScalingConfigError", func() {
-					Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod 'ns4'.`))
-				})
-
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
-			Describe("parsing invalid scaling configs in pods, maximum scaling values should be the same in all components of a pod", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addScale(testComponent("alt1", "ns4"), 2, 5),
-							addScale(testComponent("alt2", "ns4"), 2, 7),
+		Describe("parsing invalid volume configs in pods, duplicate volume via volume-from", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"),
+							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
+							VolumeConfig{VolumeFrom: "api", VolumePath: "/xdata1"},
 						),
-					)
+					),
+				)
 
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidScalingConfigError", func() {
-					Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod 'ns4'.`))
-				})
-
+				err = appConfig.validate()
 			})
 
-			Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
-				var err error
-
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
-							addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80")),
-						),
-					)
-
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidPortConfigError", func() {
-					Expect(IsInvalidPortConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
-				})
-
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
 			})
 
-			Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod (mixed with/without protocol)", func() {
-				var err error
+		})
 
-				BeforeEach(func() {
-					appConfig := testApp(
-						testService("session1",
-							addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
-							addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80/tcp")),
+		Describe("parsing invalid volume configs in pods, duplicate volume via linked volumes-from", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+						addVols(testComponent("alt2", "ns4"),
+							VolumeConfig{VolumesFrom: "api"},
+							VolumeConfig{VolumesFrom: "alt1"},
 						),
-					)
+					),
+				)
 
-					err = appConfig.validate()
-				})
-
-				It("should throw error InvalidPortConfigError", func() {
-					Expect(IsInvalidPortConfig(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
-				})
-
+				err = appConfig.validate()
 			})
+
+			It("should throw error DuplicateVolumePathError", func() {
+				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
+			})
+
+		})
+
+		Describe("parsing invalid volume configs in pods, cycle in volumes-from references", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addVols(testComponent("api", "ns4"), VolumeConfig{VolumesFrom: "alt2"}),
+						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
+						addVols(testComponent("alt2", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidVolumeConfigError", func() {
+				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
+			})
+
+		})
+
+		Describe("parsing dependency configs in pods, same name should result in same port", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same name different ports", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same alias different names", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, one with aliases, other with (conflicting) name", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+					testService("storage",
+						testComponent("redis", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs in pods, same alias different ports", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
+						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")}),
+						testComponent("redis1", ""),
+						testComponent("redis2", ""),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidDependencyConfigError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod 'ns4'.`))
+			})
+		})
+
+		Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 1, 5),
+						addScale(testComponent("alt2", "ns4"), 0, 5),
+						addScale(testComponent("alt3", "ns4"), 1, 0),
+						testComponent("alt4", "ns4"),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+
+		})
+
+		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 1, 5),
+						addScale(testComponent("alt2", "ns4"), 2, 5),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidScalingConfigError", func() {
+				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod 'ns4'.`))
+			})
+
+		})
+
+		Describe("parsing invalid scaling configs in pods, maximum scaling values should be the same in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addScale(testComponent("alt1", "ns4"), 2, 5),
+						addScale(testComponent("alt2", "ns4"), 2, 7),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidScalingConfigError", func() {
+				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod 'ns4'.`))
+			})
+
+		})
+
+		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
+						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80")),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidPortConfigError", func() {
+				Expect(IsInvalidPortConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+			})
+
+		})
+
+		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod (mixed with/without protocol)", func() {
+			var err error
+
+			BeforeEach(func() {
+				appConfig := testApp(
+					testService("session1",
+						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
+						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80/tcp")),
+					),
+				)
+
+				err = appConfig.validate()
+			})
+
+			It("should throw error InvalidPortConfigError", func() {
+				Expect(IsInvalidPortConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+			})
+
+		})
 		*/
 	})
 })

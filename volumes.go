@@ -77,7 +77,7 @@ func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 		return nil
 	}
 
-	if vc.Path != "" {
+	if vc.Path != "" && vc.Size != "" {
 		intSize, err := vc.Size.SizeInGB()
 		if err != nil {
 			return maskf(InvalidVolumeConfigError, "invalid volume size '%s', expected '<number> GB'", vc.Size)
@@ -113,20 +113,116 @@ func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 type VolumeDefinitions []VolumeConfig
 
 func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
-	paths := map[string]string{}
-
 	for _, v := range vds {
 		if err := v.V2Validate(valCtx); err != nil {
 			return mask(err)
 		}
-
-		// detect duplicate volume path
-		normalized := normalizeFolder(v.Path)
-		if _, ok := paths[normalized]; ok {
-			return maskf(InvalidVolumeConfigError, "duplicated volume path: %s", normalized)
-		}
-		paths[normalized] = normalized
 	}
 
+	return nil
+}
+
+// validateVolumesRefs checks for each volume in each node the existance of reference names in the given volume config.
+func (nds *NodeDefinitions) validateVolumesRefs() error {
+	for nodeName, nodeDef := range *nds {
+		for _, vc := range nodeDef.Volumes {
+			if err := nds.validateVolumeRefs(vc, nodeName); err != nil {
+				return mask(err)
+			}
+		}
+	}
+	return nil
+}
+
+// validateVolumeRefs checks the existance of reference names in the given volume config.
+func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeName NodeName) error {
+	nodeName := vc.VolumesFrom
+	if nodeName == "" {
+		nodeName = vc.VolumeFrom
+	}
+	if nodeName == "" {
+		// No references, all ok
+		return nil
+	}
+
+	// Check that the component name (volume-from or volumes-from) is not the containing node
+	if nodeName == containingNodeName.String() {
+		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own node '%s'.", nodeName)
+	}
+	// Another node is referenced, we should be in a pod
+	// Find the root of our pod
+	podRootName, _, err := nds.PodRoot(containingNodeName.String())
+	if err != nil {
+		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' without a pod declaration.", nodeName)
+	}
+	// Get the nodes that are part of the same pod
+	podNodes, err := nds.PodNodes(podRootName.String())
+	if err != nil {
+		return mask(err)
+	}
+	// Find the other node name
+	other, err := podNodes.FindByName(nodeName)
+	if err == nil {
+		// Found other node
+		// Check matching "volume-path"
+		if vc.VolumePath != "" {
+			found := false
+			for _, v := range other.Volumes {
+				if v.Path == vc.VolumePath {
+					// Found it
+					found = true
+				}
+			}
+			if !found {
+				return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find path '%s' on node '%s'.", vc.VolumePath, nodeName)
+			}
+		}
+		// all ok
+		return nil
+	}
+
+	// Other node is not found in the same pod
+	// Does the other node even exists?
+	if _, err := nds.FindByName(nodeName); err == nil {
+		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' that is not part of the same pod.", nodeName)
+	} else {
+		// Other node not found
+		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find referenced node '%s'.", nodeName)
+	}
+}
+
+// validateUniqueMountPoints checks that there are no duplicate volume mounts
+func (nds *NodeDefinitions) validateUniqueMountPoints() error {
+	for nodeName, nodeDef := range *nds {
+		mountPoints := make(map[string]string)
+		for _, v := range nodeDef.Volumes {
+			var paths []string
+			if v.Path != "" {
+				paths = []string{normalizeFolder(v.Path)}
+			} else if v.VolumeFrom != "" {
+				paths = []string{normalizeFolder(v.VolumePath)}
+			} else if v.VolumesFrom != "" {
+				if _, err := nds.FindByName(v.VolumesFrom); err != nil {
+					return maskf(InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced node '%s'.", v.VolumesFrom)
+				}
+				var err error
+				paths, err = nds.MountPoints(v.VolumesFrom)
+				if err != nil {
+					return mask(err)
+				}
+			} else {
+				return maskf(InvalidVolumeConfigError, "Cannot parse app config. Missing path in node '%s'.", nodeName.String())
+			}
+			for _, p := range paths {
+				if _, ok := mountPoints[p]; ok {
+					// Found duplicate mount point
+					return maskf(DuplicateVolumePathError, "Cannot parse app config. Duplicate volume '%s' found in node '%s'.", p, nodeName.String())
+				}
+				mountPoints[p] = p
+			}
+		}
+	}
+
+	// No duplicates detected
 	return nil
 }

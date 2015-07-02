@@ -130,6 +130,14 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		}
 	}
 
+	if err := nds.validateVolumesRefs(); err != nil {
+		return mask(err)
+	}
+
+	if err := nds.validateUniqueMountPoints(); err != nil {
+		return mask(err)
+	}
+
 	if err := nds.validatePods(); err != nil {
 		return mask(err)
 	}
@@ -159,6 +167,20 @@ func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
 	}
 
 	return nil, maskf(NodeNotFoundError, name)
+}
+
+// ParentOf returns the closest parent of the node with the given name.
+// If there is no such node, a NodeNotFoundError is returned.
+func (nds *NodeDefinitions) ParentOf(name string) (NodeName, *NodeDefinition, error) {
+	parts := strings.Split(name, "/")
+	for len(parts) > 1 {
+		parts = parts[:len(parts)-1]
+		parentName := strings.Join(parts, "/")
+		if parent, err := nds.FindByName(parentName); err == nil {
+			return NodeName(parentName), parent, nil
+		}
+	}
+	return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
 }
 
 // FilterNodes returns a set of all my nodes for which the given predicate returns true.
@@ -254,6 +276,24 @@ func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
 		return children, nil
 	} else {
 		return nil, maskf(InvalidArgumentError, "Node '%s' a has no pod setting", name)
+	}
+}
+
+// PodRoot returns the node that defines the pod the node with given name is a part of.
+// If there is no such node, NodeNotFoundError is returned.
+func (nds *NodeDefinitions) PodRoot(name string) (NodeName, *NodeDefinition, error) {
+	for {
+		// Find first parent
+		parentName, parent, err := nds.ParentOf(name)
+		if err != nil {
+			return "", nil, err
+		}
+		if parent.Pod == PodChildren || parent.Pod == PodInherit {
+			// We found our pod root
+			return parentName, parent, nil
+		}
+		// Not a pood root, continue up the tree
+		name = parentName.String()
 	}
 }
 
