@@ -27,6 +27,7 @@ var (
 	NodeNotFoundError             = errgo.New("node not found")
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
+	InvalidArgumentError          = errgo.New("invalid argument")
 
 	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -49,6 +50,7 @@ var (
 		IsNodeNotFound,
 		IsInternal,
 		IsMissingValidationContext,
+		IsInvalidArgument,
 	)
 )
 
@@ -134,6 +136,10 @@ func IsInternal(err error) bool {
 
 func IsMissingValidationContext(err error) bool {
 	return errgo.Cause(err) == MissingValidationContextError
+}
+
+func IsInvalidArgument(err error) bool {
+	return errgo.Cause(err) == InvalidArgumentError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError

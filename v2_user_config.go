@@ -162,40 +162,38 @@ func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
 	return nil, errgo.WithCausef(nil, NodeNotFoundError, name)
 }
 
+// FilterNodes returns a set of all my nodes for which the given predicate returns true.
+func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDef *NodeDefinition) bool) NodeDefinitions {
+	list := make(NodeDefinitions)
+	for nodeName, nodeDef := range *nds {
+		if predicate(nodeName, nodeDef) {
+			list[nodeName] = nodeDef
+		}
+	}
+	return list
+}
+
 // ChildNodes returns a map of all nodes that are a direct child of a node with
 // the given name.
 func (nds *NodeDefinitions) ChildNodes(name string) NodeDefinitions {
-	children := make(NodeDefinitions)
-	for nodeName, nodeDef := range *nds {
-		if isChildOf(name, nodeName.String()) {
-			children[nodeName] = nodeDef
-		}
-	}
-
-	return children
+	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+		return isDirectChildOf(name, nodeName.String())
+	})
 }
 
 // ChildNodesRecursive returns a list of all nodes that are a direct child of a node with
 // the given name and all child nodes of this children (recursive).
 func (nds *NodeDefinitions) ChildNodesRecursive(name string) NodeDefinitions {
-	allChildren := make(NodeDefinitions)
-	nds.appendChildrenOf(allChildren, name)
-	return allChildren
+	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+		return isChildOf(name, nodeName.String())
+	})
 }
 
-func (nds *NodeDefinitions) appendChildrenOf(allChildren NodeDefinitions, name string) {
-	children := nds.ChildNodes(name)
-	for childName, childDef := range children {
-		allChildren[childName] = childDef
-		nds.appendChildrenOf(allChildren, childName.String())
-	}
-}
-
-// isChildOf returns true if the given child name is a direct child of the given parent name.
+// isDirectChildOf returns true if the given child name is a direct child of the given parent name.
 // E.g.
-// - isChildOf("a", "a/b") -> true
-// - isChildOf("a", "a/b/c") -> false
-func isChildOf(parentName, childName string) bool {
+// - isDirectChildOf("a", "a/b") -> true
+// - isDirectChildOf("a", "a/b/c") -> false
+func isDirectChildOf(parentName, childName string) bool {
 	prefix := parentName + "/"
 	if !strings.HasPrefix(childName, prefix) {
 		return false
@@ -206,6 +204,58 @@ func isChildOf(parentName, childName string) bool {
 		return false
 	}
 	return true
+}
+
+// isChildOf returns true if the given child name is a child (recursive) of the given parent name.
+// E.g.
+// - isChildOf("a", "a/b") -> true
+// - isChildOf("a", "a/b/c") -> true
+func isChildOf(parentName, childName string) bool {
+	prefix := parentName + "/"
+	if !strings.HasPrefix(childName, prefix) {
+		return false
+	}
+	return true
+}
+
+// PodNodes returns a map of all nodes that are part of the pod specified by a node with
+// the given name.
+func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
+	parent, err := nds.FindByName(name)
+	if err != nil {
+		return nil, Mask(err)
+	}
+	if parent.Pod == PodChildren {
+		// Collect all direct child nodes that do not have pod set to 'none'.
+		return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+			return isDirectChildOf(name, nodeName.String()) && nodeDef.Pod != PodNone
+		}), nil
+	} else if parent.Pod == PodInherit {
+		// Collect all child nodes that do not have pod set to 'none'.
+		noneNames := []NodeName{}
+		children := nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+			if !isChildOf(name, nodeName.String()) {
+				return false
+			}
+			if nodeDef.Pod == PodNone {
+				noneNames = append(noneNames, nodeName)
+				return false
+			}
+			return true
+		})
+		// We now  go over the list and remove all children that have some parent with pod='none'
+		for _, nodeName := range noneNames {
+			for childName, _ := range children {
+				if isChildOf(nodeName.String(), childName.String()) {
+					// Child of pod='none', remove from list
+					delete(children, childName)
+				}
+			}
+		}
+		return children, nil
+	} else {
+		return nil, Mask(errgo.WithCausef(nil, InvalidArgumentError, "Node '%s' a has no pod setting", name))
+	}
 }
 
 // MountPoints returns a list of all mount points of a node, that is given by

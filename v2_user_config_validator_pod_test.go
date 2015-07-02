@@ -71,7 +71,25 @@ var _ = Describe("v2 user config pod validator", func() {
 	}
 
 	Describe("pod tests ", func() {
-		Describe("parsing (invalid) pod==children on a node that has node children", func() {
+		Describe("parsing (valid) pod==children on a node that has 2 children", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b"] = testNode()
+				nodes["node/a/c"] = testNode()
+
+				err = nodes.validate(valCtx())
+			})
+
+			It("should not throw any errors", func() {
+				Expect(err).To(BeNil())
+			})
+
+		})
+
+		Describe("parsing (invalid) pod==children on a node that has no children", func() {
 			var err error
 
 			BeforeEach(func() {
@@ -84,6 +102,82 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+			})
+
+		})
+
+		Describe("parsing (invalid) pod==children on a node that has 2 children (recursive), but only 1 direct", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b"] = testNode()
+				nodes["node/a/b/c"] = testNode()
+
+				err = nodes.validate(valCtx())
+			})
+
+			It("should throw error IsInvalidPodConfig", func() {
+				Expect(IsInvalidPodConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+			})
+
+		})
+
+		Describe("parsing (valid) pod==inherit on a node that has 2 children (recursive)", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodInherit)
+				nodes["node/a/b"] = testNode()
+				nodes["node/a/b/c"] = testNode()
+
+				err = nodes.validate(valCtx())
+			})
+
+			It("should not throw any errors", func() {
+				Expect(err).To(BeNil())
+			})
+
+		})
+
+		Describe("parsing (invalid) pod==inherit on a node that has not enough children", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodInherit)
+				nodes["node/a/b"] = testNode()
+
+				err = nodes.validate(valCtx())
+			})
+
+			It("should throw error IsInvalidPodConfig", func() {
+				Expect(IsInvalidPodConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'inherit'`))
+			})
+
+		})
+
+		Describe("parsing (invalid) cannot specify pod value other than 'none' inside a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b/c1"] = testNode()
+				nodes["node/a/b/c2"] = testNode()
+				nodes["node/a/c"] = testNode()
+
+				err = nodes.validate(valCtx())
+			})
+
+			It("should throw error IsInvalidPodConfig", func() {
+				Expect(IsInvalidPodConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Node 'node/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
 			})
 
 		})
