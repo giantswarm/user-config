@@ -138,6 +138,16 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	// Check for duplicate exposed ports in pods
+	if err := nds.validateUniquePortsInPods(); err != nil {
+		return mask(err)
+	}
+
+	// Check dependencies in pods
+	if err := nds.validateUniqueDependenciesInPods(); err != nil {
+		return mask(err)
+	}
+
 	if err := nds.validatePods(); err != nil {
 		return mask(err)
 	}

@@ -50,3 +50,83 @@ func contains(protocols []string, protocol string) bool {
 
 	return false
 }
+
+// validateUniqueDependenciesInPods checks that there are no dependencies with same alias and different port/name
+func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
+			continue
+		}
+
+		// Collect all dependencies in this pod
+		podNodes, err := nds.PodNodes(nodeName.String())
+		if err != nil {
+			return mask(err)
+		}
+		list := []DependencyConfig{}
+		for _, c := range podNodes {
+			if c.Links == nil {
+				// No dependencies
+				continue
+			}
+			list = append(list, c.Links...)
+		}
+
+		// Check list for duplicates
+		for i, dep1 := range list {
+			alias1 := dep1.getAlias(nodeName.String())
+			for j := i + 1; j < len(list); j++ {
+				dep2 := list[j]
+				alias2 := dep2.getAlias(nodeName.String())
+				if alias1 == alias2 {
+					// Same alias, Port must match and Name must match
+					if !dep1.Port.Equals(dep2.Port) {
+						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod under '%s'.", alias1, nodeName.String())
+					}
+					if dep1.Name != dep2.Name {
+						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod under '%s'.", alias1, nodeName.String())
+					}
+				}
+			}
+		}
+	}
+
+	// No errors detected
+	return nil
+}
+
+// validateUniquePortsInPods checks that there are no duplicate ports in a single pod
+func (nds *NodeDefinitions) validateUniquePortsInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
+			continue
+		}
+
+		// Collect all ports in this pod
+		podNodes, err := nds.PodNodes(nodeName.String())
+		if err != nil {
+			return mask(err)
+		}
+		list := []generictypes.DockerPort{}
+		for _, c := range podNodes {
+			if c.Ports == nil {
+				// No dependencies
+				continue
+			}
+			list = append(list, c.Ports...)
+		}
+
+		// Check list for duplicates
+		for i, port1 := range list {
+			for j := i + 1; j < len(list); j++ {
+				port2 := list[j]
+				if port1.Equals(port2) {
+					return maskf(InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod under '%s'.", port1.String(), nodeName.String())
+				}
+			}
+		}
+	}
+
+	// No errors detected
+	return nil
+}

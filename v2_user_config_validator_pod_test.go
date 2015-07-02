@@ -3,6 +3,7 @@ package userconfig
 import (
 	"testing"
 
+	"github.com/giantswarm/generic-types-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -34,31 +35,31 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	/*		addLinks := func(config *NodeDefinition, dep ...DependencyConfig) *NodeDefinition {
-				if config.Links == nil {
-					config.Links = dep
-				} else {
-					config.Links = append(config.Links, dep...)
-				}
-				return config
-			}
+	addDeps := func(config *NodeDefinition, dep ...DependencyConfig) *NodeDefinition {
+		if config.Links == nil {
+			config.Links = dep
+		} else {
+			config.Links = append(config.Links, dep...)
+		}
+		return config
+	}
 
-			addPorts := func(config *NodeDefinition, ports ...generictypes.DockerPort) *NodeDefinition {
-				if config.Ports == nil {
-					config.Ports = ports
-				} else {
-					config.Ports = append(config.Ports, ports...)
-				}
-				return config
-			}
+	addPorts := func(config *NodeDefinition, ports ...generictypes.DockerPort) *NodeDefinition {
+		if config.Ports == nil {
+			config.Ports = ports
+		} else {
+			config.Ports = append(config.Ports, ports...)
+		}
+		return config
+	}
 
-			addScale := func(config *NodeDefinition, min, max int) *NodeDefinition {
-				config.Scale = &ScaleDefinition{
-					Min: min,
-					Max: max,
-				}
-				return config
-			}*/
+	/*addScale := func(config *NodeDefinition, min, max int) *NodeDefinition {
+		config.Scale = &ScaleDefinition{
+			Min: min,
+			Max: max,
+		}
+		return config
+	}*/
 
 	testApp := func() NodeDefinitions {
 		return make(NodeDefinitions)
@@ -548,19 +549,17 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		/*Describe("parsing dependency configs in pods, same name should result in same port", func() {
+		Describe("parsing dependency configs in pods, same name should result in same port", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-						testComponent("redis", ""),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should not throw an error", func() {
@@ -572,21 +571,19 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")}),
-						testComponent("redis1", ""),
-						testComponent("redis2", ""),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")})
+				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod under 'node/a'.`))
 			})
 		})
 
@@ -594,21 +591,19 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")}),
-						testComponent("redis1", ""),
-						testComponent("redis2", ""),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod under 'node/a'.`))
 			})
 		})
 
@@ -616,25 +611,21 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")}),
-						testComponent("redis1", ""),
-						testComponent("redis2", ""),
-					),
-					testService("storage",
-						testComponent("redis", ""),
-						testComponent("redis2", ""),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["storage/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["storage/redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod under 'node/a'.`))
 			})
 		})
 
@@ -642,25 +633,23 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addDeps(testComponent("alt1", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")}),
-						addDeps(testComponent("alt2", "ns4"), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")}),
-						testComponent("redis1", ""),
-						testComponent("redis2", ""),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")})
+				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("9736"))
+				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod under 'node/a'.`))
 			})
 		})
 
-		Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
+		/*Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
 			var err error
 
 			BeforeEach(func() {
