@@ -715,23 +715,21 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		/*Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
+		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
-						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80")),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
+				nodes["node/a/b2"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
 
-				err = appConfig.validate()
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
 			})
 
 		})
@@ -740,22 +738,20 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addPorts(testComponent("alt1", "ns5"), generictypes.MustParseDockerPort("80")),
-						addPorts(testComponent("alt2", "ns5"), generictypes.MustParseDockerPort("80/tcp")),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
+				nodes["node/a/b2"] = addPorts(testNode(), generictypes.MustParseDockerPort("80/tcp"))
 
-				err = appConfig.validate()
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
 			})
 
 		})
-		*/
+
 	})
 })

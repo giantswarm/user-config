@@ -121,7 +121,7 @@ func (nds *NodeDefinitions) validateUniquePortsInPods() error {
 			for j := i + 1; j < len(list); j++ {
 				port2 := list[j]
 				if port1.Equals(port2) {
-					return maskf(InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod under '%s'.", port1.String(), nodeName.String())
+					return maskf(InvalidPortConfigError, "Cannot parse app config. Multiple nodes export port '%s' in pod under '%s'.", port1.String(), nodeName.String())
 				}
 			}
 		}
