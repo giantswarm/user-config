@@ -38,14 +38,14 @@ func FixJSONFieldNames(b []byte) ([]byte, error) {
 	var j map[string]interface{}
 
 	if err := json.Unmarshal(b, &j); err != nil {
-		return nil, Mask(err)
+		return nil, mask(err)
 	}
 
 	j = fixJSONFieldNamesRecursive(j, "")
 
 	b, err := json.Marshal(j)
 	if err != nil {
-		return nil, Mask(err)
+		return nil, mask(err)
 	}
 
 	return b, nil
