@@ -29,7 +29,7 @@ var (
 	MissingValidationContextError = errgo.New("missing validation context")
 	InvalidArgumentError          = errgo.New("invalid argument")
 
-	Mask = errgo.MaskFunc(IsInvalidEnvListFormat,
+	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
 		IsMissingJsonField,
 		IsInvalidSize,
@@ -53,6 +53,17 @@ var (
 		IsInvalidArgument,
 	)
 )
+
+// maskf is short for mask(errgo.WithCausef(nil, cause, f, a...))
+func maskf(cause error, f string, a ...interface{}) error {
+	err := mask(errgo.WithCausef(nil, cause, f, a...))
+	// the above call with set this location instead of that of our caller.
+	// that is fixed below.
+	if e, _ := err.(*errgo.Err); e != nil {
+		e.SetLocation(1)
+	}
+	return err
+}
 
 func IsUnknownJsonField(err error) bool {
 	return errgo.Cause(err) == UnknownJSONFieldError

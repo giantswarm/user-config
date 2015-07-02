@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/juju/errgo"
 	"github.com/kr/pretty"
 )
 
@@ -15,17 +14,17 @@ type v2AppDefCopy V2AppDefinition
 func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	var clean v2AppDefCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	cleanBytes, err := json.Marshal(clean)
 	if err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	var dirtyMap map[string]interface{}
 	if err := json.Unmarshal(b, &dirtyMap); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 	// Normalize fields to common format
 	v2NormalizeEnv(dirtyMap)
@@ -33,7 +32,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 
 	var cleanMap map[string]interface{}
 	if err := json.Unmarshal(cleanBytes, &cleanMap); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
@@ -48,26 +47,26 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 func prettyJSONFieldError(diff string) error {
 	parts := strings.Split(diff, ":")
 	if len(parts) != 2 {
-		return errgo.WithCausef(nil, InternalError, "invalid diff format")
+		return maskf(InternalError, "invalid diff format")
 	}
 	path := parts[0]
 
 	reason := strings.Split(parts[1], "!=")
 	if len(parts) != 2 {
-		return errgo.WithCausef(nil, InternalError, "invalid diff format")
+		return maskf(InternalError, "invalid diff format")
 	}
 	missing := strings.Contains(reason[0], "missing")
 	unknown := strings.Contains(reason[1], "missing")
 
 	if missing {
-		return errgo.WithCausef(nil, MissingJSONFieldError, "missing JSON field: %s", path)
+		return maskf(MissingJSONFieldError, "missing JSON field: %s", path)
 	}
 
 	if unknown {
-		return errgo.WithCausef(nil, UnknownJSONFieldError, "unknown JSON field: %s", path)
+		return maskf(UnknownJSONFieldError, "unknown JSON field: %s", path)
 	}
 
-	return errgo.WithCausef(nil, InternalError, "invalid diff format")
+	return maskf(InternalError, "invalid diff format")
 }
 
 // getMapEntry tries to get an entry in the given map that is a string map of
