@@ -53,24 +53,32 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	/*addScale := func(config *NodeDefinition, min, max int) *NodeDefinition {
+	addScale := func(config *NodeDefinition, min, max int) *NodeDefinition {
 		config.Scale = &ScaleDefinition{
 			Min: min,
 			Max: max,
 		}
 		return config
-	}*/
+	}
 
 	testApp := func() NodeDefinitions {
 		return make(NodeDefinitions)
 	}
 
-	valCtx := func() *ValidationContext {
-		return &ValidationContext{
+	maxScale := 7
+	validate := func(nds NodeDefinitions) error {
+		vctx := &ValidationContext{
 			Protocols:     []string{"tcp"},
 			MinVolumeSize: "1 GB",
 			MaxVolumeSize: "100 GB",
+			MinScaleSize:  1,
+			MaxScaleSize:  maxScale,
 		}
+		nds.setDefaults(vctx)
+		if err := nds.validate(vctx); err != nil {
+			return mask(err)
+		}
+		return nil
 	}
 
 	Describe("pod tests ", func() {
@@ -83,7 +91,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b"] = testNode()
 				nodes["node/a/c"] = testNode()
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should not throw any errors", func() {
@@ -99,7 +107,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
@@ -118,7 +126,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b"] = testNode()
 				nodes["node/a/b/c"] = testNode()
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
@@ -137,7 +145,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b"] = testNode()
 				nodes["node/a/b/c"] = testNode()
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should not throw any errors", func() {
@@ -154,7 +162,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a"] = setPod(testNode(), PodInherit)
 				nodes["node/a/b"] = testNode()
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
@@ -175,7 +183,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b/c2"] = testNode()
 				nodes["node/a/c"] = testNode()
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
@@ -281,7 +289,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumesFrom: "node/a/b2"})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -300,7 +308,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "node/a/b2"})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -319,7 +327,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Path: "/alt1"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -338,7 +346,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Size: VolumeSize("5 GB")})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -357,7 +365,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", VolumeFrom: "node/a/b1"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -376,7 +384,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/data1", Size: VolumeSize("5GB")})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -395,7 +403,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -414,7 +422,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b2", VolumePath: "/data1"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -433,7 +441,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/unknown"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -453,7 +461,7 @@ var _ = Describe("v2 user config pod validator", func() {
 					VolumeConfig{Path: "/xdata1/", Size: VolumeSize("27 GB")},
 				)
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
@@ -475,7 +483,7 @@ var _ = Describe("v2 user config pod validator", func() {
 					VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
 				)
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
@@ -497,7 +505,7 @@ var _ = Describe("v2 user config pod validator", func() {
 					VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/xdata1"},
 				)
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
@@ -520,7 +528,7 @@ var _ = Describe("v2 user config pod validator", func() {
 					VolumeConfig{VolumesFrom: "node/a/b2"},
 				)
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
@@ -540,7 +548,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
 				nodes["node/a/b3"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error VolumeCycleError", func() {
@@ -559,7 +567,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
 				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should not throw an error", func() {
@@ -578,7 +586,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
@@ -598,7 +606,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
@@ -620,7 +628,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["storage/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["storage/redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
@@ -640,7 +648,7 @@ var _ = Describe("v2 user config pod validator", func() {
 				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("9736"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
-				err = nodes.validate(valCtx())
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
@@ -649,20 +657,18 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		/*Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
+		Describe("parsing valid scaling configs in pods, scaling values should be the same in all nodes of a pod or not set", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addScale(testComponent("alt1", "ns4"), 1, 5),
-						addScale(testComponent("alt2", "ns4"), 0, 5),
-						addScale(testComponent("alt3", "ns4"), 1, 0),
-						testComponent("alt4", "ns4"),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addScale(testNode(), 1, maxScale)
+				nodes["node/a/b2"] = addScale(testNode(), 0, maxScale)
+				nodes["node/a/b3"] = addScale(testNode(), 1, 0)
+				nodes["node/a/b4"] = testNode()
 
-				err = appConfig.validate()
+				err = validate(nodes)
 			})
 
 			It("should not throw an error", func() {
@@ -671,23 +677,21 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all components of a pod", func() {
+		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all nodes of a pod", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addScale(testComponent("alt1", "ns4"), 1, 5),
-						addScale(testComponent("alt2", "ns4"), 2, 5),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addScale(testNode(), 1, 5)
+				nodes["node/a/b2"] = addScale(testNode(), 2, 5)
 
-				err = appConfig.validate()
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod under 'node/a'.`))
 			})
 
 		})
@@ -696,24 +700,22 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addScale(testComponent("alt1", "ns4"), 2, 5),
-						addScale(testComponent("alt2", "ns4"), 2, 7),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addScale(testNode(), 2, 5)
+				nodes["node/a/b2"] = addScale(testNode(), 2, 7)
 
-				err = appConfig.validate()
+				err = validate(nodes)
 			})
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod under 'node/a'.`))
 			})
 
 		})
 
-		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
+		/*Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
 			var err error
 
 			BeforeEach(func() {

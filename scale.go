@@ -53,3 +53,48 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 
 	return sd
 }
+
+// validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set of the same
+func (nds *NodeDefinitions) validateScalingPolicyInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
+			continue
+		}
+
+		// Collect all scaling policies
+		podNodes, err := nds.PodNodes(nodeName.String())
+		if err != nil {
+			return mask(err)
+		}
+		list := []ScaleDefinition{}
+		for _, c := range podNodes {
+			if c.Scale == nil {
+				// No scaling policy set
+				continue
+			}
+			list = append(list, *c.Scale)
+		}
+
+		// Check each list for errors
+		for i, p1 := range list {
+			for j := i + 1; j < len(list); j++ {
+				p2 := list[j]
+				if p1.Min != 0 && p2.Min != 0 {
+					// Both minimums specified, must be the same
+					if p1.Min != p2.Min {
+						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different minimum scaling policies in pod under '%s'.", nodeName.String())
+					}
+				}
+				if p1.Max != 0 && p2.Max != 0 {
+					// Both maximums specified, must be the same
+					if p1.Max != p2.Max {
+						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different maximum scaling policies in pod under '%s'.", nodeName.String())
+					}
+				}
+			}
+		}
+	}
+
+	// No errors detected
+	return nil
+}

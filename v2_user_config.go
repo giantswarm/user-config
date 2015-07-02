@@ -148,7 +148,13 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	// Check node relations in pods
 	if err := nds.validatePods(); err != nil {
+		return mask(err)
+	}
+
+	// Check scaling policies in pods
+	if err := nds.validateScalingPolicyInPods(); err != nil {
 		return mask(err)
 	}
 
