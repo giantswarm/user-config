@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/juju/errgo"
 )
 
 var (
@@ -33,6 +31,52 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	size, unit, err := parseVolumeSize(sz)
+	if err != nil {
+		return mask(err)
+	}
+
+	*this = NewVolumeSize(size, unit)
+	return nil
+}
+
+// Empty returns true if the given volume size in "empty" (unspecified), false otherwise.
+func (this VolumeSize) Empty() bool {
+	return string(this) == ""
+}
+
+// Size gets the size part of a volume size as an integer.
+// E.g. "5 GB" -> 5
+func (this VolumeSize) Size() (int, error) {
+	size, _, err := parseVolumeSize(string(this))
+	if err != nil {
+		return 0, mask(err)
+	}
+	return size, nil
+}
+
+// Size gets the unit part of a volume size.
+// E.g. "5 GB" -> GB
+func (this VolumeSize) Unit() (SizeUnit, error) {
+	_, unit, err := parseVolumeSize(string(this))
+	if err != nil {
+		return GB, mask(err)
+	}
+	return unit, nil
+}
+
+// Size gets the size part of a volume size as an integer in GB.
+// E.g. "5 GB" -> 5
+func (this VolumeSize) SizeInGB() (int, error) {
+	if this == "" {
+		return 0, nil
+	}
+	return this.Size()
+}
+
+// parseVolumeSize normalizes a string into a well formated VolumeSize.
+// if the string cannot be normalized, an error is returned.
+func parseVolumeSize(sz string) (int, SizeUnit, error) {
 	sz = strings.ToUpper(sz)
 	matches := volumeSizeRegex.FindStringSubmatch(sz)
 	if matches == nil || len(matches) < 1 || len(matches) > 3 {
@@ -46,7 +90,7 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 		}
 		// Re-test
 		if matches == nil || len(matches) < 1 || len(matches) > 3 {
-			return errgo.WithCausef(nil, InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
+			return 0, GB, maskf(InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
 		}
 	}
 	unit := "GB"
@@ -57,51 +101,9 @@ func (this *VolumeSize) UnmarshalJSON(data []byte) error {
 		unit = "GB"
 	}
 	// Check size being a proper number
-	if _, err := strconv.ParseUint(matches[1], 10, 32); err != nil {
-		return errgo.WithCausef(nil, InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
+	if nr, err := strconv.ParseUint(matches[1], 10, 32); err != nil {
+		return 0, GB, maskf(InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
+	} else {
+		return int(nr), SizeUnit(unit), nil
 	}
-	*this = VolumeSize(matches[1] + " " + unit)
-	return nil
-}
-
-// Empty returns true if the given volume size in "empty" (unspecified), false otherwise.
-func (this VolumeSize) Empty() bool {
-	return string(this) == ""
-}
-
-// Size gets the size part of a volume size as an integer.
-// E.g. "5 GB" -> 5
-func (this VolumeSize) Size() (int, error) {
-	parts := strings.Split(string(this), " ")
-	return strconv.Atoi(parts[0])
-}
-
-// Size gets the unit part of a volume size.
-// E.g. "5 GB" -> GB
-func (this VolumeSize) Unit() (SizeUnit, error) {
-	parts := strings.Split(string(this), " ")
-	if len(parts) == 1 {
-		// No unit found, assume GB
-		return GB, nil
-	}
-	if len(parts) < 2 {
-		return GB, errgo.Newf("No unit found, got '%s'", string(this))
-	}
-	switch parts[1] {
-	case "G":
-		return GB, nil
-	case "GB":
-		return GB, nil
-	default:
-		return GB, errgo.Newf("Unknown unit, got '%s'", parts[1])
-	}
-}
-
-// Size gets the size part of a volume size as an integer in GB.
-// E.g. "5 GB" -> 5
-func (this VolumeSize) SizeInGB() (int, error) {
-	if this == "" {
-		return 0, nil
-	}
-	return this.Size()
 }

@@ -462,26 +462,24 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		/*Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
+		Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-						addVols(testComponent("alt1", "ns4"),
-							VolumeConfig{VolumesFrom: "api"},
-							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
-						),
-					),
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(),
+					VolumeConfig{VolumesFrom: "node/a/b1"},
+					VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
 				)
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
-				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
+				//Expect(IsDuplicateVolumePath(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
 			})
 
 		})
@@ -490,22 +488,20 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-						addVols(testComponent("alt1", "ns4"),
-							VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
-							VolumeConfig{VolumeFrom: "api", VolumePath: "/xdata1"},
-						),
-					),
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(),
+					VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
+					VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/xdata1"},
 				)
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
 			})
 
 		})
@@ -514,23 +510,21 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addVols(testComponent("api", "ns4"), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")}),
-						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
-						addVols(testComponent("alt2", "ns4"),
-							VolumeConfig{VolumesFrom: "api"},
-							VolumeConfig{VolumesFrom: "alt1"},
-						),
-					),
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
+				nodes["node/a/b3"] = addVols(testNode(),
+					VolumeConfig{VolumesFrom: "node/a/b1"},
+					VolumeConfig{VolumesFrom: "node/a/b2"},
 				)
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
+				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b3'.`))
 			})
 
 		})
@@ -539,25 +533,22 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				appConfig := testApp(
-					testService("session1",
-						addVols(testComponent("api", "ns4"), VolumeConfig{VolumesFrom: "alt2"}),
-						addVols(testComponent("alt1", "ns4"), VolumeConfig{VolumesFrom: "api"}),
-						addVols(testComponent("alt2", "ns4"), VolumeConfig{VolumesFrom: "alt1"}),
-					),
-				)
+				nodes := testApp()
+				nodes["node/a"] = setPod(testNode(), PodChildren)
+				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b3"})
+				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
+				nodes["node/a/b3"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
 
-				err = appConfig.validate()
+				err = nodes.validate(valCtx())
 			})
 
-			It("should throw error InvalidVolumeConfigError", func() {
-				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
+			It("should throw error VolumeCycleError", func() {
+				Expect(IsVolumeCycle(err)).To(BeTrue())
 			})
 
 		})
 
-		Describe("parsing dependency configs in pods, same name should result in same port", func() {
+		/*Describe("parsing dependency configs in pods, same name should result in same port", func() {
 			var err error
 
 			BeforeEach(func() {

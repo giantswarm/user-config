@@ -28,6 +28,7 @@ var (
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
 	InvalidArgumentError          = errgo.New("invalid argument")
+	VolumeCycleError              = errgo.New("cycle detected in volume configuration")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -37,6 +38,7 @@ var (
 		IsCrossServicePod,
 		IsPodUsedOnlyOnce,
 		IsInvalidVolumeConfig,
+		IsVolumeCycle,
 		IsInvalidDependencyConfig,
 		IsInvalidScalingConfig,
 		IsInvalidPortConfig,
@@ -94,10 +96,14 @@ func IsPodUsedOnlyOnce(err error) bool {
 }
 
 // IsInvalidVolumeConfig returns true if the given error is of type
-// InvalidVolumeConfigError, or DuplicateVolumePathError. False otherwise.
+// InvalidVolumeConfigError, VolumeCycleError or DuplicateVolumePathError. False otherwise.
 func IsInvalidVolumeConfig(err error) bool {
 	cause := errgo.Cause(err)
-	return cause == InvalidVolumeConfigError || cause == DuplicateVolumePathError
+	return cause == InvalidVolumeConfigError || cause == DuplicateVolumePathError || cause == VolumeCycleError
+}
+
+func IsVolumeCycle(err error) bool {
+	return errgo.Cause(err) == VolumeCycleError
 }
 
 func IsInvalidDependencyConfig(err error) bool {

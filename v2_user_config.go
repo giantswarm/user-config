@@ -288,7 +288,7 @@ func (nds *NodeDefinitions) PodRoot(name string) (NodeName, *NodeDefinition, err
 		if err != nil {
 			return "", nil, err
 		}
-		if parent.Pod == PodChildren || parent.Pod == PodInherit {
+		if parent.IsPodRoot() {
 			// We found our pod root
 			return parentName, parent, nil
 		}
@@ -308,7 +308,7 @@ func (nds *NodeDefinitions) MountPoints(name string) ([]string, error) {
 func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string]string) ([]string, error) {
 	// prevent cycles
 	if _, ok := visited[name]; ok {
-		return nil, maskf(InvalidVolumeConfigError, "volume cycle detected in '%s'", name)
+		return nil, maskf(VolumeCycleError, "volume cycle detected in '%s'", name)
 	}
 	visited[name] = name
 
@@ -461,4 +461,9 @@ func ParseV2AppDefinition(b []byte) (V2AppDefinition, error) {
 	}
 
 	return appDef, nil
+}
+
+// IsPodRoot returns true if Pod is set to children or inherit.
+func (nd *NodeDefinition) IsPodRoot() bool {
+	return nd.Pod == PodChildren || nd.Pod == PodInherit
 }
