@@ -8,8 +8,8 @@ type ImageDefinition struct {
 	generictypes.DockerImage
 }
 
-func MustParseImageDefinition(id string) ImageDefinition {
-	return ImageDefinition{
+func MustParseImageDefinition(id string) *ImageDefinition {
+	return &ImageDefinition{
 		generictypes.MustParseDockerImage(id),
 	}
 }

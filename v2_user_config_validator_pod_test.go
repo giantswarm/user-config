@@ -1,6 +1,7 @@
 package userconfig
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/giantswarm/generic-types-go"
@@ -193,92 +194,79 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		})
 
-		/*
-			Describe("parsing valid volume configs in pods", func() {
-				var (
-					err       error
-					byteSlice []byte
-					appConfig AppDefinition
-				)
+		Describe("parsing valid volume configs in pods", func() {
+			var (
+				err    error
+				appDef V2AppDefinition
+			)
 
-				BeforeEach(func() {
-					byteSlice = []byte(`{
-			          "app_name": "test-app-name",
-			          "services": [
-			            {
-			              "service_name": "session1",
-			              "components": [
-			                {
-			                  "component_name": "api",
-			                  "image": "registry/namespace/repository:version",
-			                  "pod": "ns4",
-			                  "volumes": [
-			                  	{"path": "/data1", "size": "27 GB"}
-			                  ]
-			                },
-			                {
-			                  "component_name": "alt1",
-			                  "image": "dockerfile/redis",
-			                  "pod": "ns4",
-			                  "volumes": [
-			                  	{"volumes-from": "api"}
-			                  ]
-			                },
-			                {
-			                  "component_name": "alt2",
-			                  "image": "dockerfile/redis",
-			                  "pod": "ns4",
-			                  "volumes": [
-			                  	{"volume-from": "api", "volume-path": "/data1"}
-			                  ]
-			                },
-			                {
-			                  "component_name": "alt3",
-			                  "image": "dockerfile/redis",
-			                  "pod": "ns4",
-			                  "volumes": [
-			                  	{"volume-from": "api", "volume-path": "/data1", "path": "/alt4"}
-			                  ]
-			                }
-			              ]
-			            }
-			          ]
+			BeforeEach(func() {
+				byteSlice := []byte(`{
+		          "nodes": {
+		              "session1":
+		                {
+		                  "pod": "children"
+		                },
+		              "session1/api":
+		                {
+		                  "image": "registry/namespace/repository:version",
+		                  "volumes": [
+		                  	{"path": "/data1", "size": "27 GB"}
+		                  ]
+		                },
+		              "session1/alt1":
+		                {
+		                  "image": "dockerfile/redis",
+		                  "volumes": [
+		                  	{"volumes-from": "session1/api"}
+		                  ]
+		                },
+		              "session1/alt2":
+		                {
+		                  "image": "dockerfile/redis",
+		                  "volumes": [
+		                  	{"volume-from": "session1/api", "volume-path": "/data1"}
+		                  ]
+		                },
+		              "session1/alt3":
+		                {
+		                  "image": "dockerfile/redis",
+		                  "volumes": [
+		                  	{"volume-from": "session1/api", "volume-path": "/data1", "path": "/alt4"}
+		                  ]
+		                }
+			          }
 			        }`)
 
-					err = json.Unmarshal(byteSlice, &appConfig)
-				})
+				err = json.Unmarshal(byteSlice, &appDef)
+			})
 
-				It("should not throw error", func() {
-					Expect(err).To(BeNil())
-				})
+			It("should not throw error", func() {
+				Expect(err).To(BeNil())
+			})
 
-				It("should parse one service", func() {
-					Expect(appConfig.Services).To(HaveLen(1))
-				})
+			It("should parse 5 nodes", func() {
+				Expect(appDef.Nodes).To(HaveLen(5))
+			})
 
-				It("should parse 4 components", func() {
-					Expect(appConfig.Services[0].Components).To(HaveLen(4))
-				})
+			It("should parse one volume for each component", func() {
+				Expect(appDef.Nodes[NodeName("session1/api")].Volumes).To(HaveLen(1))
+				Expect(appDef.Nodes[NodeName("session1/alt1")].Volumes).To(HaveLen(1))
+				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes).To(HaveLen(1))
+				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes).To(HaveLen(1))
 
-				It("should parse one volume for each component", func() {
-					Expect(appConfig.Services[0].Components[0].Volumes).To(HaveLen(1))
-					Expect(appConfig.Services[0].Components[1].Volumes).To(HaveLen(1))
-					Expect(appConfig.Services[0].Components[2].Volumes).To(HaveLen(1))
-					Expect(appConfig.Services[0].Components[3].Volumes).To(HaveLen(1))
-
-					Expect(appConfig.Services[0].Components[0].Volumes[0].Path).To(Equal("/data1"))
-					Expect(appConfig.Services[0].Components[0].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
-					Expect(appConfig.Services[0].Components[1].Volumes[0].VolumesFrom).To(Equal("api"))
-					Expect(appConfig.Services[0].Components[2].Volumes[0].VolumeFrom).To(Equal("api"))
-					Expect(appConfig.Services[0].Components[2].Volumes[0].VolumePath).To(Equal("/data1"))
-					Expect(appConfig.Services[0].Components[3].Volumes[0].VolumeFrom).To(Equal("api"))
-					Expect(appConfig.Services[0].Components[3].Volumes[0].VolumePath).To(Equal("/data1"))
-					Expect(appConfig.Services[0].Components[3].Volumes[0].Path).To(Equal("/alt4"))
-
-				})
+				Expect(appDef.Nodes[NodeName("session1/api")].Volumes[0].Path).To(Equal("/data1"))
+				Expect(appDef.Nodes[NodeName("session1/api")].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
+				Expect(appDef.Nodes[NodeName("session1/alt1")].Volumes[0].VolumesFrom).To(Equal("session1/api"))
+				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
 
 			})
-		*/
+
+		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi path+volumes-from", func() {
 			var err error

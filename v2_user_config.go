@@ -356,7 +356,7 @@ func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string
 type NodeDefinition struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
-	Image ImageDefinition `json:"image" description:"Name of a docker image to use when running a container. The image includes tags."`
+	Image *ImageDefinition `json:"image,omitempty" description:"Name of a docker image to use when running a container. The image includes tags."`
 
 	// If given, overwrite the entrypoint of the docker image.
 	EntryPoint string `json:"entrypoint,omitempty" description:"If given, overwrite the entrypoint of the docker image."`
@@ -389,8 +389,10 @@ type NodeDefinition struct {
 // validate performs semantic validations of this NodeDefinition.
 // Return the first possible error.
 func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
-	if err := nd.Image.Validate(valCtx); err != nil {
-		return mask(err)
+	if nd.Image != nil {
+		if err := nd.Image.Validate(valCtx); err != nil {
+			return mask(err)
+		}
 	}
 
 	if err := nd.Ports.Validate(valCtx); err != nil {
@@ -441,7 +443,10 @@ type ExposeDefinition struct {
 	NodePort generictypes.DockerPort `json:"node_port" description:"Port of the given node."`
 }
 
-// TODO Node.IsService() bool
+// IsService returns true if the node has a defined container image, false otherwise.
+func (nd *NodeDefinition) IsService() bool {
+	return nd.Image != nil
+}
 
 // V2GenerateAppName removes any formatting from b and returns the first 4 bytes
 // of its MD5 checksum.
