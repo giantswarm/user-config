@@ -191,15 +191,15 @@ func (nds NodeDefinitions) validatePods() error {
 			// Check that there are least 2 pod nodes
 			children, err := nds.PodNodes(name.String())
 			if err != nil {
-				return Mask(err)
+				return mask(err)
 			}
 			if len(children) < 2 {
-				return Mask(errgo.WithCausef(nil, InvalidPodConfigError, "Node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod))
+				return maskf(InvalidPodConfigError, "Node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod)
 			}
 			// Children may not have pod set to anything other than empty
 			for childName, childDef := range children {
 				if childDef.Pod != "" {
-					return Mask(errgo.WithCausef(nil, InvalidPodConfigError, "Node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod))
+					return maskf(InvalidPodConfigError, "Node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
 				}
 			}
 		}

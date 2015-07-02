@@ -20,11 +20,11 @@ func (this *PodEnum) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	if s != string(PodNone) && s != string(PodChildren) && s != string(PodInherit) {
-		return Mask(errgo.WithCausef(nil, InvalidPodConfigError, "Cannot parse app config. Invalid pod value '%s' detected.", s))
+		return mask(errgo.WithCausef(nil, InvalidPodConfigError, "Cannot parse app config. Invalid pod value '%s' detected.", s))
 	}
 
 	*this = PodEnum(s)

@@ -131,7 +131,7 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	}
 
 	if err := nds.validatePods(); err != nil {
-		return Mask(err)
+		return mask(err)
 	}
 
 	return nil
@@ -222,7 +222,7 @@ func isChildOf(parentName, childName string) bool {
 func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
 	parent, err := nds.FindByName(name)
 	if err != nil {
-		return nil, Mask(err)
+		return nil, mask(err)
 	}
 	if parent.Pod == PodChildren {
 		// Collect all direct child nodes that do not have pod set to 'none'.
@@ -253,7 +253,7 @@ func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
 		}
 		return children, nil
 	} else {
-		return nil, Mask(errgo.WithCausef(nil, InvalidArgumentError, "Node '%s' a has no pod setting", name))
+		return nil, maskf(InvalidArgumentError, "Node '%s' a has no pod setting", name)
 	}
 }
 
