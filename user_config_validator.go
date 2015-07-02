@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/giantswarm/generic-types-go"
-	"github.com/juju/errgo"
 	"github.com/kr/pretty"
 )
 
@@ -285,61 +284,6 @@ func (ad *AppDefinition) validatePods() error {
 		}
 	}
 	return nil
-}
-
-// validate validates the settings of this VolumeConfig.
-// Valid combinations:
-// - Option1: Path & Size set, everything else empty
-// - Option 2: VolumesFrom set, everything else empty
-// - Option 3: VolumeFrom, VolumePath set, Path optionally set, everything else empty
-func (vc *VolumeConfig) validate() error {
-	// Option 1
-	if vc.Path != "" && !vc.Size.Empty() {
-		if vc.VolumesFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volumes-from for path '%s' should be empty.", vc.Path)
-		}
-		if vc.VolumeFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-from for path '%s' should be empty.", vc.Path)
-		}
-		if vc.VolumePath != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for path '%s' should be empty.", vc.Path)
-		}
-		return nil
-	}
-	// Option 2
-	if vc.VolumesFrom != "" {
-		if vc.Path != "" {
-			return errgo.WithCausef(nil, InvalidVolumeConfigError, "Cannot parse volume config. Path for volumes-from '%s' should be empty.", vc.VolumesFrom)
-		}
-		if !vc.Size.Empty() {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Size for volumes-from '%s' should be empty.", vc.VolumesFrom)
-		}
-		if vc.VolumeFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-from for volumes-from '%s' should be empty.", vc.VolumesFrom)
-		}
-		if vc.VolumePath != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for volumes-from '%s' should be empty.", vc.VolumesFrom)
-		}
-		return nil
-	}
-	// Option 3
-	if vc.VolumeFrom != "" && vc.VolumePath != "" {
-		// Path is optional
-
-		if !vc.Size.Empty() {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Size for volume-from '%s' should be empty.", vc.VolumeFrom)
-		}
-		if vc.VolumesFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volumes-from for volume-from '%s' should be empty.", vc.VolumeFrom)
-		}
-		if vc.VolumePath == "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for volume-from '%s' should not be empty.", vc.VolumeFrom)
-		}
-		return nil
-	}
-
-	// No valid option detected.
-	return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path must be set. %#v", vc)
 }
 
 // validateVolumeRefs checks the existance of reference names in the given volume config.

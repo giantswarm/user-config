@@ -67,8 +67,8 @@ var _ = Describe("v2 user config pod validator", func() {
 	valCtx := func() *ValidationContext {
 		return &ValidationContext{
 			Protocols:     []string{"tcp"},
-			MinVolumeSize: "1GB",
-			MaxVolumeSize: "100GB",
+			MinVolumeSize: "1 GB",
+			MaxVolumeSize: "100 GB",
 		}
 	}
 
