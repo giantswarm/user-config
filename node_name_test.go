@@ -43,6 +43,7 @@ func TestInvalidNodeNames(t *testing.T) {
 		"$3":    "node name must not start with special chars",
 		"()wjehfg/skdjcsd/jshg": "node name must not start with special chars",
 		"-a-0/b-1/c-2":          "node name must not start with special chars",
+		"a/b/c/":                "node name must not end with '/'",
 	}
 
 	for name, reason := range list {
@@ -127,6 +128,25 @@ func TestNodeNameIsChild(t *testing.T) {
 		child := userconfig.NodeName(test.ChildName)
 		parent := userconfig.NodeName(test.ParentName)
 		result := child.IsChildOf(parent)
+		if test.Result != result {
+			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
+		}
+	}
+}
+
+func TestNodeNameEmpty(t *testing.T) {
+	list := []struct {
+		Name   string
+		Result bool
+	}{
+		{"", true},
+		{"a", false},
+		{"a/b", false},
+	}
+
+	for _, test := range list {
+		name := userconfig.NodeName(test.Name)
+		result := name.Empty()
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
 		}

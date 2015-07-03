@@ -16,6 +16,11 @@ func (nn NodeName) String() string {
 	return string(nn)
 }
 
+// Empty returns true if the given NodeName is empty, false otherwise.
+func (nn NodeName) Empty() bool {
+	return string(nn) == ""
+}
+
 // Validate checks that the given NodeName is a valid NodeName.
 func (nn NodeName) Validate() error {
 	nnStr := nn.String()
