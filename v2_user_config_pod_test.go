@@ -84,7 +84,7 @@ var _ = Describe("v2 user config pod functions", func() {
 			})
 		})
 
-		Describe("PodNodes will pod!=children|inherit should return an error", func() {
+		Describe("Calling PodNodes on a node with pod!=children|inherit should return an error", func() {
 			var err error
 
 			BeforeEach(func() {
