@@ -233,7 +233,10 @@ func (nds *NodeDefinitions) ChildNodesRecursive(name NodeName) NodeDefinitions {
 // - isDirectChildOf("a", "a/b") -> true
 // - isDirectChildOf("a", "a/b/c") -> false
 func isDirectChildOf(parentName, childName string) bool {
-	prefix := parentName + "/"
+	prefix := parentName
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = parentName + "/"
+	}
 	if !strings.HasPrefix(childName, prefix) {
 		return false
 	}
@@ -250,7 +253,10 @@ func isDirectChildOf(parentName, childName string) bool {
 // - isChildOf("a", "a/b") -> true
 // - isChildOf("a", "a/b/c") -> true
 func isChildOf(parentName, childName string) bool {
-	prefix := parentName + "/"
+	prefix := parentName
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = parentName + "/"
+	}
 	if !strings.HasPrefix(childName, prefix) {
 		return false
 	}
