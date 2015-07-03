@@ -189,7 +189,7 @@ func (nds NodeDefinitions) validatePods() error {
 	for name, nodeDef := range nds {
 		if nodeDef.Pod == PodChildren || nodeDef.Pod == PodInherit {
 			// Check that there are least 2 pod nodes
-			children, err := nds.PodNodes(name.String())
+			children, err := nds.PodNodes(name)
 			if err != nil {
 				return mask(err)
 			}

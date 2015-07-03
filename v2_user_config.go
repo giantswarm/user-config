@@ -175,26 +175,28 @@ func (nds NodeDefinitions) setDefaults(valCtx *ValidationContext) {
 	}
 }
 
-func (nds *NodeDefinitions) FindByName(name string) (*NodeDefinition, error) {
+func (nds *NodeDefinitions) NodeByName(name NodeName) (*NodeDefinition, error) {
 	for nodeName, nodeDef := range *nds {
-		if name == nodeName.String() {
+		if name == nodeName {
 			return nodeDef, nil
 		}
 	}
 
-	return nil, maskf(NodeNotFoundError, name)
+	return nil, maskf(NodeNotFoundError, name.String())
 }
 
 // ParentOf returns the closest parent of the node with the given name.
 // If there is no such node, a NodeNotFoundError is returned.
-func (nds *NodeDefinitions) ParentOf(name string) (NodeName, *NodeDefinition, error) {
-	parts := strings.Split(name, "/")
-	for len(parts) > 1 {
-		parts = parts[:len(parts)-1]
-		parentName := strings.Join(parts, "/")
-		if parent, err := nds.FindByName(parentName); err == nil {
-			return NodeName(parentName), parent, nil
+func (nds *NodeDefinitions) ParentOf(name NodeName) (NodeName, *NodeDefinition, error) {
+	for {
+		parentName, err := name.ParentName()
+		if err != nil {
+			return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
 		}
+		if parent, err := nds.NodeByName(parentName); err == nil {
+			return parentName, parent, nil
+		}
+		name = parentName
 	}
 	return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
 }
@@ -257,21 +259,21 @@ func isChildOf(parentName, childName string) bool {
 
 // PodNodes returns a map of all nodes that are part of the pod specified by a node with
 // the given name.
-func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
-	parent, err := nds.FindByName(name)
+func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
+	parent, err := nds.NodeByName(name)
 	if err != nil {
 		return nil, mask(err)
 	}
 	if parent.Pod == PodChildren {
 		// Collect all direct child nodes that do not have pod set to 'none'.
 		return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-			return isDirectChildOf(name, nodeName.String()) && nodeDef.Pod != PodNone
+			return isDirectChildOf(name.String(), nodeName.String()) && nodeDef.Pod != PodNone
 		}), nil
 	} else if parent.Pod == PodInherit {
 		// Collect all child nodes that do not have pod set to 'none'.
 		noneNames := []NodeName{}
 		children := nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-			if !isChildOf(name, nodeName.String()) {
+			if !isChildOf(name.String(), nodeName.String()) {
 				return false
 			}
 			if nodeDef.Pod == PodNone {
@@ -297,7 +299,7 @@ func (nds *NodeDefinitions) PodNodes(name string) (NodeDefinitions, error) {
 
 // PodRoot returns the node that defines the pod the node with given name is a part of.
 // If there is no such node, NodeNotFoundError is returned.
-func (nds *NodeDefinitions) PodRoot(name string) (NodeName, *NodeDefinition, error) {
+func (nds *NodeDefinitions) PodRoot(name NodeName) (NodeName, *NodeDefinition, error) {
 	for {
 		// Find first parent
 		parentName, parent, err := nds.ParentOf(name)
@@ -309,26 +311,26 @@ func (nds *NodeDefinitions) PodRoot(name string) (NodeName, *NodeDefinition, err
 			return parentName, parent, nil
 		}
 		// Not a pood root, continue up the tree
-		name = parentName.String()
+		name = parentName
 	}
 }
 
 // MountPoints returns a list of all mount points of a node, that is given by
 // name
-func (nds *NodeDefinitions) MountPoints(name string) ([]string, error) {
+func (nds *NodeDefinitions) MountPoints(name NodeName) ([]string, error) {
 	visited := make(map[string]string)
 	return nds.mountPointsRecursive(name, visited)
 }
 
 // mountPointsRecursive creates a list of all mount points of a node
-func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string]string) ([]string, error) {
+func (nds *NodeDefinitions) mountPointsRecursive(name NodeName, visited map[string]string) ([]string, error) {
 	// prevent cycles
-	if _, ok := visited[name]; ok {
+	if _, ok := visited[name.String()]; ok {
 		return nil, maskf(VolumeCycleError, "volume cycle detected in '%s'", name)
 	}
-	visited[name] = name
+	visited[name.String()] = name.String()
 
-	node, err := nds.FindByName(name)
+	node, err := nds.NodeByName(name)
 	if err != nil {
 		return nil, mask(err)
 	}
@@ -341,7 +343,7 @@ func (nds *NodeDefinitions) mountPointsRecursive(name string, visited map[string
 		} else if vol.VolumePath != "" {
 			mountPoints = append(mountPoints, normalizeFolder(vol.VolumePath))
 		} else if vol.VolumesFrom != "" {
-			p, err := nds.mountPointsRecursive(vol.VolumesFrom, visited)
+			p, err := nds.mountPointsRecursive(NodeName(vol.VolumesFrom), visited)
 			if err != nil {
 				return nil, err
 			}

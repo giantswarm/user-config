@@ -151,17 +151,17 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 	}
 	// Another node is referenced, we should be in a pod
 	// Find the root of our pod
-	podRootName, _, err := nds.PodRoot(containingNodeName.String())
+	podRootName, _, err := nds.PodRoot(containingNodeName)
 	if err != nil {
 		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' without a pod declaration.", nodeName)
 	}
 	// Get the nodes that are part of the same pod
-	podNodes, err := nds.PodNodes(podRootName.String())
+	podNodes, err := nds.PodNodes(podRootName)
 	if err != nil {
 		return mask(err)
 	}
 	// Find the other node name
-	other, err := podNodes.FindByName(nodeName)
+	other, err := podNodes.NodeByName(NodeName(nodeName))
 	if err == nil {
 		// Found other node
 		// Check matching "volume-path"
@@ -183,7 +183,7 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 
 	// Other node is not found in the same pod
 	// Does the other node even exists?
-	if _, err := nds.FindByName(nodeName); err == nil {
+	if _, err := nds.NodeByName(NodeName(nodeName)); err == nil {
 		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' that is not part of the same pod.", nodeName)
 	} else {
 		// Other node not found
@@ -202,11 +202,11 @@ func (nds *NodeDefinitions) validateUniqueMountPoints() error {
 			} else if v.VolumeFrom != "" {
 				paths = []string{normalizeFolder(v.VolumePath)}
 			} else if v.VolumesFrom != "" {
-				if _, err := nds.FindByName(v.VolumesFrom); err != nil {
+				if _, err := nds.NodeByName(NodeName(v.VolumesFrom)); err != nil {
 					return maskf(InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced node '%s'.", v.VolumesFrom)
 				}
 				var err error
-				paths, err = nds.MountPoints(v.VolumesFrom)
+				paths, err = nds.MountPoints(NodeName(v.VolumesFrom))
 				if err != nil {
 					return mask(err)
 				}

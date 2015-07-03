@@ -62,7 +62,7 @@ func (nds *NodeDefinitions) validateScalingPolicyInPods() error {
 		}
 
 		// Collect all scaling policies
-		podNodes, err := nds.PodNodes(nodeName.String())
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}

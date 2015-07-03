@@ -59,7 +59,7 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 		}
 
 		// Collect all dependencies in this pod
-		podNodes, err := nds.PodNodes(nodeName.String())
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}
@@ -103,7 +103,7 @@ func (nds *NodeDefinitions) validateUniquePortsInPods() error {
 		}
 
 		// Collect all ports in this pod
-		podNodes, err := nds.PodNodes(nodeName.String())
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}
