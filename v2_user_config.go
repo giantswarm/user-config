@@ -158,6 +158,11 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	// Check leafs
+	if err := nds.validateLeafs(); err != nil {
+		return mask(err)
+	}
+
 	return nil
 }
 
@@ -289,6 +294,17 @@ func (nds *NodeDefinitions) PodRoot(name NodeName) (NodeName, *NodeDefinition, e
 		// Not a pood root, continue up the tree
 		name = parentName
 	}
+}
+
+// IsLeaf returns true if the node with the given name has no children,
+// false otherwise.
+func (nds *NodeDefinitions) IsLeaf(name NodeName) bool {
+	for nodeName, _ := range *nds {
+		if nodeName.IsChildOf(name) {
+			return false
+		}
+	}
+	return true
 }
 
 // MountPoints returns a list of all mount points of a node, that is given by

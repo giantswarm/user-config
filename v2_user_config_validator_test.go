@@ -146,7 +146,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	}
 }
 
-/*func TestUnmarshalV2AppDefMissingField(t *testing.T) {
+func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	// "image" is missing
 	b := []byte(`{
 		"nodes": {
@@ -159,13 +159,13 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `missing JSON field: ["nodes"]["foo/bar"]["image"]` {
+	if err.Error() != `Node 'foo/bar' must have an 'image'` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsMissingJsonField(err) {
-		t.Fatalf("expetced error to be MissingJSONFieldError")
+	if !userconfig.IsInvalidNodeDefinition(err) {
+		t.Fatalf("expected error to be MissingJSONFieldError")
 	}
-}*/
+}
 
 func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
 	b := []byte(`{

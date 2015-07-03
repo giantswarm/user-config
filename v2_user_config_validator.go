@@ -206,3 +206,16 @@ func (nds NodeDefinitions) validatePods() error {
 	}
 	return nil
 }
+
+// validateLeafs checks that all leaf nodes are a service.
+func (nds NodeDefinitions) validateLeafs() error {
+	for nodeName, nodeDef := range nds {
+		if nds.IsLeaf(nodeName) {
+			// It has to be a service
+			if !nodeDef.IsService() {
+				return maskf(InvalidNodeDefinitionError, "Node '%s' must have an 'image'", nodeName.String())
+			}
+		}
+	}
+	return nil
+}
