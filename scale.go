@@ -54,7 +54,7 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 	return sd
 }
 
-// validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set of the same
+// validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set or the same
 func (nds *NodeDefinitions) validateScalingPolicyInPods() error {
 	for nodeName, nodeDef := range *nds {
 		if !nodeDef.IsPodRoot() {
