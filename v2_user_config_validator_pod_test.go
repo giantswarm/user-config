@@ -643,7 +643,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all nodes of a pod", func() {
+		Describe("parsing invalid scaling definition in pods, minimum scaling values should be the same in all nodes of a pod", func() {
 			var err error
 
 			BeforeEach(func() {
@@ -661,7 +661,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing invalid scaling configs in pods, maximum scaling values should be the same in all components of a pod", func() {
+		Describe("parsing invalid scaling definition in pods, maximum scaling values should be the same in all components of a pod", func() {
 			var err error
 
 			BeforeEach(func() {
