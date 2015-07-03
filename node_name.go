@@ -99,3 +99,21 @@ func (childName NodeName) IsChildOf(parentName NodeName) bool {
 	}
 	return true
 }
+
+// IsSiblingOf returns true if the given other name is a sibling of the given name.
+// E.g.
+// - "a/b".IsSiblingOf("a") -> false
+// - "a/c".IsSiblingOf("a/b") -> true
+// - "a/b/c".IsSiblingOf("a/b") -> false
+func (name NodeName) IsSiblingOf(otherName NodeName) bool {
+	parentName, err := name.ParentName()
+	if err != nil {
+		parentName = ""
+	}
+	otherParentName, err := otherName.ParentName()
+	if err != nil {
+		otherParentName = ""
+	}
+
+	return parentName.String() == otherParentName.String()
+}

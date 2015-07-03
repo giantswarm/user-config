@@ -98,7 +98,7 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 type NodeDefinitions map[NodeName]*NodeDefinition
 
 func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
-	for nodeName, node := range nds {
+	for nodeName, _ := range nds {
 		if err := nodeName.Validate(); err != nil {
 			return mask(err)
 		}
@@ -109,25 +109,10 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		if err := nds[nodeName].validate(valCtx); err != nil {
 			return mask(err)
 		}
+	}
 
-		// detect invalid links
-		for _, link := range node.Links {
-			nodeFound := false
-
-			for nn, n := range nds {
-				if link.Name == nn.String() {
-					nodeFound = true
-
-					if !n.Ports.contains(link.Port) {
-						return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", nodeName, link.Port)
-					}
-				}
-			}
-
-			if !nodeFound {
-				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name)
-			}
-		}
+	if err := nds.validateLinks(); err != nil {
+		return mask(err)
 	}
 
 	if err := nds.validateVolumesRefs(); err != nil {

@@ -588,12 +588,12 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "storage/redis", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Alias: "redis", Name: "storage/redis2", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "node/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addDeps(testNode(), DependencyConfig{Alias: "redis", Name: "node/redis2", Port: generictypes.MustParseDockerPort("6379")})
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["storage/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["storage/redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["node/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				nodes["node/redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)
 			})
@@ -621,6 +621,41 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod under 'node/a'.`))
+			})
+		})
+
+		Describe("parsing invalid dependency configs, linking to a node that is not a parent/sibling", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = testNode()
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "node/b/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/b/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+
+				err = validate(nodes)
+			})
+
+			It("should throw error InvalidLinkDefinitionError", func() {
+				Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`invalid link to node 'node/b/redis': node 'node/a/b1' is not allowed to link to it`))
+			})
+		})
+
+		Describe("parsing valid dependency configs, linking to a node that is a parent/sibling", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = testNode()
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "node/a/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+
+				err = validate(nodes)
+			})
+
+			It("should now throw an error", func() {
+				Expect(err).To(BeNil())
 			})
 		})
 

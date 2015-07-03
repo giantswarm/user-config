@@ -137,6 +137,31 @@ func TestNodeNameIsChild(t *testing.T) {
 	}
 }
 
+func TestNodeNameIsSibling(t *testing.T) {
+	list := []struct {
+		Name1  string
+		Name2  string
+		Result bool
+	}{
+		{"a", "a/b", false},
+		{"a/b", "a", false},
+		{"a/b", "a/c", true},
+		{"a/b/c", "a/b/b", true},
+		{"a/b/c", "a/c/b", false},
+		{"a/b", "a", false},
+		{"a", "c", true},
+	}
+
+	for _, test := range list {
+		name1 := userconfig.NodeName(test.Name1)
+		name2 := userconfig.NodeName(test.Name2)
+		result := name1.IsSiblingOf(name2)
+		if test.Result != result {
+			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
+		}
+	}
+}
+
 func TestNodeNameEmpty(t *testing.T) {
 	list := []struct {
 		Name   string
