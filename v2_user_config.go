@@ -214,17 +214,17 @@ func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDe
 
 // ChildNodes returns a map of all nodes that are a direct child of a node with
 // the given name.
-func (nds *NodeDefinitions) ChildNodes(name string) NodeDefinitions {
+func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
 	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-		return isDirectChildOf(name, nodeName.String())
+		return isDirectChildOf(name.String(), nodeName.String())
 	})
 }
 
 // ChildNodesRecursive returns a list of all nodes that are a direct child of a node with
 // the given name and all child nodes of this children (recursive).
-func (nds *NodeDefinitions) ChildNodesRecursive(name string) NodeDefinitions {
+func (nds *NodeDefinitions) ChildNodesRecursive(name NodeName) NodeDefinitions {
 	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-		return isChildOf(name, nodeName.String())
+		return isChildOf(name.String(), nodeName.String())
 	})
 }
 
