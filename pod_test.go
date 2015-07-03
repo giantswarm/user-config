@@ -19,7 +19,7 @@ func TestValidPodValues(t *testing.T) {
 		var pe struct {
 			Pod userconfig.PodEnum
 		}
-		data := fmt.Sprintf("{\"pod\": \"%s\"}", s)
+		data := fmt.Sprintf(`{"pod": "%s"}`, s)
 		if err := json.Unmarshal([]byte(data), &pe); err != nil {
 			t.Fatalf("Valid pod value '%s' considered invalid because %v", s, err)
 		}
@@ -37,7 +37,7 @@ func TestInvalidPodValues(t *testing.T) {
 		var pe struct {
 			Pod userconfig.PodEnum
 		}
-		data := fmt.Sprintf("{\"pod\": \"%s\"}", s)
+		data := fmt.Sprintf(`{"pod": "%s"}`, s)
 		if err := json.Unmarshal([]byte(data), &pe); err == nil {
 			t.Fatalf("Invalid pod value '%s' considered valid", s)
 		}
