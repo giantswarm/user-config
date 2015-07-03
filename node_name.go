@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	nodeNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_/-]{0,99}$")
+	nodeNameRegExp   = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_/-]{0,99}$")
+	lettersAndDigits = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 type NodeName string
@@ -34,6 +35,16 @@ func (nn NodeName) Validate() error {
 
 	if strings.HasSuffix(nnStr, "/") {
 		return maskf(InvalidNodeNameError, "node name '%s' must not end with '/'", nnStr)
+	}
+
+	parts := strings.Split(nn.String(), "/")
+	for _, part := range parts {
+		if part == "" {
+			return maskf(InvalidNodeNameError, "node name '%s' must not have empty parts", nnStr)
+		}
+		if !strings.ContainsAny(part, lettersAndDigits) {
+			return maskf(InvalidNodeNameError, "node name '%s' (part '%s') must contain at least one letter or digit", nnStr, part)
+		}
 	}
 
 	return nil
