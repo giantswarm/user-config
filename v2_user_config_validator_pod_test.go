@@ -98,7 +98,6 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should not throw any errors", func() {
 				Expect(err).To(BeNil())
 			})
-
 		})
 
 		Describe("parsing (invalid) pod==children on a node that has no children", func() {
@@ -115,7 +114,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
 			})
-
 		})
 
 		Describe("parsing (invalid) pod==children on a node that has 2 children (recursive), but only 1 direct", func() {
@@ -134,7 +132,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
 			})
-
 		})
 
 		Describe("parsing (valid) pod==inherit on a node that has 2 children (recursive)", func() {
@@ -152,7 +149,6 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should not throw any errors", func() {
 				Expect(err).To(BeNil())
 			})
-
 		})
 
 		Describe("parsing (invalid) pod==inherit on a node that has not enough children", func() {
@@ -170,7 +166,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'inherit'`))
 			})
-
 		})
 
 		Describe("parsing (invalid) cannot specify pod value other than 'none' inside a pod", func() {
@@ -191,7 +186,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Node 'node/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
 			})
-
 		})
 
 		Describe("parsing valid volume configs in pods", func() {
@@ -265,7 +259,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
 
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi path+volumes-from", func() {
@@ -284,7 +277,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volumes-from for path '/data1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi path+volume-from", func() {
@@ -303,7 +295,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+path", func() {
@@ -322,7 +313,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'node/a/b1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+size", func() {
@@ -341,7 +331,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'node/a/b1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi volumes-from+volume-from", func() {
@@ -360,7 +349,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'node/a/b1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, invalid property combi volume-from+size", func() {
@@ -379,7 +367,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'node/a/b1' should be empty.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, volumes-from cannot refer to self", func() {
@@ -398,7 +385,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pod, volume-from cannot refer to self", func() {
@@ -417,7 +403,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, unknown path in volume-path", func() {
@@ -436,7 +421,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on node 'node/a/b1'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs, duplicate volume via different postfixes", func() {
@@ -456,7 +440,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, duplicate volume via volumes-from", func() {
@@ -478,7 +461,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				//Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, duplicate volume via volume-from", func() {
@@ -500,7 +482,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, duplicate volume via linked volumes-from", func() {
@@ -523,7 +504,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b3'.`))
 			})
-
 		})
 
 		Describe("parsing invalid volume configs in pods, cycle in volumes-from references", func() {
@@ -542,7 +522,6 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should throw error VolumeCycleError", func() {
 				Expect(IsVolumeCycle(err)).To(BeTrue())
 			})
-
 		})
 
 		Describe("parsing dependency configs in pods, same name should result in same port", func() {
@@ -662,7 +641,6 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should not throw an error", func() {
 				Expect(err).To(BeNil())
 			})
-
 		})
 
 		Describe("parsing invalid scaling configs in pods, minimum scaling values should be the same in all nodes of a pod", func() {
@@ -681,7 +659,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod under 'node/a'.`))
 			})
-
 		})
 
 		Describe("parsing invalid scaling configs in pods, maximum scaling values should be the same in all components of a pod", func() {
@@ -700,7 +677,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod under 'node/a'.`))
 			})
-
 		})
 
 		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod", func() {
@@ -719,7 +695,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
 			})
-
 		})
 
 		Describe("parsing invalid ports configs in pods, cannot duplicate ports in a single pod (mixed with/without protocol)", func() {
@@ -738,7 +713,6 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
 			})
-
 		})
 
 	})
