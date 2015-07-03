@@ -57,3 +57,33 @@ func TestInvalidNodeNames(t *testing.T) {
 		}
 	}
 }
+
+func TestNodeNameParentName(t *testing.T) {
+	list := []struct {
+		Name       string
+		ParentName string
+		IsValid    bool
+	}{
+		{"a", "", false},
+		{"a/b", "a", true},
+		{"", "", false},
+		{"a/b/c", "a/b", true},
+	}
+
+	for _, test := range list {
+		child := userconfig.NodeName(test.Name)
+		parent, err := child.ParentName()
+		if test.IsValid {
+			if err != nil {
+				t.Fatalf("Test %v failed %v", test, err)
+			}
+			if parent.String() != test.ParentName {
+				t.Fatalf("Test %v failed: got '%s', expected '%s'", test, parent.String(), test.ParentName)
+			}
+		} else {
+			if err == nil {
+				t.Fatalf("Test %v succeeded while error expected", test)
+			}
+		}
+	}
+}

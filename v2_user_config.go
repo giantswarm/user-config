@@ -216,7 +216,7 @@ func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDe
 // the given name.
 func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
 	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-		return isDirectChildOf(name.String(), nodeName.String())
+		return nodeName.IsDirectChildOf(name)
 	})
 }
 
@@ -224,43 +224,8 @@ func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
 // the given name and all child nodes of this children (recursive).
 func (nds *NodeDefinitions) ChildNodesRecursive(name NodeName) NodeDefinitions {
 	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-		return isChildOf(name.String(), nodeName.String())
+		return nodeName.IsChildOf(name)
 	})
-}
-
-// isDirectChildOf returns true if the given child name is a direct child of the given parent name.
-// E.g.
-// - isDirectChildOf("a", "a/b") -> true
-// - isDirectChildOf("a", "a/b/c") -> false
-func isDirectChildOf(parentName, childName string) bool {
-	prefix := parentName
-	if !strings.HasSuffix(prefix, "/") {
-		prefix = parentName + "/"
-	}
-	if !strings.HasPrefix(childName, prefix) {
-		return false
-	}
-	name := childName[len(prefix):]
-	if strings.Contains(name, "/") {
-		// Grand child
-		return false
-	}
-	return true
-}
-
-// isChildOf returns true if the given child name is a child (recursive) of the given parent name.
-// E.g.
-// - isChildOf("a", "a/b") -> true
-// - isChildOf("a", "a/b/c") -> true
-func isChildOf(parentName, childName string) bool {
-	prefix := parentName
-	if !strings.HasSuffix(prefix, "/") {
-		prefix = parentName + "/"
-	}
-	if !strings.HasPrefix(childName, prefix) {
-		return false
-	}
-	return true
 }
 
 // PodNodes returns a map of all nodes that are part of the pod specified by a node with
@@ -275,7 +240,7 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 		{
 			// Collect all direct child nodes that do not have pod set to 'none'.
 			return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-				return isDirectChildOf(name.String(), nodeName.String()) && nodeDef.Pod != PodNone
+				return nodeName.IsDirectChildOf(name) && nodeDef.Pod != PodNone
 			}), nil
 		}
 	case PodInherit:
@@ -283,7 +248,7 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 			// Collect all child nodes that do not have pod set to 'none'.
 			noneNames := []NodeName{}
 			children := nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
-				if !isChildOf(name.String(), nodeName.String()) {
+				if !nodeName.IsChildOf(name) {
 					return false
 				}
 				if nodeDef.Pod == PodNone {
@@ -295,7 +260,7 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 			// We now  go over the list and remove all children that have some parent with pod='none'
 			for _, nodeName := range noneNames {
 				for childName, _ := range children {
-					if isChildOf(nodeName.String(), childName.String()) {
+					if childName.IsChildOf(nodeName) {
 						// Child of pod='none', remove from list
 						delete(children, childName)
 					}

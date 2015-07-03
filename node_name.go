@@ -11,17 +11,24 @@ var (
 
 type NodeName string
 
+// String returns a string version of the given NodeName.
 func (nn NodeName) String() string {
 	return string(nn)
 }
 
+// Validate checks that the given NodeName is a valid NodeName.
 func (nn NodeName) Validate() error {
-	if nn == "" {
+	nnStr := nn.String()
+	if nnStr == "" {
 		return maskf(InvalidNodeNameError, "node name must not be empty")
 	}
 
-	if !nodeNameRegExp.MatchString(nn.String()) {
-		return maskf(InvalidNodeNameError, "node name '%s' must match regexp: %s", nn, nodeNameRegExp)
+	if !nodeNameRegExp.MatchString(nnStr) {
+		return maskf(InvalidNodeNameError, "node name '%s' must match regexp: %s", nnStr, nodeNameRegExp)
+	}
+
+	if strings.HasSuffix(nnStr, "/") {
+		return maskf(InvalidNodeNameError, "node name '%s' must not end with '/'", nnStr)
 	}
 
 	return nil
@@ -36,4 +43,43 @@ func (nn NodeName) ParentName() (NodeName, error) {
 		return NodeName(parentName), nil
 	}
 	return NodeName(""), maskf(InvalidArgumentError, "'%s' has no parent", nn.String())
+}
+
+// IsDirectChildOf returns true if the given child name is a direct child of the given parent name.
+// E.g.
+// - "a/b".IsDirectChildOf("a") -> true
+// - "a/b/c".IsDirectChildOf("a") -> false
+func (childName NodeName) IsDirectChildOf(parentName NodeName) bool {
+	parentNameStr := parentName.String()
+	prefix := parentNameStr
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = parentNameStr + "/"
+	}
+	childNameStr := childName.String()
+	if !strings.HasPrefix(childNameStr, prefix) {
+		return false
+	}
+	name := childNameStr[len(prefix):]
+	if strings.Contains(name, "/") {
+		// Grand child
+		return false
+	}
+	return true
+}
+
+// IsChildOf returns true if the given child name is a child (recursive) of the given parent name.
+// E.g.
+// - "a/b".IsChildOf("a") -> true
+// - "a/b/c".IsChildOf("a") -> true
+func (childName NodeName) IsChildOf(parentName NodeName) bool {
+	parentNameStr := parentName.String()
+	prefix := parentNameStr
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = parentNameStr + "/"
+	}
+	childNameStr := childName.String()
+	if !strings.HasPrefix(childNameStr, prefix) {
+		return false
+	}
+	return true
 }
