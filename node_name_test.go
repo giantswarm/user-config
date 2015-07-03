@@ -87,3 +87,48 @@ func TestNodeNameParentName(t *testing.T) {
 		}
 	}
 }
+
+func TestNodeNameIsDirectChild(t *testing.T) {
+	list := []struct {
+		ParentName string
+		ChildName  string
+		Result     bool
+	}{
+		{"a", "a/b", true},
+		{"a/b", "a", false},
+		{"a", "a/b/c", false},
+		{"a", "b/c", false},
+	}
+
+	for _, test := range list {
+		child := userconfig.NodeName(test.ChildName)
+		parent := userconfig.NodeName(test.ParentName)
+		result := child.IsDirectChildOf(parent)
+		if test.Result != result {
+			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
+		}
+	}
+}
+
+func TestNodeNameIsChild(t *testing.T) {
+	list := []struct {
+		ParentName string
+		ChildName  string
+		Result     bool
+	}{
+		{"a", "a/b", true},
+		{"a/b", "a", false},
+		{"a", "a/b/c", true},
+		{"a/b", "a/b/c/d/e/f", true},
+		{"a", "b/c", false},
+	}
+
+	for _, test := range list {
+		child := userconfig.NodeName(test.ChildName)
+		parent := userconfig.NodeName(test.ParentName)
+		result := child.IsChildOf(parent)
+		if test.Result != result {
+			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
+		}
+	}
+}
