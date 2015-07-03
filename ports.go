@@ -64,12 +64,12 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 			return mask(err)
 		}
 		list := []DependencyConfig{}
-		for _, c := range podNodes {
-			if c.Links == nil {
+		for _, pn := range podNodes {
+			if pn.Links == nil {
 				// No dependencies
 				continue
 			}
-			list = append(list, c.Links...)
+			list = append(list, pn.Links...)
 		}
 
 		// Check list for duplicates
@@ -108,12 +108,12 @@ func (nds *NodeDefinitions) validateUniquePortsInPods() error {
 			return mask(err)
 		}
 		list := []generictypes.DockerPort{}
-		for _, c := range podNodes {
-			if c.Ports == nil {
+		for _, pn := range podNodes {
+			if pn.Ports == nil {
 				// No dependencies
 				continue
 			}
-			list = append(list, c.Ports...)
+			list = append(list, pn.Ports...)
 		}
 
 		// Check list for duplicates
