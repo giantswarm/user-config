@@ -29,12 +29,6 @@ var _ = Describe("v2 user config pod functions", func() {
 		return make(NodeDefinitions)
 	}
 
-	/*valCtx := func() *ValidationContext {
-		return &ValidationContext{
-			Protocols: []string{"tcp"},
-		}
-	}*/
-
 	Describe("pod function tests ", func() {
 		Describe("PodNodes with pod=children should return only direct child nodes with pod!=none", func() {
 			var err error
