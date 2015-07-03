@@ -74,10 +74,10 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 
 		// Check list for duplicates
 		for i, dep1 := range list {
-			alias1 := dep1.getAlias(nodeName.String())
+			alias1 := dep1.alias(nodeName.String())
 			for j := i + 1; j < len(list); j++ {
 				dep2 := list[j]
-				alias2 := dep2.getAlias(nodeName.String())
+				alias2 := dep2.alias(nodeName.String())
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {

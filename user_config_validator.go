@@ -427,10 +427,10 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 	// Check each list for duplicates
 	for pn, list := range pod2deps {
 		for i, dep1 := range list {
-			alias1 := dep1.getAlias(sc.ServiceName)
+			alias1 := dep1.alias(sc.ServiceName)
 			for j := i + 1; j < len(list); j++ {
 				dep2 := list[j]
-				alias2 := dep2.getAlias(sc.ServiceName)
+				alias2 := dep2.alias(sc.ServiceName)
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {
@@ -545,7 +545,7 @@ func (sc *ServiceConfig) findComponent(name string) *ComponentConfig {
 }
 
 // getAlias returns the alias of a dependency or its name if there is no alias
-func (dc *DependencyConfig) getAlias(serviceName string) string {
+func (dc *DependencyConfig) alias(serviceName string) string {
 	alias := dc.Alias
 	if alias == "" {
 		_, depComponent := ParseDependency(serviceName, dc.Name)
