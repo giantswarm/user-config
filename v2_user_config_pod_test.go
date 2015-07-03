@@ -41,6 +41,7 @@ var _ = Describe("v2 user config pod functions", func() {
 				nodes["node/a/b2"] = testNode()
 				nodes["node/a/b2/c"] = testNode()
 				nodes["node/a/b3"] = setPod(testNode(), PodNone)
+				nodes["node/b/g1"] = testNode()
 
 				list, err = nodes.PodNodes("node/a")
 			})
