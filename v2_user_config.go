@@ -202,10 +202,10 @@ func (nds *NodeDefinitions) ParentOf(name NodeName) (NodeName, *NodeDefinition, 
 }
 
 // FilterNodes returns a set of all my nodes for which the given predicate returns true.
-func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDef *NodeDefinition) bool) NodeDefinitions {
+func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDef NodeDefinition) bool) NodeDefinitions {
 	list := make(NodeDefinitions)
 	for nodeName, nodeDef := range *nds {
-		if predicate(nodeName, nodeDef) {
+		if predicate(nodeName, *nodeDef) {
 			list[nodeName] = nodeDef
 		}
 	}
@@ -215,7 +215,7 @@ func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDe
 // ChildNodes returns a map of all nodes that are a direct child of a node with
 // the given name.
 func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
-	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+	return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
 		return nodeName.IsDirectChildOf(name)
 	})
 }
@@ -223,7 +223,7 @@ func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
 // ChildNodesRecursive returns a list of all nodes that are a direct child of a node with
 // the given name and all child nodes of this children (recursive).
 func (nds *NodeDefinitions) ChildNodesRecursive(name NodeName) NodeDefinitions {
-	return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+	return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
 		return nodeName.IsChildOf(name)
 	})
 }
@@ -239,7 +239,7 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 	case PodChildren:
 		{
 			// Collect all direct child nodes that do not have pod set to 'none'.
-			return nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+			return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
 				return nodeName.IsDirectChildOf(name) && nodeDef.Pod != PodNone
 			}), nil
 		}
@@ -247,7 +247,7 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 		{
 			// Collect all child nodes that do not have pod set to 'none'.
 			noneNames := []NodeName{}
-			children := nds.FilterNodes(func(nodeName NodeName, nodeDef *NodeDefinition) bool {
+			children := nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
 				if !nodeName.IsChildOf(name) {
 					return false
 				}
