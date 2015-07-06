@@ -53,6 +53,7 @@ var (
 		IsInternal,
 		IsMissingValidationContext,
 		IsInvalidArgument,
+		IsSyntax,
 	)
 )
 
