@@ -81,10 +81,10 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {
-						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod under '%s'.", alias1, nodeName.String())
+						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
 					if dep1.Name != dep2.Name {
-						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod under '%s'.", alias1, nodeName.String())
+						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
 				}
 			}
@@ -121,7 +121,7 @@ func (nds *NodeDefinitions) validateUniquePortsInPods() error {
 			for j := i + 1; j < len(list); j++ {
 				port2 := list[j]
 				if port1.Equals(port2) {
-					return maskf(InvalidPortConfigError, "Cannot parse app config. Multiple nodes export port '%s' in pod under '%s'.", port1.String(), nodeName.String())
+					return maskf(InvalidPortConfigError, "multiple nodes export port '%s' in pod under '%s'", port1.String(), nodeName.String())
 				}
 			}
 		}

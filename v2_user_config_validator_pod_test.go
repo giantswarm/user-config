@@ -558,7 +558,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'redis1' in pod under 'node/a'`))
 			})
 		})
 
@@ -578,7 +578,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'db' in pod under 'node/a'`))
 			})
 		})
 
@@ -600,7 +600,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'redis' in pod under 'node/a'`))
 			})
 		})
 
@@ -620,7 +620,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'db' in pod under 'node/a'`))
 			})
 		})
 
@@ -728,7 +728,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`multiple nodes export port '80/tcp' in pod under 'node/a'`))
 			})
 		})
 
@@ -746,7 +746,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple nodes export port '80/tcp' in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`multiple nodes export port '80/tcp' in pod under 'node/a'`))
 			})
 		})
 
