@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-// Type of the "pod" field in a V2 node definition.
+// Type of the "pod" field in a node definition.
 type PodEnum string
 
 const (
