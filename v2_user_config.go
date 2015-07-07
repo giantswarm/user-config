@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/giantswarm/generic-types-go"
 )
 
 type V2AppDefinition struct {
@@ -93,12 +91,6 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 
 	ad.Nodes.setDefaults(valCtx)
 	return nil
-}
-
-type ExposeDefinition struct {
-	Port     generictypes.DockerPort `json:"port" description:"Port of the stable API."`
-	Node     string                  `json:"node" description:"Node name of the node that exposes a given port."`
-	NodePort generictypes.DockerPort `json:"node_port" description:"Port of the given node."`
 }
 
 // V2GenerateAppName removes any formatting from b and returns the first 4 bytes
