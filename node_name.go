@@ -66,10 +66,9 @@ func (nn NodeName) ParentName() (NodeName, error) {
 // - "a/b".IsDirectChildOf("a") -> true
 // - "a/b/c".IsDirectChildOf("a") -> false
 func (childName NodeName) IsDirectChildOf(parentName NodeName) bool {
-	parentNameStr := parentName.String()
-	prefix := parentNameStr
+	prefix := parentName.String()
 	if !strings.HasSuffix(prefix, "/") {
-		prefix = parentNameStr + "/"
+		prefix = prefix + "/"
 	}
 	childNameStr := childName.String()
 	if !strings.HasPrefix(childNameStr, prefix) {
@@ -88,10 +87,9 @@ func (childName NodeName) IsDirectChildOf(parentName NodeName) bool {
 // - "a/b".IsChildOf("a") -> true
 // - "a/b/c".IsChildOf("a") -> true
 func (childName NodeName) IsChildOf(parentName NodeName) bool {
-	parentNameStr := parentName.String()
-	prefix := parentNameStr
+	prefix := parentName.String()
 	if !strings.HasSuffix(prefix, "/") {
-		prefix = parentNameStr + "/"
+		prefix = prefix + "/"
 	}
 	childNameStr := childName.String()
 	if !strings.HasPrefix(childNameStr, prefix) {
