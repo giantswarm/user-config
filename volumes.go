@@ -145,7 +145,7 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 		return nil
 	}
 
-	// Check that the component name (volume-from or volumes-from) is not the containing node
+	// Check that the node name (volume-from or volumes-from) is not the containing node
 	if nodeName == containingNodeName.String() {
 		return maskf(InvalidVolumeConfigError, "cannot refer to own node '%s'", nodeName)
 	}
