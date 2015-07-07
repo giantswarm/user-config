@@ -46,11 +46,11 @@ func TestVolumesDuplicatedPath(t *testing.T) {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
 
-	if err.Error() != "duplicated volume path: /data" {
+	if err.Error() != "duplicate volume '/data' found in node 'node/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsInvalidVolumeConfig(err) {
-		t.Fatalf("expetced error to be InvalidVolumeConfigError")
+		t.Fatalf("expected error to be InvalidVolumeConfigError")
 	}
 }
 
@@ -68,11 +68,11 @@ func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
 
-	if err.Error() != "duplicated volume path: /data" {
+	if err.Error() != "duplicate volume '/data' found in node 'node/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsInvalidVolumeConfig(err) {
-		t.Fatalf("expetced error to be InvalidVolumeConfigError")
+		t.Fatalf("expected error to be InvalidVolumeConfigError")
 	}
 }
 

@@ -23,9 +23,12 @@ var (
 	InvalidNodeDefinitionError    = errgo.New("invalid node definition")
 	InvalidImageDefinitionError   = errgo.New("invalid image definition")
 	InvalidNodeNameError          = errgo.New("invalid node name")
+	InvalidPodConfigError         = errgo.New("invalid pod configuration")
 	NodeNotFoundError             = errgo.New("node not found")
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
+	InvalidArgumentError          = errgo.New("invalid argument")
+	VolumeCycleError              = errgo.New("cycle detected in volume configuration")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -35,9 +38,11 @@ var (
 		IsCrossServicePod,
 		IsPodUsedOnlyOnce,
 		IsInvalidVolumeConfig,
+		IsVolumeCycle,
 		IsInvalidDependencyConfig,
 		IsInvalidScalingConfig,
 		IsInvalidPortConfig,
+		IsInvalidPodConfig,
 		IsInvalidDomainDefinition,
 		IsInvalidLinkDefinition,
 		IsInvalidAppDefinition,
@@ -47,6 +52,8 @@ var (
 		IsNodeNotFound,
 		IsInternal,
 		IsMissingValidationContext,
+		IsInvalidArgument,
+		IsSyntax,
 	)
 )
 
@@ -89,8 +96,15 @@ func IsPodUsedOnlyOnce(err error) bool {
 	return errgo.Cause(err) == PodUsedOnlyOnceError
 }
 
+// IsInvalidVolumeConfig returns true if the given error is of type
+// InvalidVolumeConfigError, VolumeCycleError or DuplicateVolumePathError. False otherwise.
 func IsInvalidVolumeConfig(err error) bool {
-	return errgo.Cause(err) == InvalidVolumeConfigError
+	cause := errgo.Cause(err)
+	return cause == InvalidVolumeConfigError || cause == DuplicateVolumePathError || cause == VolumeCycleError
+}
+
+func IsVolumeCycle(err error) bool {
+	return errgo.Cause(err) == VolumeCycleError
 }
 
 func IsInvalidDependencyConfig(err error) bool {
@@ -99,6 +113,10 @@ func IsInvalidDependencyConfig(err error) bool {
 
 func IsInvalidScalingConfig(err error) bool {
 	return errgo.Cause(err) == InvalidScalingConfigError
+}
+
+func IsInvalidPodConfig(err error) bool {
+	return errgo.Cause(err) == InvalidPodConfigError
 }
 
 func IsInvalidPortConfig(err error) bool {
@@ -139,6 +157,10 @@ func IsInternal(err error) bool {
 
 func IsMissingValidationContext(err error) bool {
 	return errgo.Cause(err) == MissingValidationContextError
+}
+
+func IsInvalidArgument(err error) bool {
+	return errgo.Cause(err) == InvalidArgumentError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError

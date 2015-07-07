@@ -159,11 +159,11 @@ func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `missing JSON field: ["nodes"]["foo/bar"]["image"]` {
+	if err.Error() != `node 'foo/bar' must have an 'image'` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsMissingJsonField(err) {
-		t.Fatalf("expetced error to be MissingJSONFieldError")
+	if !userconfig.IsInvalidNodeDefinition(err) {
+		t.Fatalf("expected error to be MissingJSONFieldError")
 	}
 }
 

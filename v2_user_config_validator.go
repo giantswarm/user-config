@@ -183,3 +183,39 @@ func v2NormalizeVolumeSizes(def map[string]interface{}) {
 		}
 	}
 }
+
+// validatePods checks that all pods are well formed.
+func (nds NodeDefinitions) validatePods() error {
+	for name, nodeDef := range nds {
+		if nodeDef.Pod == PodChildren || nodeDef.Pod == PodInherit {
+			// Check that there are least 2 pod nodes
+			children, err := nds.PodNodes(name)
+			if err != nil {
+				return mask(err)
+			}
+			if len(children) < 2 {
+				return maskf(InvalidPodConfigError, "node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod)
+			}
+			// Children may not have pod set to anything other than empty
+			for childName, childDef := range children {
+				if childDef.Pod != "" {
+					return maskf(InvalidPodConfigError, "node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// validateLeafs checks that all leaf nodes are a service.
+func (nds NodeDefinitions) validateLeafs() error {
+	for nodeName, nodeDef := range nds {
+		if nds.IsLeaf(nodeName) {
+			// It has to be a service
+			if !nodeDef.IsService() {
+				return maskf(InvalidNodeDefinitionError, "node '%s' must have an 'image'", nodeName.String())
+			}
+		}
+	}
+	return nil
+}

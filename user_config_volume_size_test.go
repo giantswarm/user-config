@@ -90,10 +90,10 @@ func TestVolumeSizeGetters(t *testing.T) {
 		{"5 GB", false, 5, false, userConfigPkg.GB, false, 5},
 		{"123 G", false, 123, false, userConfigPkg.GB, false, 123},
 		{"123", false, 123, true, userConfigPkg.GB, true, 123},
-		{"abc G", true, 0, false, userConfigPkg.GB, true, 0},
+		{"abc G", true, 0, true, userConfigPkg.GB, true, 0},
 		{"", true, 0, true, userConfigPkg.GB, false, 0},
-		{"124 KB", false, 124, true, userConfigPkg.GB, true, 124},
-		{"5GB", true, 0, true, userConfigPkg.GB, true, 0},
+		{"124 KB", true, 124, true, userConfigPkg.GB, true, 124},
+		{"5GB", false, 5, false, userConfigPkg.GB, false, 5},
 		{"8", false, 8, false, userConfigPkg.GB, false, 8},
 	}
 
