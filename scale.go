@@ -82,13 +82,13 @@ func (nds *NodeDefinitions) validateScalingPolicyInPods() error {
 				if p1.Min != 0 && p2.Min != 0 {
 					// Both minimums specified, must be the same
 					if p1.Min != p2.Min {
-						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different minimum scaling policies in pod under '%s'.", nodeName.String())
+						return maskf(InvalidScalingConfigError, "different minimum scaling policies in pod under '%s'", nodeName.String())
 					}
 				}
 				if p1.Max != 0 && p2.Max != 0 {
 					// Both maximums specified, must be the same
 					if p1.Max != p2.Max {
-						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different maximum scaling policies in pod under '%s'.", nodeName.String())
+						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod under '%s'", nodeName.String())
 					}
 				}
 			}

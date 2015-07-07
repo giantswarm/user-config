@@ -303,7 +303,7 @@ var _ = Describe("user config validator", func() {
 
 			It("should detect first occuring error and throw DuplicateVolumePathError", func() {
 				Expect(userconfig.IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/data' found in component 'api'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/data' found in component 'api'`))
 			})
 
 			It("should not parse given app name", func() {

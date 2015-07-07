@@ -172,7 +172,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error CrossServicePodError", func() {
 				Expect(IsCrossServicePod(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Pod 'ns2' is used in multiple services.`))
+				Expect(err.Error()).To(Equal(`pod 'ns2' is used in multiple services`))
 			})
 
 		})
@@ -193,7 +193,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error PodUsedOnlyOnceError", func() {
 				Expect(IsPodUsedOnlyOnce(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Pod 'ns3' is used in only 1 component.`))
+				Expect(err.Error()).To(Equal(`pod 'ns3' is used in only 1 component`))
 			})
 
 		})
@@ -299,7 +299,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volumes-from for path '/data1' should be empty.`))
+				Expect(err.Error()).To(Equal(`volumes-from for path '/data1' should be empty`))
 			})
 
 		})
@@ -320,7 +320,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
+				Expect(err.Error()).To(Equal(`volume-from for path '/data1' should be empty`))
 			})
 
 		})
@@ -341,7 +341,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'api' should be empty.`))
+				Expect(err.Error()).To(Equal(`path for volumes-from 'api' should be empty`))
 			})
 
 		})
@@ -362,7 +362,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'api' should be empty.`))
+				Expect(err.Error()).To(Equal(`size for volumes-from 'api' should be empty`))
 			})
 
 		})
@@ -383,7 +383,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'api' should be empty.`))
+				Expect(err.Error()).To(Equal(`volume-from for volumes-from 'api' should be empty`))
 			})
 
 		})
@@ -404,7 +404,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'api' should be empty.`))
+				Expect(err.Error()).To(Equal(`size for volume-from 'api' should be empty`))
 			})
 
 		})
@@ -425,7 +425,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
+				Expect(err.Error()).To(Equal(`cannot refer to own component 'alt1'`))
 			})
 
 		})
@@ -446,7 +446,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own component 'alt1'.`))
+				Expect(err.Error()).To(Equal(`cannot refer to own component 'alt1'`))
 			})
 
 		})
@@ -467,7 +467,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on component 'api'.`))
+				Expect(err.Error()).To(Equal(`cannot find path '/unknown' on component 'api'`))
 			})
 
 		})
@@ -490,7 +490,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'api'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'api'`))
 			})
 
 		})
@@ -514,7 +514,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'alt1'`))
 			})
 
 		})
@@ -538,7 +538,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt1'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'alt1'`))
 			})
 
 		})
@@ -563,7 +563,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in component 'alt2'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'alt2'`))
 			})
 
 		})
@@ -585,7 +585,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Cycle in referenced components detected in 'alt2'.`))
+				Expect(err.Error()).To(Equal(`cycle in referenced components detected in 'alt2'`))
 			})
 
 		})
@@ -628,7 +628,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'redis1' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'redis1' in pod 'ns4'`))
 			})
 		})
 
@@ -650,7 +650,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'db' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'db' in pod 'ns4'`))
 			})
 		})
 
@@ -676,7 +676,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different names) dependency 'redis' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'redis' in pod 'ns4'`))
 			})
 		})
 
@@ -698,7 +698,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate (but different ports) dependency 'db' in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'db' in pod 'ns4'`))
 			})
 		})
 
@@ -740,7 +740,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`different minimum scaling policies in pod 'ns4'`))
 			})
 
 		})
@@ -761,7 +761,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod 'ns4'.`))
+				Expect(err.Error()).To(Equal(`different maximum scaling policies in pod 'ns4'`))
 			})
 
 		})
@@ -782,7 +782,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+				Expect(err.Error()).To(Equal(`multiple components export port '80/tcp' in pod 'ns5'`))
 			})
 
 		})
@@ -803,7 +803,7 @@ var _ = Describe("user config pod validator", func() {
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Multiple components export port '80/tcp' in pod 'ns5'.`))
+				Expect(err.Error()).To(Equal(`multiple components export port '80/tcp' in pod 'ns5'`))
 			})
 
 		})

@@ -275,7 +275,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volumes-from for path '/data1' should be empty.`))
+				Expect(err.Error()).To(Equal(`volumes-from for path '/data1' should be empty`))
 			})
 		})
 
@@ -293,7 +293,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for path '/data1' should be empty.`))
+				Expect(err.Error()).To(Equal(`volume-from for path '/data1' should be empty`))
 			})
 		})
 
@@ -311,7 +311,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Path for volumes-from 'node/a/b1' should be empty.`))
+				Expect(err.Error()).To(Equal(`path for volumes-from 'node/a/b1' should be empty`))
 			})
 		})
 
@@ -329,7 +329,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volumes-from 'node/a/b1' should be empty.`))
+				Expect(err.Error()).To(Equal(`size for volumes-from 'node/a/b1' should be empty`))
 			})
 		})
 
@@ -347,7 +347,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Volume-from for volumes-from 'node/a/b1' should be empty.`))
+				Expect(err.Error()).To(Equal(`volume-from for volumes-from 'node/a/b1' should be empty`))
 			})
 		})
 
@@ -365,7 +365,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Size for volume-from 'node/a/b1' should be empty.`))
+				Expect(err.Error()).To(Equal(`size for volume-from 'node/a/b1' should be empty`))
 			})
 		})
 
@@ -383,7 +383,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
+				Expect(err.Error()).To(Equal(`cannot refer to own node 'node/a/b2'`))
 			})
 		})
 
@@ -401,7 +401,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot refer to own node 'node/a/b2'.`))
+				Expect(err.Error()).To(Equal(`cannot refer to own node 'node/a/b2'`))
 			})
 		})
 
@@ -419,7 +419,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse volume config. Cannot find path '/unknown' on node 'node/a/b1'.`))
+				Expect(err.Error()).To(Equal(`cannot find path '/unknown' on node 'node/a/b1'`))
 			})
 		})
 
@@ -438,7 +438,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a'`))
 			})
 		})
 
@@ -459,7 +459,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				//Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b2'`))
 			})
 		})
 
@@ -480,7 +480,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b2'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b2'`))
 			})
 		})
 
@@ -502,7 +502,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Duplicate volume '/xdata1' found in node 'node/a/b3'.`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b3'`))
 			})
 		})
 
@@ -692,7 +692,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different minimum scaling policies in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`different minimum scaling policies in pod under 'node/a'`))
 			})
 		})
 
@@ -710,7 +710,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Cannot parse app config. Different maximum scaling policies in pod under 'node/a'.`))
+				Expect(err.Error()).To(Equal(`different maximum scaling policies in pod under 'node/a'`))
 			})
 		})
 

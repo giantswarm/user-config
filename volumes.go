@@ -26,29 +26,29 @@ func (vc *VolumeConfig) validate() error {
 	// Option 1
 	if vc.Path != "" && !vc.Size.Empty() {
 		if vc.VolumesFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volumes-from for path '%s' should be empty.", vc.Path)
+			return maskf(InvalidVolumeConfigError, "volumes-from for path '%s' should be empty", vc.Path)
 		}
 		if vc.VolumeFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-from for path '%s' should be empty.", vc.Path)
+			return maskf(InvalidVolumeConfigError, "volume-from for path '%s' should be empty", vc.Path)
 		}
 		if vc.VolumePath != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for path '%s' should be empty.", vc.Path)
+			return maskf(InvalidVolumeConfigError, "volume-path for path '%s' should be empty", vc.Path)
 		}
 		return nil
 	}
 	// Option 2
 	if vc.VolumesFrom != "" {
 		if vc.Path != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Path for volumes-from '%s' should be empty.", vc.VolumesFrom)
+			return maskf(InvalidVolumeConfigError, "path for volumes-from '%s' should be empty", vc.VolumesFrom)
 		}
 		if !vc.Size.Empty() {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Size for volumes-from '%s' should be empty.", vc.VolumesFrom)
+			return maskf(InvalidVolumeConfigError, "size for volumes-from '%s' should be empty", vc.VolumesFrom)
 		}
 		if vc.VolumeFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-from for volumes-from '%s' should be empty.", vc.VolumesFrom)
+			return maskf(InvalidVolumeConfigError, "volume-from for volumes-from '%s' should be empty", vc.VolumesFrom)
 		}
 		if vc.VolumePath != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for volumes-from '%s' should be empty.", vc.VolumesFrom)
+			return maskf(InvalidVolumeConfigError, "volume-path for volumes-from '%s' should be empty", vc.VolumesFrom)
 		}
 		return nil
 	}
@@ -57,19 +57,19 @@ func (vc *VolumeConfig) validate() error {
 		// Path is optional
 
 		if !vc.Size.Empty() {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Size for volume-from '%s' should be empty.", vc.VolumeFrom)
+			return maskf(InvalidVolumeConfigError, "size for volume-from '%s' should be empty", vc.VolumeFrom)
 		}
 		if vc.VolumesFrom != "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volumes-from for volume-from '%s' should be empty.", vc.VolumeFrom)
+			return maskf(InvalidVolumeConfigError, "volumes-from for volume-from '%s' should be empty", vc.VolumeFrom)
 		}
 		if vc.VolumePath == "" {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Volume-path for volume-from '%s' should not be empty.", vc.VolumeFrom)
+			return maskf(InvalidVolumeConfigError, "volume-path for volume-from '%s' should not be empty", vc.VolumeFrom)
 		}
 		return nil
 	}
 
 	// No valid option detected.
-	return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Path, volume-path or volumes-path must be set. %#v", vc)
+	return maskf(InvalidVolumeConfigError, "path, volume-path or volumes-path must be set in '%#v'", vc)
 }
 
 func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
@@ -147,13 +147,13 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 
 	// Check that the component name (volume-from or volumes-from) is not the containing node
 	if nodeName == containingNodeName.String() {
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own node '%s'.", nodeName)
+		return maskf(InvalidVolumeConfigError, "cannot refer to own node '%s'", nodeName)
 	}
 	// Another node is referenced, we should be in a pod
 	// Find the root of our pod
 	podRootName, _, err := nds.PodRoot(containingNodeName)
 	if err != nil {
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' without a pod declaration.", nodeName)
+		return maskf(InvalidVolumeConfigError, "cannot refer to another node '%s' without a pod declaration", nodeName)
 	}
 	// Get the nodes that are part of the same pod
 	podNodes, err := nds.PodNodes(podRootName)
@@ -174,7 +174,7 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 				}
 			}
 			if !found {
-				return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find path '%s' on node '%s'.", vc.VolumePath, nodeName)
+				return maskf(InvalidVolumeConfigError, "cannot find path '%s' on node '%s'", vc.VolumePath, nodeName)
 			}
 		}
 		// all ok
@@ -184,10 +184,10 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 	// Other node is not found in the same pod
 	// Does the other node even exists?
 	if _, err := nds.NodeByName(NodeName(nodeName)); err == nil {
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another node '%s' that is not part of the same pod.", nodeName)
+		return maskf(InvalidVolumeConfigError, "cannot refer to another node '%s' that is not part of the same pod", nodeName)
 	} else {
 		// Other node not found
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find referenced node '%s'.", nodeName)
+		return maskf(InvalidVolumeConfigError, "cannot find referenced node '%s'", nodeName)
 	}
 }
 
@@ -203,7 +203,7 @@ func (nds *NodeDefinitions) validateUniqueMountPoints() error {
 				paths = []string{normalizeFolder(v.VolumePath)}
 			} else if v.VolumesFrom != "" {
 				if _, err := nds.NodeByName(NodeName(v.VolumesFrom)); err != nil {
-					return maskf(InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced node '%s'.", v.VolumesFrom)
+					return maskf(InvalidVolumeConfigError, "cannot find referenced node '%s'", v.VolumesFrom)
 				}
 				var err error
 				paths, err = nds.MountPoints(NodeName(v.VolumesFrom))
@@ -211,12 +211,12 @@ func (nds *NodeDefinitions) validateUniqueMountPoints() error {
 					return mask(err)
 				}
 			} else {
-				return maskf(InvalidVolumeConfigError, "Cannot parse app config. Missing path in node '%s'.", nodeName.String())
+				return maskf(InvalidVolumeConfigError, "missing path in node '%s'", nodeName.String())
 			}
 			for _, p := range paths {
 				if _, ok := mountPoints[p]; ok {
 					// Found duplicate mount point
-					return maskf(DuplicateVolumePathError, "Cannot parse app config. Duplicate volume '%s' found in node '%s'.", p, nodeName.String())
+					return maskf(DuplicateVolumePathError, "duplicate volume '%s' found in node '%s'", p, nodeName.String())
 				}
 				mountPoints[p] = p
 			}

@@ -268,7 +268,7 @@ func (ad *AppDefinition) validatePods() error {
 					// Found earlier use of pod name
 					if info.ServiceName != s.ServiceName {
 						// Pod is used in different services
-						return maskf(CrossServicePodError, "Cannot parse app config. Pod '%s' is used in multiple services.", pn)
+						return maskf(CrossServicePodError, "pod '%s' is used in multiple services", pn)
 					}
 					// Increase counter
 					info.Count++
@@ -280,7 +280,7 @@ func (ad *AppDefinition) validatePods() error {
 	for pn, info := range pod2info {
 		if info.Count == 1 {
 			// Pod is used only once
-			return maskf(PodUsedOnlyOnceError, "Cannot parse app config. Pod '%s' is used in only 1 component.", pn)
+			return maskf(PodUsedOnlyOnceError, "pod '%s' is used in only 1 component", pn)
 		}
 	}
 	return nil
@@ -299,12 +299,12 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 
 	// Check that the component name (volume-from or volumes-from) is not the containing component
 	if compName == containingComponent.ComponentName {
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to own component '%s'.", compName)
+		return maskf(InvalidVolumeConfigError, "cannot refer to own component '%s'", compName)
 	}
 	// Another component is referenced, we should be in a pod
 	pn := containingComponent.PodName
 	if pn == "" {
-		return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a pod declaration.", compName)
+		return maskf(InvalidVolumeConfigError, "cannot refer to another component '%s' without a pod declaration", compName)
 	}
 	// Find the other component name
 	other := service.findComponent(compName)
@@ -312,7 +312,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 		// Found other component
 		// Check matching pod
 		if pn != other.PodName {
-			return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot refer to another component '%s' without a matching pod declaration.", compName)
+			return maskf(InvalidVolumeConfigError, "cannot refer to another component '%s' without a matching pod declaration", compName)
 		}
 		// Check matching "volume-path"
 		if vc.VolumePath != "" {
@@ -324,7 +324,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 				}
 			}
 			if !found {
-				return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find path '%s' on component '%s'.", vc.VolumePath, compName)
+				return maskf(InvalidVolumeConfigError, "cannot find path '%s' on component '%s'", vc.VolumePath, compName)
 			}
 		}
 		// all ok
@@ -332,7 +332,7 @@ func (vc *VolumeConfig) validateVolumeRefs(service *ServiceConfig, containingCom
 	}
 
 	// Not found
-	return maskf(InvalidVolumeConfigError, "Cannot parse volume config. Cannot find referenced component '%s'.", compName)
+	return maskf(InvalidVolumeConfigError, "cannot find referenced component '%s'", compName)
 }
 
 // validateUniqueMountPoints checks that there are no duplicate volume mounts
@@ -347,7 +347,7 @@ func (cc *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) err
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
-				return maskf(InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+				return maskf(InvalidVolumeConfigError, "cannot find referenced component '%s'", v.VolumesFrom)
 			}
 			visitedComponents := make(map[string]string)
 			var err error
@@ -356,12 +356,12 @@ func (cc *ComponentConfig) validateUniqueMountPoints(service *ServiceConfig) err
 				return err
 			}
 		} else {
-			return maskf(InvalidVolumeConfigError, "Cannot parse app config. Missing path in component '%s'.", cc.ComponentName)
+			return maskf(InvalidVolumeConfigError, "missing path in component '%s'", cc.ComponentName)
 		}
 		for _, p := range paths {
 			if _, ok := mountPoints[p]; ok {
 				// Found duplicate mount point
-				return maskf(DuplicateVolumePathError, "Cannot parse app config. Duplicate volume '%s' found in component '%s'.", p, cc.ComponentName)
+				return maskf(DuplicateVolumePathError, "duplicate volume '%s' found in component '%s'", p, cc.ComponentName)
 			}
 			mountPoints[p] = p
 		}
@@ -376,7 +376,7 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 	// Prevent cycles
 	if _, ok := visitedComponents[cc.ComponentName]; ok {
 		// Cycle detected
-		return nil, maskf(InvalidVolumeConfigError, "Cannot parse app config. Cycle in referenced components detected in '%s'.", cc.ComponentName)
+		return nil, maskf(InvalidVolumeConfigError, "cycle in referenced components detected in '%s'", cc.ComponentName)
 	}
 	visitedComponents[cc.ComponentName] = cc.ComponentName
 
@@ -390,7 +390,7 @@ func (cc *ComponentConfig) getAllMountPoints(service *ServiceConfig, visitedComp
 		} else if v.VolumesFrom != "" {
 			other := service.findComponent(v.VolumesFrom)
 			if other == nil {
-				return nil, maskf(InvalidVolumeConfigError, "Cannot parse app config. Cannot find referenced component '%s'.", v.VolumesFrom)
+				return nil, maskf(InvalidVolumeConfigError, "cannot find referenced component '%s'", v.VolumesFrom)
 			}
 			p, err := other.getAllMountPoints(service, visitedComponents)
 			if err != nil {
@@ -434,10 +434,10 @@ func (sc *ServiceConfig) validateUniqueDependenciesInPods() error {
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !dep1.Port.Equals(dep2.Port) {
-						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different ports) dependency '%s' in pod '%s'.", alias1, pn)
+						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod '%s'", alias1, pn)
 					}
 					if dep1.Name != dep2.Name {
-						return maskf(InvalidDependencyConfigError, "Cannot parse app config. Duplicate (but different names) dependency '%s' in pod '%s'.", alias1, pn)
+						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod '%s'", alias1, pn)
 					}
 				}
 			}
@@ -476,7 +476,7 @@ func (sc *ServiceConfig) validateUniquePortsInPods() error {
 			for j := i + 1; j < len(list); j++ {
 				port2 := list[j]
 				if port1.Equals(port2) {
-					return maskf(InvalidPortConfigError, "Cannot parse app config. Multiple components export port '%s' in pod '%s'.", port1.String(), pn)
+					return maskf(InvalidPortConfigError, "multiple components export port '%s' in pod '%s'", port1.String(), pn)
 				}
 			}
 		}
@@ -516,13 +516,13 @@ func (sc *ServiceConfig) validateScalingPolicyInPods() error {
 				if p1.Min != 0 && p2.Min != 0 {
 					// Both minimums specified, must be the same
 					if p1.Min != p2.Min {
-						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different minimum scaling policies in pod '%s'.", pn)
+						return maskf(InvalidScalingConfigError, "different minimum scaling policies in pod '%s'", pn)
 					}
 				}
 				if p1.Max != 0 && p2.Max != 0 {
 					// Both maximums specified, must be the same
 					if p1.Max != p2.Max {
-						return maskf(InvalidScalingConfigError, "Cannot parse app config. Different maximum scaling policies in pod '%s'.", pn)
+						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod '%s'", pn)
 					}
 				}
 			}
