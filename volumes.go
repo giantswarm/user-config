@@ -112,6 +112,17 @@ func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 
 type VolumeDefinitions []VolumeConfig
 
+// Contains returns true if the volumes contain a volume with the given path,
+// or false otherwise.
+func (vds VolumeDefinitions) Contains(path string) bool {
+	for _, v := range vds {
+		if v.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
 func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
 	for _, v := range vds {
 		if err := v.V2Validate(valCtx); err != nil {
@@ -166,14 +177,7 @@ func (nds *NodeDefinitions) validateVolumeRefs(vc VolumeConfig, containingNodeNa
 		// Found other node
 		// Check matching "volume-path"
 		if vc.VolumePath != "" {
-			found := false
-			for _, v := range other.Volumes {
-				if v.Path == vc.VolumePath {
-					// Found it
-					found = true
-				}
-			}
-			if !found {
+			if !other.Volumes.Contains(vc.VolumePath) {
 				return maskf(InvalidVolumeConfigError, "cannot find path '%s' on node '%s'", vc.VolumePath, nodeName)
 			}
 		}
