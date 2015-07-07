@@ -24,11 +24,11 @@ func (nn NodeName) Empty() bool {
 
 // Validate checks that the given NodeName is a valid NodeName.
 func (nn NodeName) Validate() error {
-	nnStr := nn.String()
-	if nnStr == "" {
+	if nn.Empty() {
 		return maskf(InvalidNodeNameError, "node name must not be empty")
 	}
 
+	nnStr := nn.String()
 	if !nodeNameRegExp.MatchString(nnStr) {
 		return maskf(InvalidNodeNameError, "node name '%s' must match regexp: %s", nnStr, nodeNameRegExp)
 	}
