@@ -22,6 +22,12 @@ func (nn NodeName) Empty() bool {
 	return string(nn) == ""
 }
 
+// Equals returns true if the given NodeName is equal to the other
+// given node name, false otherwise.
+func (nn NodeName) Equals(other NodeName) bool {
+	return string(nn) == string(other)
+}
+
 // Validate checks that the given NodeName is a valid NodeName.
 func (nn NodeName) Validate() error {
 	if nn.Empty() {
