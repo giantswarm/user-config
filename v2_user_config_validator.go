@@ -194,12 +194,12 @@ func (nds NodeDefinitions) validatePods() error {
 				return mask(err)
 			}
 			if len(children) < 2 {
-				return maskf(InvalidPodConfigError, "Node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod)
+				return maskf(InvalidPodConfigError, "node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod)
 			}
 			// Children may not have pod set to anything other than empty
 			for childName, childDef := range children {
 				if childDef.Pod != "" {
-					return maskf(InvalidPodConfigError, "Node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
+					return maskf(InvalidPodConfigError, "node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
 				}
 			}
 		}
@@ -213,7 +213,7 @@ func (nds NodeDefinitions) validateLeafs() error {
 		if nds.IsLeaf(nodeName) {
 			// It has to be a service
 			if !nodeDef.IsService() {
-				return maskf(InvalidNodeDefinitionError, "Node '%s' must have an 'image'", nodeName.String())
+				return maskf(InvalidNodeDefinitionError, "node '%s' must have an 'image'", nodeName.String())
 			}
 		}
 	}

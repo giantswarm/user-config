@@ -112,7 +112,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
 			})
 		})
 
@@ -130,7 +130,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
 			})
 		})
 
@@ -164,7 +164,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'inherit'`))
+				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'inherit'`))
 			})
 		})
 
@@ -184,7 +184,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`Node 'node/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
+				Expect(err.Error()).To(Equal(`node 'node/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
 			})
 		})
 
