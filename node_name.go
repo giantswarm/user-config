@@ -113,5 +113,5 @@ func (name NodeName) IsSiblingOf(otherName NodeName) bool {
 		otherParentName = ""
 	}
 
-	return parentName.String() == otherParentName.String()
+	return parentName == otherParentName
 }
