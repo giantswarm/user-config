@@ -132,37 +132,33 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 	}
 	switch parent.Pod {
 	case PodChildren:
-		{
-			// Collect all direct child nodes that do not have pod set to 'none'.
-			return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-				return nodeName.IsDirectChildOf(name) && nodeDef.Pod != PodNone
-			}), nil
-		}
+		// Collect all direct child nodes that do not have pod set to 'none'.
+		return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
+			return nodeName.IsDirectChildOf(name) && nodeDef.Pod != PodNone
+		}), nil
 	case PodInherit:
-		{
-			// Collect all child nodes that do not have pod set to 'none'.
-			noneNames := []NodeName{}
-			children := nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-				if !nodeName.IsChildOf(name) {
-					return false
-				}
-				if nodeDef.Pod == PodNone {
-					noneNames = append(noneNames, nodeName)
-					return false
-				}
-				return true
-			})
-			// We now  go over the list and remove all children that have some parent with pod='none'
-			for _, nodeName := range noneNames {
-				for childName, _ := range children {
-					if childName.IsChildOf(nodeName) {
-						// Child of pod='none', remove from list
-						delete(children, childName)
-					}
+		// Collect all child nodes that do not have pod set to 'none'.
+		noneNames := []NodeName{}
+		children := nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
+			if !nodeName.IsChildOf(name) {
+				return false
+			}
+			if nodeDef.Pod == PodNone {
+				noneNames = append(noneNames, nodeName)
+				return false
+			}
+			return true
+		})
+		// We now  go over the list and remove all children that have some parent with pod='none'
+		for _, nodeName := range noneNames {
+			for childName, _ := range children {
+				if childName.IsChildOf(nodeName) {
+					// Child of pod='none', remove from list
+					delete(children, childName)
 				}
 			}
-			return children, nil
 		}
+		return children, nil
 	default:
 		return nil, maskf(InvalidArgumentError, "Node '%s' a has no pod setting", name)
 	}
