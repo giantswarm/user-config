@@ -659,6 +659,40 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
+		Describe("parsing valid dependency configs, linking to a node that is a child", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = testNode()
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "node/a/b1/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+
+				err = validate(nodes)
+			})
+
+			It("should now throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+
+		Describe("parsing valid dependency configs, linking to a node that is a grandchild", func() {
+			var err error
+
+			BeforeEach(func() {
+				nodes := testApp()
+				nodes["node/a"] = testNode()
+				nodes["node/a/b1"] = addDeps(testNode(), DependencyConfig{Name: "node/a/b1/c/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1/c/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+
+				err = validate(nodes)
+			})
+
+			It("should now throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+
 		Describe("parsing valid scaling configs in pods, scaling values should be the same in all nodes of a pod or not set", func() {
 			var err error
 
