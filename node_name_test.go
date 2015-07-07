@@ -46,7 +46,10 @@ func TestInvalidNodeNames(t *testing.T) {
 		"a/b/c/":                "node name must not end with '/'",
 		"/a/b/c":                "node name must not start with '/'",
 		"a//b/c":                "node name must not contain '//'",
-		"a/---/b/c":             "node name parts must not contain at least one letter or digit",
+		"a/---/b/c":             "node name parts must contain at least one letter or digit",
+		"/":                     "node name must not start with '/'",
+		" ":                     "node name parts must contain at least one letter or digit",
+		"a ":                    "node name parts must not contain spaces",
 	}
 
 	for name, reason := range list {
