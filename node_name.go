@@ -37,7 +37,7 @@ func (nn NodeName) Validate() error {
 		return maskf(InvalidNodeNameError, "node name '%s' must not end with '/'", nnStr)
 	}
 
-	parts := strings.Split(nn.String(), "/")
+	parts := strings.Split(nnStr, "/")
 	for _, part := range parts {
 		if part == "" {
 			return maskf(InvalidNodeNameError, "node name '%s' must not have empty parts", nnStr)
