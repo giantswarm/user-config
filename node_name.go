@@ -19,13 +19,13 @@ func (nn NodeName) String() string {
 
 // Empty returns true if the given NodeName is empty, false otherwise.
 func (nn NodeName) Empty() bool {
-	return string(nn) == ""
+	return nn == ""
 }
 
 // Equals returns true if the given NodeName is equal to the other
 // given node name, false otherwise.
 func (nn NodeName) Equals(other NodeName) bool {
-	return string(nn) == string(other)
+	return nn == other
 }
 
 // Validate checks that the given NodeName is a valid NodeName.
