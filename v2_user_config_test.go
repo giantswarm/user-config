@@ -189,3 +189,28 @@ func TestV2AppHideDefaults(t *testing.T) {
 		t.Fatalf("scale not hidden")
 	}
 }
+
+func TestV2AbsentAppName(t *testing.T) {
+	a := V2ExampleDefinition()
+	name, err := a.Name()
+	if err != nil {
+		t.Fatalf("Name failed: %#v", err)
+	}
+	expectedName := "e27445c0"
+	if name != expectedName {
+		t.Fatalf("Name result is invalid, got '%s', expected '%s'", name, expectedName)
+	}
+}
+
+func TestV2SpecifiedAppName(t *testing.T) {
+	a := V2ExampleDefinition()
+	expectedName := "nice-he"
+	a.AppName = expectedName
+	name, err := a.Name()
+	if err != nil {
+		t.Fatalf("Name failed: %#v", err)
+	}
+	if name != expectedName {
+		t.Fatalf("Name result is invalid, got '%s', expected '%s'", name, expectedName)
+	}
+}

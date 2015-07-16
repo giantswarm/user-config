@@ -8,6 +8,10 @@ import (
 )
 
 type V2AppDefinition struct {
+	// Optional application name
+	AppName string `json:"name,omitempty"`
+
+	// Nodes
 	Nodes NodeDefinitions `json:"nodes"`
 }
 
@@ -93,17 +97,44 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 	return nil
 }
 
-// V2GenerateAppName removes any formatting from b and returns the first 4 bytes
-// of its MD5 checksum.
-func V2GenerateAppName(b []byte) (string, error) {
+// V2GetAppName returns the name of the given definition if it exists.
+// It is does not exist, it generates an app name.
+func V2GetAppName(b []byte) (string, error) {
 	// parse and validate
 	appDef, err := ParseV2AppDefinition(b)
 	if err != nil {
 		return "", mask(err)
 	}
 
+	// Get name
+	if name, err := appDef.Name(); err != nil {
+		return "", mask(err)
+	} else {
+		return name, nil
+	}
+}
+
+// Name returns the name of the given definition if it exists.
+// It is does not exist, it generates an app name.
+func (ad *V2AppDefinition) Name() (string, error) {
+	// Is a name specified?
+	if ad.AppName != "" {
+		return ad.AppName, nil
+	}
+
+	// No name is specified, generate one
+	if name, err := ad.generateAppName(); err != nil {
+		return "", mask(err)
+	} else {
+		return name, nil
+	}
+}
+
+// generateAppName removes any formatting from b and returns the first 4 bytes
+// of its MD5 checksum.
+func (ad *V2AppDefinition) generateAppName() (string, error) {
 	// remove formatting
-	clean, err := json.Marshal(appDef)
+	clean, err := json.Marshal(*ad)
 	if err != nil {
 		return "", mask(err)
 	}
