@@ -2,7 +2,7 @@ PROJECT=user-config
 
 BUILD_PATH := $(shell pwd)/.gobuild
 
-D0_PATH := "$(BUILD_PATH)/src/github.com/giantswarm"
+GS_PATH := "$(BUILD_PATH)/src/github.com/giantswarm"
 
 BIN=$(PROJECT)
 
@@ -22,19 +22,25 @@ clean:
 get-deps: .gobuild
 
 .gobuild:
-	mkdir -p $(D0_PATH)
-	cd "$(D0_PATH)" && ln -s ../../../.. $(PROJECT)
+	mkdir -p $(GS_PATH)
+	cd "$(GS_PATH)" && ln -s ../../../.. $(PROJECT)
 
 	#
-	# Pin internal libraries
-	@builder get dep -b 1.0.0 git@github.com:giantswarm/generic-types-go.git $(D0_PATH)/generic-types-go
+	# Fetch internal libraries
+	@builder get dep git@github.com:giantswarm/generic-types-go.git $(GS_PATH)/generic-types-go
+	@builder get dep git@github.com:giantswarm/go-tld.git $(GS_PATH)/go-tld
+	@builder get dep git@github.com:giantswarm/validate.git $(GS_PATH)/validate
+
 	#
 	# Fetch public dependencies via `go get`
-	GOPATH=$(GOPATH) go get -d -v github.com/giantswarm/$(PROJECT)
+	GOPATH=$(GOPATH) builder go get github.com/juju/errgo
+	GOPATH=$(GOPATH) builder go get github.com/kr/pretty
+	GOPATH=$(GOPATH) builder go get github.com/kr/text
+
 	#
 	# Build test packages (we only want those two, so we use `-d` in go get)
-	GOPATH=$(GOPATH) go get -d -v github.com/onsi/gomega
-	GOPATH=$(GOPATH) go get -d -v github.com/onsi/ginkgo
+	GOPATH=$(GOPATH) builder go get github.com/onsi/gomega
+	GOPATH=$(GOPATH) builder go get github.com/onsi/ginkgo
 
 $(BIN): $(SOURCE)
 	GOPATH=$(GOPATH) go build -o $(BIN)
