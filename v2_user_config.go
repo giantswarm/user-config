@@ -99,7 +99,7 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 
 // V2GetAppName returns the name of the given definition if it exists.
 // It is does not exist, it generates an app name.
-func V2GetAppName(b []byte) (string, error) {
+func V2AppName(b []byte) (string, error) {
 	// parse and validate
 	appDef, err := ParseV2AppDefinition(b)
 	if err != nil {
