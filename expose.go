@@ -76,6 +76,18 @@ func (eds ExposeDefinitions) contains(port generictypes.DockerPort) bool {
 	return false
 }
 
+// defByPort returns the first expose definition in this list that equals the given port.
+// If no such definition is found, a PortNotFoundError is returned.
+func (eds ExposeDefinitions) defByPort(port generictypes.DockerPort) (ExposeDefinition, error) {
+	for _, ed := range eds {
+		if ed.Port.Equals(port) {
+			return ed, nil
+		}
+	}
+
+	return ExposeDefinition{}, maskf(PortNotFoundError, "port %s not found", port)
+}
+
 // ImplementationNodeName returns the name of the node that implements the stable API exposed by this definition.
 func (ed *ExposeDefinition) ImplementationNodeName(containingNodeName NodeName) NodeName {
 	if ed.Node.Empty() {
@@ -90,4 +102,36 @@ func (ed *ExposeDefinition) ImplementationPort() generictypes.DockerPort {
 		return ed.Port
 	}
 	return ed.NodePort
+}
+
+// Resolve resolves the implementation of the given Expose definition in the context of the given
+// node definitions.
+// Resolve returns the name of the node the implements this expose and its implementation port.
+// If this expose definition cannot be resolved, an error is returned.
+func (ed *ExposeDefinition) Resolve(containingNodeName NodeName, nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
+	// Get implementation node name
+	implName := ed.ImplementationNodeName(containingNodeName)
+	// Get implementation port
+	implPort := ed.ImplementationPort()
+
+	// Find implementation node
+	node, err := nds.NodeByName(implName)
+	if err != nil {
+		return "", generictypes.DockerPort{}, mask(err)
+	}
+
+	// Check expose definitions of node
+	if implExpDef, err := node.Expose.defByPort(implPort); err == nil {
+		// Recurse into the implementation node
+		return implExpDef.Resolve(implName, nds)
+	}
+
+	// Check exported ports of node
+	if node.Ports.contains(implPort) {
+		// Found implementation node and port
+		return implName, implPort, nil
+	}
+
+	// Port is not exposed, not exported by implementation node
+	return "", generictypes.DockerPort{}, maskf(PortNotFoundError, "node %s does not export port %s", implName, implPort)
 }
