@@ -27,7 +27,7 @@ get-deps: .gobuild
 
 	#
 	# Fetch internal libraries
-	@builder get dep git@github.com:giantswarm/generic-types-go.git $(GS_PATH)/generic-types-go
+	@builder get dep -b empty git@github.com:giantswarm/generic-types-go.git $(GS_PATH)/generic-types-go
 	@builder get dep git@github.com:giantswarm/go-tld.git $(GS_PATH)/go-tld
 	@builder get dep git@github.com:giantswarm/validate.git $(GS_PATH)/validate
 
