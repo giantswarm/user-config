@@ -205,7 +205,7 @@ func TestV2AbsentAppName(t *testing.T) {
 func TestV2SpecifiedAppName(t *testing.T) {
 	a := V2ExampleDefinition()
 	expectedName := "nice-he"
-	a.AppName = expectedName
+	a.AppName = userconfig.AppName(expectedName)
 	name, err := a.Name()
 	if err != nil {
 		t.Fatalf("Name failed: %#v", err)

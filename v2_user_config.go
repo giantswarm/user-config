@@ -9,7 +9,7 @@ import (
 
 type V2AppDefinition struct {
 	// Optional application name
-	AppName string `json:"name,omitempty"`
+	AppName AppName `json:"name,omitempty"`
 
 	// Nodes
 	Nodes NodeDefinitions `json:"nodes"`
@@ -68,6 +68,12 @@ func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 		return maskf(InvalidAppDefinitionError, "nodes must not be empty")
 	}
 
+	if !ad.AppName.Empty() {
+		if err := ad.AppName.Validate(); err != nil {
+			return mask(err)
+		}
+	}
+
 	if err := ad.Nodes.validate(valCtx); err != nil {
 		return mask(err)
 	}
@@ -118,8 +124,8 @@ func V2AppName(b []byte) (string, error) {
 // It is does not exist, it generates an app name.
 func (ad *V2AppDefinition) Name() (string, error) {
 	// Is a name specified?
-	if ad.AppName != "" {
-		return ad.AppName, nil
+	if !ad.AppName.Empty() {
+		return ad.AppName.String(), nil
 	}
 
 	// No name is specified, generate one
