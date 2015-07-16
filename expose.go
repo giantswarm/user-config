@@ -104,11 +104,11 @@ func (ed *ExposeDefinition) ImplementationPort() generictypes.DockerPort {
 	return ed.NodePort
 }
 
-// Resolve resolves the implementation of the given Expose definition in the context of the given
+// resolve resolves the implementation of the given Expose definition in the context of the given
 // node definitions.
 // Resolve returns the name of the node the implements this expose and its implementation port.
 // If this expose definition cannot be resolved, an error is returned.
-func (ed *ExposeDefinition) Resolve(containingNodeName NodeName, nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
+func (ed *ExposeDefinition) resolve(containingNodeName NodeName, nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
 	// Get implementation node name
 	implName := ed.ImplementationNodeName(containingNodeName)
 	// Get implementation port
@@ -123,7 +123,7 @@ func (ed *ExposeDefinition) Resolve(containingNodeName NodeName, nds NodeDefinit
 	// Check expose definitions of node
 	if implExpDef, err := node.Expose.defByPort(implPort); err == nil {
 		// Recurse into the implementation node
-		return implExpDef.Resolve(implName, nds)
+		return implExpDef.resolve(implName, nds)
 	}
 
 	// Check exported ports of node
