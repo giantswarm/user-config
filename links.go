@@ -36,8 +36,8 @@ func (nds NodeDefinitions) validateLinks() error {
 				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name)
 			}
 
-			// Do the target node expose the linked to port?
-			if !targetNode.Ports.contains(link.Port) {
+			// Does the target node expose the linked to port?
+			if !targetNode.Expose.contains(link.Port) && !targetNode.Ports.contains(link.Port) {
 				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", link.Name, link.Port)
 			}
 

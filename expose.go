@@ -10,6 +10,8 @@ type ExposeDefinition struct {
 	NodePort generictypes.DockerPort `json:"node_port,omitempty" description:"Port of the given node that implements the stable API."`
 }
 
+type ExposeDefinitions []ExposeDefinition
+
 // validateExpose
 func (nds NodeDefinitions) validateExpose() error {
 	for nodeName, node := range nds {
@@ -42,6 +44,36 @@ func (nds NodeDefinitions) validateExpose() error {
 		}
 	}
 	return nil
+}
+
+// validate checks for invalid and duplicate entries
+func (eds ExposeDefinitions) validate() error {
+	for i, ed := range eds {
+		if ed.Port.Empty() {
+			// Invalid exposed port found
+			return maskf(InvalidNodeDefinitionError, "cannot expose with empty port")
+		}
+
+		for j := i + 1; j < len(eds); j++ {
+			if eds[j].Port.Equals(ed.Port) {
+				// Duplicate exposed port found
+				return maskf(InvalidNodeDefinitionError, "port %s is exposed more than once", ed.Port)
+			}
+		}
+	}
+	return nil
+}
+
+// contains returns true if the given list of expose definitions contains
+// a definition that exposes the given port.
+func (eds ExposeDefinitions) contains(port generictypes.DockerPort) bool {
+	for _, ed := range eds {
+		if ed.Port.Equals(port) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ImplementationNodeName returns the name of the node that implements the stable API exposed by this definition.

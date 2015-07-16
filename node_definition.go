@@ -28,7 +28,7 @@ type NodeDefinition struct {
 	// Service names required by a service.
 	Links LinkDefinitions `json:"links,omitempty" description:"List of dependencies of this service."`
 
-	Expose []ExposeDefinition `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
+	Expose ExposeDefinitions `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
 
 	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the node."`
 
@@ -64,6 +64,10 @@ func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 		if err := nd.Scale.validate(valCtx); err != nil {
 			return mask(err)
 		}
+	}
+
+	if err := nd.Expose.validate(); err != nil {
+		return mask(err)
 	}
 
 	return nil
