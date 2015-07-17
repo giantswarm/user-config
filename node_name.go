@@ -67,6 +67,12 @@ func (nn NodeName) ParentName() (NodeName, error) {
 	return NodeName(""), maskf(InvalidArgumentError, "'%s' has no parent", nn.String())
 }
 
+// LocalName returns the last part of the given name.
+func (nn NodeName) LocalName() NodeName {
+	parts := strings.Split(nn.String(), "/")
+	return NodeName(parts[len(parts)-1])
+}
+
 // IsDirectChildOf returns true if the given child name is a direct child of the given parent name.
 // E.g.
 // - "a/b".IsDirectChildOf("a") -> true
