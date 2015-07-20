@@ -115,7 +115,7 @@ func (link LinkDefinition) Resolve(nds NodeDefinitions) (NodeName, generictypes.
 	// If the linked to port exposed by the target node?
 	if expDef, err := targetNode.Expose.defByPort(link.Port); err == nil {
 		// Link to exposed port, let expose definition resolve this further
-		return expDef.resolve(targetName, nds)
+		return expDef.Resolve(targetName, nds)
 	}
 
 	if targetNode.Ports.contains(link.Port) {
