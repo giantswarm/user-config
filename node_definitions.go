@@ -100,6 +100,13 @@ func (nds *NodeDefinitions) ParentOf(name NodeName) (NodeName, *NodeDefinition, 
 	return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
 }
 
+// IsRoot returns true if the given node name has no more parent nodes
+// in this set of nodes.
+func (nds *NodeDefinitions) IsRoot(name NodeName) bool {
+	_, _, err := nds.ParentOf(name)
+	return err != nil
+}
+
 // FilterNodes returns a set of all my nodes for which the given predicate returns true.
 func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDef NodeDefinition) bool) NodeDefinitions {
 	list := make(NodeDefinitions)
