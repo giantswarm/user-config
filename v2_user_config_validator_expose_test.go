@@ -230,5 +230,39 @@ var _ = Describe("v2 user config stable API validator", func() {
 			})
 		})
 
+		Describe("check restrictions for inter-app links", func() {
+			Describe("test valid link to another app", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Port: port("123")})
+
+					err = validate(nodes)
+				})
+
+				It("should not throw an error", func() {
+					Expect(err).To(BeNil())
+				})
+			})
+
+			Describe("test invalid link; cannot have name and app set", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Name: "b", Port: port("123")})
+					nodes["b"] = addPorts(testNode(), port("123"))
+
+					err = validate(nodes)
+				})
+
+				It("should throw an InvalidLinkDefinitionError", func() {
+					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`link app and name cannot be set both`))
+				})
+			})
+		})
+
 	})
 })

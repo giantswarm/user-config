@@ -5,10 +5,10 @@ import (
 )
 
 type LinkDefinition struct {
-	App AppName `json:"app" description:"Name of the application that is linked to"`
+	App AppName `json:"app,omitempty" description:"Name of the application that is linked to"`
 
 	// Name of a required node
-	Name NodeName `json:"name" description:"Name of a node that is linked to"`
+	Name NodeName `json:"name,omitempty" description:"Name of a node that is linked to"`
 
 	// The name how this dependency should appear in the container
 	Alias string `json:"alias,omitempty" description:"The name how this dependency should appear in the container"`
@@ -33,6 +33,9 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 			return maskf(InvalidLinkDefinitionError, "invalid link app: %s", err.Error())
 		}
 	}
+	if !ld.Name.Empty() && !ld.App.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link app and name cannot be set both")
+	}
 
 	// for easy validation we create a port definitions type and use its
 	// validate method
@@ -53,12 +56,26 @@ func (ld LinkDefinition) InternalName() (string, error) {
 		return ld.Alias, nil
 	}
 	if !ld.Name.Empty() {
+		// Take the dependency name from the last part of the node name
+		// We should prevent that the dependency name has '/' in it.
 		return ld.Name.LocalName().String(), nil
 	}
 	if !ld.App.Empty() {
 		return ld.App.String(), nil
 	}
 	return "", mask(InvalidLinkDefinitionError)
+}
+
+// IsInterApp returns true if this definition defines
+// a link between a node an another application.
+func (ld LinkDefinition) IsInterApp() bool {
+	return !ld.App.Empty()
+}
+
+// IsIntraApp returns true if this definition defines
+// a link between a node and another node within the same application.
+func (ld LinkDefinition) IsIntraApp() bool {
+	return ld.App.Empty()
 }
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
@@ -115,6 +132,11 @@ func (nds NodeDefinitions) validateLinks() error {
 	for nodeName, node := range nds {
 		// detect invalid links
 		for _, link := range node.Links {
+			// If the link is inter-app, we cannot validate it here.
+			if link.IsInterApp() {
+				continue
+			}
+
 			// Try to find the target node
 			targetName := NodeName(link.Name)
 			targetNode, err := nds.NodeByName(targetName)
