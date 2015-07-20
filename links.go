@@ -4,7 +4,62 @@ import (
 	"github.com/giantswarm/generic-types-go"
 )
 
-type LinkDefinitions []DependencyConfig
+type LinkDefinition struct {
+	App AppName `json:"app" description:"Name of the application that is linked to"`
+
+	// Name of a required node
+	Name NodeName `json:"name" description:"Name of a node that is linked to"`
+
+	// The name how this dependency should appear in the container
+	Alias string `json:"alias,omitempty" description:"The name how this dependency should appear in the container"`
+
+	// Port of the required node
+	Port generictypes.DockerPort `json:"port" description:"Port of the required node"`
+}
+
+type LinkDefinitions []LinkDefinition
+
+func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
+	if ld.Name.Empty() && ld.App.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link name must not be empty")
+	}
+	if !ld.Name.Empty() {
+		if err := ld.Name.Validate(); err != nil {
+			return maskf(InvalidLinkDefinitionError, "invalid link name: %s", err.Error())
+		}
+	}
+	if !ld.App.Empty() {
+		if err := ld.App.Validate(); err != nil {
+			return maskf(InvalidLinkDefinitionError, "invalid link app: %s", err.Error())
+		}
+	}
+
+	// for easy validation we create a port definitions type and use its
+	// validate method
+	pds := PortDefinitions{ld.Port}
+	if err := pds.Validate(valCtx); err != nil {
+		return maskf(InvalidLinkDefinitionError, "invalid link: %s", err.Error())
+	}
+
+	return nil
+}
+
+// InternalName returns the name of this link as it will be used inside
+// the node.
+// This defaults to the alias. If that is not specified, the local name
+// of the Node name will be used, or if that is also empty, the app name.
+func (ld LinkDefinition) InternalName() (string, error) {
+	if ld.Alias != "" {
+		return ld.Alias, nil
+	}
+	if !ld.Name.Empty() {
+		return ld.Name.LocalName().String(), nil
+	}
+	if !ld.App.Empty() {
+		return ld.App.String(), nil
+	}
+	return "", mask(InvalidLinkDefinitionError)
+}
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 	links := map[string]bool{}
@@ -15,14 +70,14 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 		}
 
 		// detect duplicated link name
-		name := link.Alias
-		if name == "" {
-			name = link.Name
+		internalName, err := link.InternalName()
+		if err != nil {
+			return mask(err)
 		}
-		if _, ok := links[name]; ok {
-			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", name)
+		if _, ok := links[internalName]; ok {
+			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", internalName)
 		}
-		links[name] = true
+		links[internalName] = true
 	}
 
 	return nil
@@ -32,12 +87,12 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 // node definitions.
 // Resolve returns the name of the node that implements this link and its implementation port.
 // If this link cannot be resolved, an error is returned.
-func (link DependencyConfig) Resolve(nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
+func (link LinkDefinition) Resolve(nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
 	// Resolve initial link target
-	targetName := NodeName(link.Name)
+	targetName := link.Name
 	targetNode, err := nds.NodeByName(targetName)
 	if err != nil {
-		return "", generictypes.DockerPort{}, maskf(NodeNotFoundError, link.Name)
+		return "", generictypes.DockerPort{}, maskf(NodeNotFoundError, link.Name.String())
 	}
 
 	// If the linked to port exposed by the target node?

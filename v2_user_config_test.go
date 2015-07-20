@@ -55,7 +55,7 @@ func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinit
 	}
 	links := userconfig.LinkDefinitions{}
 	for i, name := range names {
-		links = append(links, userconfig.DependencyConfig{Name: name, Port: generictypes.MustParseDockerPort(ports[i])})
+		links = append(links, userconfig.LinkDefinition{Name: userconfig.NodeName(name), Port: generictypes.MustParseDockerPort(ports[i])})
 	}
 	nodeA.Links = links
 	appDef.Nodes["node/a"] = nodeA

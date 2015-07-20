@@ -63,7 +63,7 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 		if err != nil {
 			return mask(err)
 		}
-		list := []DependencyConfig{}
+		list := LinkDefinitions{}
 		for _, pn := range podNodes {
 			if pn.Links == nil {
 				// No dependencies
@@ -73,17 +73,23 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 		}
 
 		// Check list for duplicates
-		for i, dep1 := range list {
-			alias1 := dep1.alias(nodeName.String())
+		for i, l1 := range list {
+			alias1, err := l1.InternalName()
+			if err != nil {
+				return mask(err)
+			}
 			for j := i + 1; j < len(list); j++ {
-				dep2 := list[j]
-				alias2 := dep2.alias(nodeName.String())
+				l2 := list[j]
+				alias2, err := l2.InternalName()
+				if err != nil {
+					return mask(err)
+				}
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
-					if !dep1.Port.Equals(dep2.Port) {
+					if !l1.Port.Equals(l2.Port) {
 						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
-					if dep1.Name != dep2.Name {
+					if l1.Name != l2.Name {
 						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
 				}

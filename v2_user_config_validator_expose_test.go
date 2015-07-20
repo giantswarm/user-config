@@ -30,11 +30,11 @@ var _ = Describe("v2 user config stable API validator", func() {
 		return config
 	}
 
-	addLinks := func(config *NodeDefinition, dep ...DependencyConfig) *NodeDefinition {
+	addLinks := func(config *NodeDefinition, link ...LinkDefinition) *NodeDefinition {
 		if config.Links == nil {
-			config.Links = dep
+			config.Links = link
 		} else {
-			config.Links = append(config.Links, dep...)
+			config.Links = append(config.Links, link...)
 		}
 		return config
 	}
@@ -201,7 +201,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), DependencyConfig{Name: "a", Port: port("123")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("123")})
 
 					err = validate(nodes)
 				})
@@ -218,7 +218,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), DependencyConfig{Name: "a", Port: port("789")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("789")})
 
 					err = validate(nodes)
 				})
