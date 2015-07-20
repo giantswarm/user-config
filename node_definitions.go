@@ -20,6 +20,10 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	if err := nds.validateExpose(); err != nil {
+		return mask(err)
+	}
+
 	if err := nds.validateVolumesRefs(); err != nil {
 		return mask(err)
 	}

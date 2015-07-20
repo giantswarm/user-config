@@ -95,6 +95,26 @@ func TestNodeNameParentName(t *testing.T) {
 	}
 }
 
+func TestNodeNameLocalName(t *testing.T) {
+	list := []struct {
+		Name      string
+		LocalName string
+	}{
+		{"a", "a"},
+		{"a/b", "b"},
+		{"", ""},
+		{"a/b/c", "c"},
+	}
+
+	for _, test := range list {
+		child := userconfig.NodeName(test.Name)
+		local := child.LocalName()
+		if local.String() != test.LocalName {
+			t.Fatalf("Test %v failed: got '%s', expected '%s'", test, local.String(), test.LocalName)
+		}
+	}
+}
+
 func TestNodeNameIsDirectChild(t *testing.T) {
 	list := []struct {
 		ParentName string

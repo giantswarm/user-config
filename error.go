@@ -25,6 +25,7 @@ var (
 	InvalidAppNameError           = errgo.New("invalid application name")
 	InvalidNodeNameError          = errgo.New("invalid node name")
 	InvalidPodConfigError         = errgo.New("invalid pod configuration")
+	PortNotFoundError             = errgo.New("port not found")
 	NodeNotFoundError             = errgo.New("node not found")
 	InternalError                 = errgo.New("internal error")
 	MissingValidationContextError = errgo.New("missing validation context")
@@ -52,6 +53,7 @@ var (
 		IsInvalidAppName,
 		IsInvalidNodeName,
 		IsNodeNotFound,
+		IsPortNotFound,
 		IsInternal,
 		IsMissingValidationContext,
 		IsInvalidArgument,
@@ -155,6 +157,10 @@ func IsInvalidNodeName(err error) bool {
 
 func IsNodeNotFound(err error) bool {
 	return errgo.Cause(err) == NodeNotFoundError
+}
+
+func IsPortNotFound(err error) bool {
+	return errgo.Cause(err) == PortNotFoundError
 }
 
 func IsInternal(err error) bool {
