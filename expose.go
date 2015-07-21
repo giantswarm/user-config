@@ -14,6 +14,7 @@ type ExposeDefinitions []ExposeDefinition
 
 // validateExpose
 func (nds NodeDefinitions) validateExpose() error {
+	rootNodes := []*NodeDefinition{}
 	for nodeName, node := range nds {
 		// detect invalid exposes
 		for _, expose := range node.Expose {
@@ -42,7 +43,24 @@ func (nds NodeDefinitions) validateExpose() error {
 				return maskf(InvalidNodeDefinitionError, "invalid expose to node '%s': does not export port '%s'", implName, implPort)
 			}
 		}
+
+		// Collect root nodes
+		if nds.IsRoot(nodeName) {
+			rootNodes = append(rootNodes, node)
+		}
 	}
+
+	// Check for duplicate exposed ports on root nodes
+	for i, node := range rootNodes {
+		for _, expose := range node.Expose {
+			for j := i + 1; j < len(rootNodes); j++ {
+				if rootNodes[j].Expose.contains(expose.Port) {
+					return maskf(InvalidNodeDefinitionError, "port '%s' is exposed by multiple root nodes", expose.Port)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -57,7 +75,7 @@ func (eds ExposeDefinitions) validate() error {
 		for j := i + 1; j < len(eds); j++ {
 			if eds[j].Port.Equals(ed.Port) {
 				// Duplicate exposed port found
-				return maskf(InvalidNodeDefinitionError, "port %s is exposed more than once", ed.Port)
+				return maskf(InvalidNodeDefinitionError, "port '%s' is exposed more than once", ed.Port)
 			}
 		}
 	}
@@ -85,7 +103,7 @@ func (eds ExposeDefinitions) defByPort(port generictypes.DockerPort) (ExposeDefi
 		}
 	}
 
-	return ExposeDefinition{}, maskf(PortNotFoundError, "port %s not found", port)
+	return ExposeDefinition{}, maskf(PortNotFoundError, "port '%s' not found", port)
 }
 
 // ImplementationNodeName returns the name of the node that implements the stable API exposed by this definition.
@@ -133,5 +151,5 @@ func (ed *ExposeDefinition) Resolve(containingNodeName NodeName, nds NodeDefinit
 	}
 
 	// Port is not exposed, not exported by implementation node
-	return "", generictypes.DockerPort{}, maskf(PortNotFoundError, "node %s does not export port %s", implName, implPort)
+	return "", generictypes.DockerPort{}, maskf(PortNotFoundError, "node '%s' does not export port '%s'", implName, implPort)
 }

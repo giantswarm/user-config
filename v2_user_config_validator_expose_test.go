@@ -188,7 +188,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				It("should throw an InvalidNodeDefinitionError", func() {
 					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`port 123/tcp is exposed more than once`))
+					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed more than once`))
 				})
 			})
 		})
@@ -260,6 +260,25 @@ var _ = Describe("v2 user config stable API validator", func() {
 				It("should throw an InvalidLinkDefinitionError", func() {
 					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
 					Expect(err.Error()).To(Equal(`link app and name cannot be set both`))
+				})
+			})
+
+			Describe("test exposing the same port on multiple root nodes (which is not allowed)", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
+					nodes["c"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "c/b", NodePort: port("456")})
+					nodes["c/b"] = addPorts(testNode(), port("456"))
+
+					err = validate(nodes)
+				})
+
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed by multiple root nodes`))
 				})
 			})
 		})
