@@ -47,17 +47,18 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 	return nil
 }
 
-// InternalName returns the name of this link as it will be used inside
+// LinkName returns the name of this link as it will be used inside
 // the node.
 // This defaults to the alias. If that is not specified, the local name
 // of the Node name will be used, or if that is also empty, the app name.
-func (ld LinkDefinition) InternalName() (string, error) {
+func (ld LinkDefinition) LinkName() (string, error) {
 	if ld.Alias != "" {
 		return ld.Alias, nil
 	}
 	if !ld.Name.Empty() {
 		// Take the dependency name from the last part of the node name
-		// We should prevent that the dependency name has '/' in it.
+		// (using `LocalName()`).
+		// This is done to prevent that the dependency name has '/' in it.
 		return ld.Name.LocalName().String(), nil
 	}
 	if !ld.App.Empty() {
@@ -66,15 +67,15 @@ func (ld LinkDefinition) InternalName() (string, error) {
 	return "", mask(InvalidLinkDefinitionError)
 }
 
-// IsInterApp returns true if this definition defines
+// LinksToOtherApp returns true if this definition defines
 // a link between a node an another application.
-func (ld LinkDefinition) IsInterApp() bool {
+func (ld LinkDefinition) LinksToOtherApp() bool {
 	return !ld.App.Empty()
 }
 
-// IsIntraApp returns true if this definition defines
+// LinksToSameApp returns true if this definition defines
 // a link between a node and another node within the same application.
-func (ld LinkDefinition) IsIntraApp() bool {
+func (ld LinkDefinition) LinksToSameApp() bool {
 	return ld.App.Empty()
 }
 
@@ -87,14 +88,14 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 		}
 
 		// detect duplicated link name
-		internalName, err := link.InternalName()
+		linkName, err := link.LinkName()
 		if err != nil {
 			return mask(err)
 		}
-		if _, ok := links[internalName]; ok {
-			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", internalName)
+		if _, ok := links[linkName]; ok {
+			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", linkName)
 		}
-		links[internalName] = true
+		links[linkName] = true
 	}
 
 	return nil
@@ -133,7 +134,7 @@ func (nds NodeDefinitions) validateLinks() error {
 		// detect invalid links
 		for _, link := range node.Links {
 			// If the link is inter-app, we cannot validate it here.
-			if link.IsInterApp() {
+			if link.LinksToOtherApp() {
 				continue
 			}
 

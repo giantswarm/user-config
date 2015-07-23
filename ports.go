@@ -74,13 +74,13 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 
 		// Check list for duplicates
 		for i, l1 := range list {
-			alias1, err := l1.InternalName()
+			alias1, err := l1.LinkName()
 			if err != nil {
 				return mask(err)
 			}
 			for j := i + 1; j < len(list); j++ {
 				l2 := list[j]
-				alias2, err := l2.InternalName()
+				alias2, err := l2.LinkName()
 				if err != nil {
 					return mask(err)
 				}
