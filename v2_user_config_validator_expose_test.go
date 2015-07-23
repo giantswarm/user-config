@@ -30,11 +30,11 @@ var _ = Describe("v2 user config stable API validator", func() {
 		return config
 	}
 
-	addLinks := func(config *NodeDefinition, dep ...DependencyConfig) *NodeDefinition {
+	addLinks := func(config *NodeDefinition, link ...LinkDefinition) *NodeDefinition {
 		if config.Links == nil {
-			config.Links = dep
+			config.Links = link
 		} else {
-			config.Links = append(config.Links, dep...)
+			config.Links = append(config.Links, link...)
 		}
 		return config
 	}
@@ -188,7 +188,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				It("should throw an InvalidNodeDefinitionError", func() {
 					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`port 123/tcp is exposed more than once`))
+					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed more than once`))
 				})
 			})
 		})
@@ -201,7 +201,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), DependencyConfig{Name: "a", Port: port("123")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("123")})
 
 					err = validate(nodes)
 				})
@@ -218,7 +218,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), DependencyConfig{Name: "a", Port: port("789")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("789")})
 
 					err = validate(nodes)
 				})
@@ -226,6 +226,59 @@ var _ = Describe("v2 user config stable API validator", func() {
 				It("should throw an InvalidNodeDefinitionError", func() {
 					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
 					Expect(err.Error()).To(Equal(`invalid link to node 'a': does not export port '789/tcp'`))
+				})
+			})
+		})
+
+		Describe("check restrictions for inter-app links", func() {
+			Describe("test valid link to another app", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Port: port("123")})
+
+					err = validate(nodes)
+				})
+
+				It("should not throw an error", func() {
+					Expect(err).To(BeNil())
+				})
+			})
+
+			Describe("test invalid link; cannot have name and app set", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Name: "b", Port: port("123")})
+					nodes["b"] = addPorts(testNode(), port("123"))
+
+					err = validate(nodes)
+				})
+
+				It("should throw an InvalidLinkDefinitionError", func() {
+					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`link app and name cannot be set both`))
+				})
+			})
+
+			Describe("test exposing the same port on multiple root nodes (which is not allowed)", func() {
+				var err error
+
+				BeforeEach(func() {
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
+					nodes["c"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "c/b", NodePort: port("456")})
+					nodes["c/b"] = addPorts(testNode(), port("456"))
+
+					err = validate(nodes)
+				})
+
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed by multiple root nodes`))
 				})
 			})
 		})

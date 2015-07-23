@@ -14,7 +14,8 @@ func TestParseV2AppDef(t *testing.T) {
 				"image": "registry/namespace/repository:version",
 				"ports": [ "80/tcp" ],
 				"links": [
-					{ "name": "node/b", "port": 6379, "same_machine": true }
+					{ "name": "node/b", "port": 6379 },
+					{ "app": "otherapp", "port": 1234 }
 				],
 				"domains": { "test.domain.io": "80" }
 			},
