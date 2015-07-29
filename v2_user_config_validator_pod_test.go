@@ -191,7 +191,7 @@ var _ = Describe("v2 user config pod validator", func() {
 		Describe("parsing valid volume configs in pods", func() {
 			var (
 				err    error
-				appDef V2ServiceDefinition
+				appDef V2AppDefinition
 			)
 
 			BeforeEach(func() {

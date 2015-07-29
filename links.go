@@ -5,7 +5,7 @@ import (
 )
 
 type LinkDefinition struct {
-	Service ServiceName `json:"service,omitempty" description:"Name of the service that is linked to"`
+	Service AppName `json:"service,omitempty" description:"Name of the service that is linked to"`
 
 	// Name of a required node
 	Name NodeName `json:"name,omitempty" description:"Name of a node that is linked to"`

@@ -32,7 +32,7 @@ func TestParseV2ServiceDef(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2ServiceDefinition
+	var appDef userconfig.V2AppDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %v", err)
@@ -100,7 +100,7 @@ func TestV2ServiceDefFixFieldName(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2ServiceDefinition
+	var appDef userconfig.V2AppDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %v", err)
@@ -134,7 +134,7 @@ func TestV2ServiceDefCannotFixFieldName(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2ServiceDefinition
+	var appDef userconfig.V2AppDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -155,7 +155,7 @@ func TestUnmarshalV2ServiceDefMissingField(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2ServiceDefinition
+	var appDef userconfig.V2AppDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -178,7 +178,7 @@ func TestUnmarshalV2ServiceDefUnknownField(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2ServiceDefinition
+	var appDef userconfig.V2AppDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")

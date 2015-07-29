@@ -9,10 +9,10 @@ import (
 	"github.com/kr/pretty"
 )
 
-type v2ServiceDefCopy V2ServiceDefinition
+type v2AppDefCopy V2AppDefinition
 
-func V2CheckForUnknownFields(b []byte, ac *V2ServiceDefinition) error {
-	var clean v2ServiceDefCopy
+func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
+	var clean v2AppDefCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
 		return mask(err)
 	}
@@ -37,7 +37,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2ServiceDefinition) error {
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
 	for _, diff := range diffs {
-		*ac = V2ServiceDefinition{}
+		*ac = V2AppDefinition{}
 		return prettyJSONFieldError(diff)
 	}
 
