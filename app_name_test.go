@@ -26,7 +26,7 @@ func TestValidAppNames(t *testing.T) {
 	}
 }
 
-func TestInvalidServiceNames(t *testing.T) {
+func TestInvalidAppNames(t *testing.T) {
 	list := map[string]string{
 		"":      "app name must not be empty",
 		"-":     "app name must not start with special chars",
@@ -51,7 +51,7 @@ func TestInvalidServiceNames(t *testing.T) {
 	}
 }
 
-func TestServiceNameEmpty(t *testing.T) {
+func TestAppNameEmpty(t *testing.T) {
 	list := []struct {
 		Name   string
 		Result bool
