@@ -8,8 +8,8 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func V2ExampleDefinition() userconfig.V2AppDefinition {
-	return userconfig.V2AppDefinition{
+func V2ExampleDefinition() userconfig.V2ServiceDefinition {
+	return userconfig.V2ServiceDefinition{
 		Nodes: userconfig.NodeDefinitions{
 			userconfig.NodeName("node/a"): &userconfig.NodeDefinition{
 				Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
@@ -23,7 +23,7 @@ func V2ExampleDefinition() userconfig.V2AppDefinition {
 	}
 }
 
-func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefinition {
+func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2ServiceDefinition {
 	appDef := V2ExampleDefinition()
 	nodeA, ok := appDef.Nodes["node/a"]
 	if !ok {
@@ -43,7 +43,7 @@ func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefini
 	return appDef
 }
 
-func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinition {
+func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2ServiceDefinition {
 	appDef := V2ExampleDefinition()
 	nodeA, ok := appDef.Nodes["node/a"]
 	if !ok {
@@ -88,7 +88,7 @@ func TestV2AppLinksInvalidNode(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -114,7 +114,7 @@ func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
@@ -142,7 +142,7 @@ func TestV2AppSetDefaults(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
@@ -174,7 +174,7 @@ func TestV2AppHideDefaults(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())

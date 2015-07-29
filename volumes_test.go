@@ -40,7 +40,7 @@ func TestVolumesDuplicatedPath(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -62,7 +62,7 @@ func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -84,7 +84,7 @@ func TestVolumesInvalidSizeUnit(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -106,7 +106,7 @@ func TestVolumesNegativeSize(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.V2ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
