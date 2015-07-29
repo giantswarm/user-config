@@ -7,7 +7,7 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func TestParseV2ServiceDef(t *testing.T) {
+func TestParseV2AppDef(t *testing.T) {
 	b := []byte(`{
 		"nodes": {
 			"node/a": {
@@ -91,7 +91,7 @@ func TestParseV2ServiceDef(t *testing.T) {
 	}
 }
 
-func TestV2ServiceDefFixFieldName(t *testing.T) {
+func TestV2AppDefFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"Nodes": {
 			"node/fooBar": {
@@ -125,7 +125,7 @@ func TestV2ServiceDefFixFieldName(t *testing.T) {
 	}
 }
 
-func TestV2ServiceDefCannotFixFieldName(t *testing.T) {
+func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"nodes": {
 			"foo/bar": {
@@ -147,7 +147,7 @@ func TestV2ServiceDefCannotFixFieldName(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2ServiceDefMissingField(t *testing.T) {
+func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	// "image" is missing
 	b := []byte(`{
 		"nodes": {
@@ -168,7 +168,7 @@ func TestUnmarshalV2ServiceDefMissingField(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2ServiceDefUnknownField(t *testing.T) {
+func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
 	b := []byte(`{
 		"nodes": {
 			"foo/bar": {

@@ -61,7 +61,7 @@ type ValidationContext struct {
 	PrivateDockerRegistry string
 }
 
-// validate performs semantic validations of this V2ServiceDefinition.
+// validate performs semantic validations of this V2AppDefinition.
 // Return the first possible error.
 func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 	if len(ad.Nodes) == 0 {
