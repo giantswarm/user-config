@@ -5,7 +5,7 @@ import (
 )
 
 type LinkDefinition struct {
-	App AppName `json:"app,omitempty" description:"Name of the application that is linked to"`
+	Service ServiceName `json:"service,omitempty" description:"Name of the service that is linked to"`
 
 	// Name of a required node
 	Name NodeName `json:"name,omitempty" description:"Name of a node that is linked to"`
@@ -20,7 +20,7 @@ type LinkDefinition struct {
 type LinkDefinitions []LinkDefinition
 
 func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
-	if ld.Name.Empty() && ld.App.Empty() {
+	if ld.Name.Empty() && ld.Service.Empty() {
 		return maskf(InvalidLinkDefinitionError, "link name must not be empty")
 	}
 	if !ld.Name.Empty() {
@@ -28,13 +28,13 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 			return maskf(InvalidLinkDefinitionError, "invalid link name: %s", err.Error())
 		}
 	}
-	if !ld.App.Empty() {
-		if err := ld.App.Validate(); err != nil {
-			return maskf(InvalidLinkDefinitionError, "invalid link app: %s", err.Error())
+	if !ld.Service.Empty() {
+		if err := ld.Service.Validate(); err != nil {
+			return maskf(InvalidLinkDefinitionError, "invalid link service: %s", err.Error())
 		}
 	}
-	if !ld.Name.Empty() && !ld.App.Empty() {
-		return maskf(InvalidLinkDefinitionError, "link app and name cannot be set both")
+	if !ld.Name.Empty() && !ld.Service.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link service and name cannot be set both")
 	}
 
 	// for easy validation we create a port definitions type and use its
@@ -61,22 +61,22 @@ func (ld LinkDefinition) LinkName() (string, error) {
 		// This is done to prevent that the dependency name has '/' in it.
 		return ld.Name.LocalName().String(), nil
 	}
-	if !ld.App.Empty() {
-		return ld.App.String(), nil
+	if !ld.Service.Empty() {
+		return ld.Service.String(), nil
 	}
 	return "", mask(InvalidLinkDefinitionError)
 }
 
-// LinksToOtherApp returns true if this definition defines
-// a link between a node an another application.
-func (ld LinkDefinition) LinksToOtherApp() bool {
-	return !ld.App.Empty()
+// LinksToOtherService returns true if this definition defines
+// a link between a node an another service.
+func (ld LinkDefinition) LinksToOtherService() bool {
+	return !ld.Service.Empty()
 }
 
-// LinksToSameApp returns true if this definition defines
-// a link between a node and another node within the same application.
-func (ld LinkDefinition) LinksToSameApp() bool {
-	return ld.App.Empty()
+// LinksToSameService returns true if this definition defines
+// a link between a node and another node within the same service.
+func (ld LinkDefinition) LinksToSameService() bool {
+	return ld.Service.Empty()
 }
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
@@ -133,8 +133,8 @@ func (nds NodeDefinitions) validateLinks() error {
 	for nodeName, node := range nds {
 		// detect invalid links
 		for _, link := range node.Links {
-			// If the link is inter-app, we cannot validate it here.
-			if link.LinksToOtherApp() {
+			// If the link is inter-service, we cannot validate it here.
+			if link.LinksToOtherService() {
 				continue
 			}
 

@@ -8,8 +8,8 @@ import (
 )
 
 type V2AppDefinition struct {
-	// Optional application name
-	AppName AppName `json:"name,omitempty"`
+	// Optional service name
+	ServiceName ServiceName `json:"name,omitempty"`
 
 	// Nodes
 	Nodes NodeDefinitions `json:"nodes"`
@@ -68,8 +68,8 @@ func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 		return maskf(InvalidAppDefinitionError, "nodes must not be empty")
 	}
 
-	if !ad.AppName.Empty() {
-		if err := ad.AppName.Validate(); err != nil {
+	if !ad.ServiceName.Empty() {
+		if err := ad.ServiceName.Validate(); err != nil {
 			return mask(err)
 		}
 	}
@@ -121,24 +121,24 @@ func V2AppName(b []byte) (string, error) {
 }
 
 // Name returns the name of the given definition if it exists.
-// It is does not exist, it generates an app name.
+// It is does not exist, it generates an service name.
 func (ad *V2AppDefinition) Name() (string, error) {
 	// Is a name specified?
-	if !ad.AppName.Empty() {
-		return ad.AppName.String(), nil
+	if !ad.ServiceName.Empty() {
+		return ad.ServiceName.String(), nil
 	}
 
 	// No name is specified, generate one
-	if name, err := ad.generateAppName(); err != nil {
+	if name, err := ad.generateServiceName(); err != nil {
 		return "", mask(err)
 	} else {
 		return name, nil
 	}
 }
 
-// generateAppName removes any formatting from b and returns the first 4 bytes
+// generateServiceName removes any formatting from b and returns the first 4 bytes
 // of its MD5 checksum.
-func (ad *V2AppDefinition) generateAppName() (string, error) {
+func (ad *V2AppDefinition) generateServiceName() (string, error) {
 	// remove formatting
 	clean, err := json.Marshal(*ad)
 	if err != nil {
