@@ -8,7 +8,7 @@ import (
 )
 
 type V2AppDefinition struct {
-	// Optional application name
+	// Optional app name
 	AppName AppName `json:"name,omitempty"`
 
 	// Nodes
@@ -103,7 +103,7 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 	return nil
 }
 
-// V2GetAppName returns the name of the given definition if it exists.
+// V2AppName returns the name of the given definition if it exists.
 // It is does not exist, it generates an app name.
 func V2AppName(b []byte) (string, error) {
 	// parse and validate
@@ -121,7 +121,7 @@ func V2AppName(b []byte) (string, error) {
 }
 
 // Name returns the name of the given definition if it exists.
-// It is does not exist, it generates an app name.
+// It is does not exist, it generates an application name.
 func (ad *V2AppDefinition) Name() (string, error) {
 	// Is a name specified?
 	if !ad.AppName.Empty() {

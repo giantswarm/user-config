@@ -230,13 +230,13 @@ var _ = Describe("v2 user config stable API validator", func() {
 			})
 		})
 
-		Describe("check restrictions for inter-app links", func() {
-			Describe("test valid link to another app", func() {
+		Describe("check restrictions for inter-service links", func() {
+			Describe("test valid link to another service", func() {
 				var err error
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Port: port("123")})
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Port: port("123")})
 
 					err = validate(nodes)
 				})
@@ -246,12 +246,12 @@ var _ = Describe("v2 user config stable API validator", func() {
 				})
 			})
 
-			Describe("test invalid link; cannot have name and app set", func() {
+			Describe("test invalid link; cannot have name and service set", func() {
 				var err error
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addLinks(testNode(), LinkDefinition{App: "other", Name: "b", Port: port("123")})
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Name: "b", Port: port("123")})
 					nodes["b"] = addPorts(testNode(), port("123"))
 
 					err = validate(nodes)
@@ -259,7 +259,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				It("should throw an InvalidLinkDefinitionError", func() {
 					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`link app and name cannot be set both`))
+					Expect(err.Error()).To(Equal(`link service and name cannot be set both`))
 				})
 			})
 

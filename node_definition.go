@@ -90,8 +90,8 @@ func (nd *NodeDefinition) setDefaults(valCtx *ValidationContext) {
 	nd.Scale.setDefaults(valCtx)
 }
 
-// IsService returns true if the node has a defined container image, false otherwise.
-func (nd *NodeDefinition) IsService() bool {
+// IsComponent returns true if the node has a defined container image, false otherwise.
+func (nd *NodeDefinition) IsComponent() bool {
 	return nd.Image != nil
 }
 

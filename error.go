@@ -22,7 +22,7 @@ var (
 	InvalidAppDefinitionError     = errgo.New("invalid app definition")
 	InvalidNodeDefinitionError    = errgo.New("invalid node definition")
 	InvalidImageDefinitionError   = errgo.New("invalid image definition")
-	InvalidAppNameError           = errgo.New("invalid application name")
+	InvalidAppNameError           = errgo.New("invalid app name")
 	InvalidNodeNameError          = errgo.New("invalid node name")
 	InvalidPodConfigError         = errgo.New("invalid pod configuration")
 	PortNotFoundError             = errgo.New("port not found")

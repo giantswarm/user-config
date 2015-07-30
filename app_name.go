@@ -26,15 +26,15 @@ func (an AppName) Equals(other AppName) bool {
 	return an == other
 }
 
-// Validate checks that the given NodeName is a valid NodeName.
+// Validate checks that the given AppName is a valid AppName.
 func (an AppName) Validate() error {
 	if an.Empty() {
-		return maskf(InvalidAppNameError, "application name must not be empty")
+		return maskf(InvalidAppNameError, "app name must not be empty")
 	}
 
 	anStr := an.String()
 	if !appNameRegExp.MatchString(anStr) {
-		return maskf(InvalidAppNameError, "application name '%s' must match regexp: %s", anStr, appNameRegExp)
+		return maskf(InvalidAppNameError, "app name '%s' must match regexp: %s", anStr, appNameRegExp)
 	}
 
 	return nil
