@@ -1,11 +1,14 @@
 package userconfig
 
 import (
+	"encoding/json"
+
 	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
 )
 
 type PortDefinitions []generictypes.DockerPort
+type portDefinitions PortDefinitions
 
 // Validate tries to validate the current PortDefinitions. If valCtx is nil,
 // nothing can be validated. The given valCtx must provide at least one
@@ -25,6 +28,28 @@ func (pds PortDefinitions) Validate(valCtx *ValidationContext) error {
 			return maskf(InvalidPortConfigError, "invalid protocol '%s' for port '%s', expected one of %v", port.Protocol, port.Port, valCtx.Protocols)
 		}
 	}
+
+	return nil
+}
+
+// UnmarshalJSON performs custom unmarshalling to support smart
+// data types.
+func (pds *PortDefinitions) UnmarshalJSON(data []byte) error {
+	if data[0] != '[' {
+		// Must be a single value, convert to an array of one
+		newData := []byte{}
+		newData = append(newData, '[')
+		newData = append(newData, data...)
+		newData = append(newData, ']')
+
+		data = newData
+	}
+
+	var local portDefinitions
+	if err := json.Unmarshal(data, &local); err != nil {
+		return mask(err)
+	}
+	*pds = PortDefinitions(local)
 
 	return nil
 }
