@@ -18,7 +18,7 @@ func TestExpose(t *testing.T) {
 		// Set node, empty node port should refer to node with identical port
 		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), Node: userconfig.NodeName("foo")}, ImplName: "foo", ImplPort: "80/tcp"},
 		// Empty node, specified node port should refer to self with specified port
-		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), NodePort: generictypes.MustParseDockerPort("8080/tcp")}, ImplName: "self", ImplPort: "8080/tcp"},
+		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), TargetPort: generictypes.MustParseDockerPort("8080/tcp")}, ImplName: "self", ImplPort: "8080/tcp"},
 	}
 
 	for _, test := range list {

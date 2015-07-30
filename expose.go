@@ -5,9 +5,9 @@ import (
 )
 
 type ExposeDefinition struct {
-	Port     generictypes.DockerPort `json:"port" description:"Port of the stable API."`
-	Node     NodeName                `json:"node,omitempty" description:"Name of the node that implements the stable API."`
-	NodePort generictypes.DockerPort `json:"node_port,omitempty" description:"Port of the given node that implements the stable API."`
+	Port       generictypes.DockerPort `json:"port" description:"Port of the stable API."`
+	Node       NodeName                `json:"node,omitempty" description:"Name of the node that implements the stable API."`
+	TargetPort generictypes.DockerPort `json:"target_port,omitempty" description:"Port of the given node that implements the stable API."`
 }
 
 type ExposeDefinitions []ExposeDefinition
@@ -116,10 +116,10 @@ func (ed *ExposeDefinition) ImplementationNodeName(containingNodeName NodeName) 
 
 // ImplementationPort returns the port on the node that implements the stable API exposed by this definition.
 func (ed *ExposeDefinition) ImplementationPort() generictypes.DockerPort {
-	if ed.NodePort.Empty() {
+	if ed.TargetPort.Empty() {
 		return ed.Port
 	}
-	return ed.NodePort
+	return ed.TargetPort
 }
 
 // resolve resolves the implementation of the given Expose definition in the context of the given

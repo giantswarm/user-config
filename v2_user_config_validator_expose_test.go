@@ -79,7 +79,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
 
 					err = validate(nodes)
@@ -111,7 +111,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addPorts(addExpose(testNode(), ExposeDefinition{Port: port("123"), NodePort: port("456")}), port("456"))
+					nodes["a"] = addPorts(addExpose(testNode(), ExposeDefinition{Port: port("123"), TargetPort: port("456")}), port("456"))
 
 					err = validate(nodes)
 				})
@@ -126,7 +126,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "b", TargetPort: port("456")})
 					nodes["b"] = addPorts(testNode(), port("456"))
 
 					err = validate(nodes)
@@ -143,7 +143,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("789"))
 
 					err = validate(nodes)
@@ -199,7 +199,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
 					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("123")})
 
@@ -216,7 +216,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
 					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("789")})
 
@@ -268,9 +268,9 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "c/b", NodePort: port("456")})
+					nodes["c"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "c/b", TargetPort: port("456")})
 					nodes["c/b"] = addPorts(testNode(), port("456"))
 
 					err = validate(nodes)
