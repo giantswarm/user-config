@@ -201,7 +201,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("123")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("123")})
 
 					err = validate(nodes)
 				})
@@ -218,7 +218,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 					nodes := testApp()
 					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", NodePort: port("456")})
 					nodes["a/b"] = addPorts(testNode(), port("456"))
-					nodes["c"] = addLinks(testNode(), LinkDefinition{Name: "a", Port: port("789")})
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("789")})
 
 					err = validate(nodes)
 				})
@@ -236,7 +236,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Port: port("123")})
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", TargetPort: port("123")})
 
 					err = validate(nodes)
 				})
@@ -251,7 +251,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				BeforeEach(func() {
 					nodes := testApp()
-					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Name: "b", Port: port("123")})
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Node: "b", TargetPort: port("123")})
 					nodes["b"] = addPorts(testNode(), port("123"))
 
 					err = validate(nodes)
@@ -259,7 +259,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 				It("should throw an InvalidLinkDefinitionError", func() {
 					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`link service and name cannot be set both`))
+					Expect(err.Error()).To(Equal(`link service and node cannot be set both`))
 				})
 			})
 

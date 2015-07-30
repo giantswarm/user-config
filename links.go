@@ -8,24 +8,24 @@ type LinkDefinition struct {
 	Service AppName `json:"service,omitempty" description:"Name of the service that is linked to"`
 
 	// Name of a required node
-	Name NodeName `json:"name,omitempty" description:"Name of a node that is linked to"`
+	Node NodeName `json:"node,omitempty" description:"Name of a node that is linked to"`
 
 	// The name how this dependency should appear in the container
 	Alias string `json:"alias,omitempty" description:"The name how this dependency should appear in the container"`
 
 	// Port of the required node
-	Port generictypes.DockerPort `json:"port" description:"Port of the required node"`
+	TargetPort generictypes.DockerPort `json:"target_port" description:"Port on the node that is linked to"`
 }
 
 type LinkDefinitions []LinkDefinition
 
 func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
-	if ld.Name.Empty() && ld.Service.Empty() {
-		return maskf(InvalidLinkDefinitionError, "link name must not be empty")
+	if ld.Node.Empty() && ld.Service.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link node must not be empty")
 	}
-	if !ld.Name.Empty() {
-		if err := ld.Name.Validate(); err != nil {
-			return maskf(InvalidLinkDefinitionError, "invalid link name: %s", err.Error())
+	if !ld.Node.Empty() {
+		if err := ld.Node.Validate(); err != nil {
+			return maskf(InvalidLinkDefinitionError, "invalid link node: %s", err.Error())
 		}
 	}
 	if !ld.Service.Empty() {
@@ -33,13 +33,13 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 			return maskf(InvalidLinkDefinitionError, "invalid link service: %s", err.Error())
 		}
 	}
-	if !ld.Name.Empty() && !ld.Service.Empty() {
-		return maskf(InvalidLinkDefinitionError, "link service and name cannot be set both")
+	if !ld.Node.Empty() && !ld.Service.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link service and node cannot be set both")
 	}
 
 	// for easy validation we create a port definitions type and use its
 	// validate method
-	pds := PortDefinitions{ld.Port}
+	pds := PortDefinitions{ld.TargetPort}
 	if err := pds.Validate(valCtx); err != nil {
 		return maskf(InvalidLinkDefinitionError, "invalid link: %s", err.Error())
 	}
@@ -55,11 +55,11 @@ func (ld LinkDefinition) LinkName() (string, error) {
 	if ld.Alias != "" {
 		return ld.Alias, nil
 	}
-	if !ld.Name.Empty() {
+	if !ld.Node.Empty() {
 		// Take the dependency name from the last part of the node name
 		// (using `LocalName()`).
 		// This is done to prevent that the dependency name has '/' in it.
-		return ld.Name.LocalName().String(), nil
+		return ld.Node.LocalName().String(), nil
 	}
 	if !ld.Service.Empty() {
 		return ld.Service.String(), nil
@@ -107,25 +107,25 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 // If this link cannot be resolved, an error is returned.
 func (link LinkDefinition) Resolve(nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
 	// Resolve initial link target
-	targetName := link.Name
+	targetName := link.Node
 	targetNode, err := nds.NodeByName(targetName)
 	if err != nil {
-		return "", generictypes.DockerPort{}, maskf(NodeNotFoundError, link.Name.String())
+		return "", generictypes.DockerPort{}, maskf(NodeNotFoundError, link.Node.String())
 	}
 
 	// If the linked to port exposed by the target node?
-	if expDef, err := targetNode.Expose.defByPort(link.Port); err == nil {
+	if expDef, err := targetNode.Expose.defByPort(link.TargetPort); err == nil {
 		// Link to exposed port, let expose definition resolve this further
 		return expDef.Resolve(targetName, nds)
 	}
 
-	if targetNode.Ports.contains(link.Port) {
+	if targetNode.Ports.contains(link.TargetPort) {
 		// Link points directly to an exported port of the target
-		return targetName, link.Port, nil
+		return targetName, link.TargetPort, nil
 	}
 
 	// Invalid link
-	return "", generictypes.DockerPort{}, maskf(InvalidLinkDefinitionError, "port %s not found in %s", link.Port, targetName)
+	return "", generictypes.DockerPort{}, maskf(InvalidLinkDefinitionError, "port %s not found in %s", link.TargetPort, targetName)
 }
 
 // validateLinks
@@ -139,20 +139,20 @@ func (nds NodeDefinitions) validateLinks() error {
 			}
 
 			// Try to find the target node
-			targetName := NodeName(link.Name)
+			targetName := NodeName(link.Node)
 			targetNode, err := nds.NodeByName(targetName)
 			if err != nil {
-				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Name)
+				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Node)
 			}
 
 			// Does the target node expose the linked to port?
-			if !targetNode.Expose.contains(link.Port) && !targetNode.Ports.contains(link.Port) {
-				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", link.Name, link.Port)
+			if !targetNode.Expose.contains(link.TargetPort) && !targetNode.Ports.contains(link.TargetPort) {
+				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", link.Node, link.TargetPort)
 			}
 
 			// Is the node allowed to link to the target node?
 			if !isLinkAllowed(nodeName, targetName) {
-				return maskf(InvalidLinkDefinitionError, "invalid link to node '%s': node '%s' is not allowed to link to it", link.Name, nodeName)
+				return maskf(InvalidLinkDefinitionError, "invalid link to node '%s': node '%s' is not allowed to link to it", link.Node, nodeName)
 			}
 		}
 	}
