@@ -45,3 +45,64 @@ func TestUnmarshalInvalidDomains(t *testing.T) {
 		t.Fatalf("Invalid domain not detected")
 	}
 }
+
+func TestValidDomainValues(t *testing.T) {
+	list := []struct {
+		Input  string
+		Result userconfig.DomainDefinitions
+	}{
+		// Original format: domain: port
+		{`{ "foo.com": "8080/tcp" }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+		}},
+		{`{ "foo.com": "8081/tcp", "old.io": "8082" }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("old.io"):  generictypes.MustParseDockerPort("8082"),
+		}},
+		// Reverse (new) format: port: domainList
+		{`{ "8080": [ "foo.com" ] }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+		}},
+		{`{ "8080": "foo.com" }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+		}},
+		{`{ "8086/tcp": "foo.com" }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8086"),
+		}},
+		{`{ "8080": [ "foo.com", "intel.com" ], "6800": "motorola.com" }`, userconfig.DomainDefinitions{
+			generictypes.Domain("foo.com"):      generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("intel.com"):    generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("motorola.com"): generictypes.MustParseDockerPort("6800"),
+		}},
+	}
+
+	for _, test := range list {
+		var dds userconfig.DomainDefinitions
+		if err := json.Unmarshal([]byte(test.Input), &dds); err != nil {
+			t.Fatalf("Valid domain definitions value '%s' considered invalid because %v", test.Input, err)
+		}
+		if len(dds) != len(test.Result) {
+			t.Fatalf("Invalid length, expected %v, got %v", len(test.Result), len(dds))
+		}
+		for d, p := range dds {
+			expected := test.Result[d]
+			if !p.Equals(expected) {
+				t.Fatalf("Invalid element for domain %s, expected %v, got %v", d, expected, p)
+			}
+		}
+	}
+}
+
+func TestInvalidDomainValues(t *testing.T) {
+	list := []string{
+		``,
+		`{"field":"foo"}`,
+	}
+
+	for _, s := range list {
+		var dds userconfig.DomainDefinitions
+		if err := json.Unmarshal([]byte(s), &dds); err == nil {
+			t.Fatalf("Invalid domain value '%s' considered valid", s)
+		}
+	}
+}
