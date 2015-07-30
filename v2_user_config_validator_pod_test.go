@@ -530,8 +530,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)
@@ -548,8 +548,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "redis1", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Name: "redis1", Port: generictypes.MustParseDockerPort("1234")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Node: "redis1", TargetPort: generictypes.MustParseDockerPort("1234")})
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
@@ -568,8 +568,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Name: "redis1", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Name: "redis2", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
@@ -588,8 +588,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "node/redis", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "redis", Name: "node/redis2", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "redis", Node: "node/redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 				nodes["node/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
@@ -610,8 +610,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Name: "redis", Port: generictypes.MustParseDockerPort("9736")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis", TargetPort: generictypes.MustParseDockerPort("9736")})
 				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("9736"))
 				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
@@ -630,7 +630,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "node/b/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/b/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["node/b/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)
@@ -648,7 +648,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "node/a/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["node/a/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)
@@ -665,7 +665,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "node/a/b1/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/b1/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["node/a/b1/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)
@@ -682,7 +682,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				nodes := testApp()
 				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Name: "node/a/b1/c/redis", Port: generictypes.MustParseDockerPort("6379")})
+				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/b1/c/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
 				nodes["node/a/b1/c/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
 
 				err = validate(nodes)

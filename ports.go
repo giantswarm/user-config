@@ -86,10 +86,10 @@ func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
 				}
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
-					if !l1.Port.Equals(l2.Port) {
+					if !l1.TargetPort.Equals(l2.TargetPort) {
 						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
-					if l1.Name != l2.Name {
+					if l1.Node != l2.Node {
 						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
 				}
