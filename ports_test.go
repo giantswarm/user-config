@@ -48,3 +48,38 @@ func TestInvalidPortsValues(t *testing.T) {
 		}
 	}
 }
+
+func TestUnmarshalV2PortsFullService(t *testing.T) {
+	// Test the validator for full service containing ports in various formats
+	var appDef userconfig.V2AppDefinition
+
+	byteSlice := []byte(`{
+    "nodes": {
+        "node1": {
+            "image": "busybox",
+            "ports": [ "80" ]
+        }, 
+        "node2": {
+            "image": "busybox",
+            "ports": [ "80/tcp", 81 ]
+        }, 
+        "node3": {
+            "image": "busybox",
+            "ports": "80"
+        }, 
+        "node4": {
+            "image": "busybox",
+            "ports": "80/tcp"
+        }, 
+        "node5": {
+            "image": "busybox",
+            "ports": 8086
+        } 
+    }
+}`)
+
+	err := json.Unmarshal(byteSlice, &appDef)
+	if err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+}
