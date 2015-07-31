@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/giantswarm/generic-types-go"
 	"github.com/kr/pretty"
 )
 
@@ -29,11 +31,16 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	// Normalize fields to common format
 	v2NormalizeEnv(dirtyMap)
 	v2NormalizeVolumeSizes(dirtyMap)
+	v2NormalizePorts(dirtyMap)
 
 	var cleanMap map[string]interface{}
 	if err := json.Unmarshal(cleanBytes, &cleanMap); err != nil {
 		return mask(err)
 	}
+
+	// Also normalize the clean map for ports because marshalling
+	// ports preserves the input format
+	v2NormalizePorts(cleanMap)
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
 	for _, diff := range diffs {
@@ -124,6 +131,77 @@ func v2NormalizeEnv(def map[string]interface{}) {
 		}
 		nodeMap["env"] = list
 	}
+}
+
+// v2NormalizePorts normalizes all values of "ports" elements
+func v2NormalizePorts(def map[string]interface{}) {
+	nodes := getMapEntry(def, "nodes")
+	if nodes == nil {
+		// No nodes element
+		return
+	}
+
+	for _, node := range nodes {
+		nodeMap, ok := node.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		portsRaw, ok := nodeMap["ports"]
+		if !ok {
+			// No ports field
+			continue
+		}
+
+		// Check for string value
+		if portsStr, ok := portsRaw.(string); ok {
+			// Port is a string value, wrap it in an array
+			nodeMap["ports"] = []interface{}{normalizeSinglePort(portsStr)}
+			continue
+		}
+
+		// Check for number values
+		if portsNum, ok := portsRaw.(float64); ok {
+			// Port is a number
+			nodeMap["ports"] = []interface{}{normalizeSinglePort(portsNum)}
+			continue
+		}
+
+		// Check for array values
+		if portsArr, ok := portsRaw.([]interface{}); ok {
+			// Ports is an array, normalize all elements
+			for i, v := range portsArr {
+				portsArr[i] = normalizeSinglePort(v)
+			}
+			nodeMap["ports"] = portsArr
+			continue
+		}
+	}
+}
+
+func normalizeSinglePort(input interface{}) interface{} {
+	// Check for string value
+	if str, ok := input.(string); ok {
+		// Port is a string value, parse it
+		if port, err := generictypes.ParseDockerPort(str); err == nil {
+			return port.String()
+		}
+		// Error, just return input
+		return input
+	}
+
+	// Check for number values
+	if num, ok := input.(float64); ok {
+		// Port is a number, parse it
+		if port, err := generictypes.ParseDockerPort(strconv.Itoa(int(num))); err == nil {
+			return port.String()
+		}
+		// Error, just return input
+		return input
+	}
+
+	// Unknown type, just return input
+	return input
 }
 
 // v2NormalizeVolumeSizes normalizes all volume sizes to it's normalized format
