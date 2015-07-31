@@ -95,7 +95,7 @@ func getMapEntry(def map[string]interface{}, key string) map[string]interface{} 
 func v2NormalizeEnv(def map[string]interface{}) {
 	nodes := getMapEntry(def, "nodes")
 	if nodes == nil {
-		// No services element
+		// No nodes element
 		return
 	}
 
@@ -107,8 +107,8 @@ func v2NormalizeEnv(def map[string]interface{}) {
 
 		envMap := getMapEntry(nodeMap, "env")
 		if envMap == nil {
-			// No services element
-			return
+			// No env field formatted as map
+			continue
 		}
 
 		// 'env' is of map type, normalize it to an array
