@@ -31,6 +31,7 @@ var (
 	MissingValidationContextError = errgo.New("missing validation context")
 	InvalidArgumentError          = errgo.New("invalid argument")
 	VolumeCycleError              = errgo.New("cycle detected in volume configuration")
+	WrongDiffOrderError           = errgo.New("wrong diff order")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,

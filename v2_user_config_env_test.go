@@ -27,10 +27,11 @@ func TestUnmarshalV2EnvArray(t *testing.T) {
 }
 
 func TestUnmarshalV2EnvStruct(t *testing.T) {
-	// The original implementation (of "env" parsing) has an issue with the go implementation of map,
-	// not being consistent with respect to ordering of elements.
-	// With this loop we prevent that is works "by mistake" the first time (but not the second or third time)
-	for i := 0; i < 10000; i++ {
+	// The original implementation (of "env" parsing) has an issue with the go
+	// implementation of map, not being consistent with respect to ordering of
+	// elements. With this loop we prevent that it works "by mistake" the first
+	// time (but not the second or third time)
+	for i := 0; i < 1000; i++ {
 		var nodeDef userconfig.NodeDefinition
 
 		byteSlice := []byte(`{ "env": { "key1": "value1", "key2": "value2" } }`)
@@ -94,7 +95,7 @@ func TestUnmarshalV2EnvFullApp(t *testing.T) {
             ],
             "image": "busybox",
             "args": ["sh", "-c", "while true; do echo \"Beep $KEY\"; sleep 2; done"]
-        }, 
+        },
         "env-struct": {
             "env": {
                 "KEY": "env-struct"
@@ -123,7 +124,7 @@ func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
                 "KEY=env-array",
                 "k=v"
             ]
-        }, 
+        },
         "env-struct": {
             "image": "busybox",
             "env": {

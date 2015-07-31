@@ -31,7 +31,11 @@ func TestUnmarshalEnvArray(t *testing.T) {
 }
 
 func TestUnmarshalEnvStruct(t *testing.T) {
-	for i := 0; i < 10000; i++ {
+	// The original implementation (of "env" parsing) has an issue with the go
+	// implementation of map, not being consistent with respect to ordering of
+	// elements. With this loop we prevent that it works "by mistake" the first
+	// time (but not the second or third time)
+	for i := 0; i < 1000; i++ {
 		var compConfig userConfigPkg.ComponentConfig
 
 		byteSlice := []byte(`{

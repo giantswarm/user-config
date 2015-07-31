@@ -110,31 +110,39 @@ func TestV2InvalidDomainValues(t *testing.T) {
 func TestUnmarshalV2DomainFullService(t *testing.T) {
 	// Test the validator for full services containing various
 	// forms of domain definitions
-	var appDef userconfig.V2AppDefinition
+	//
+	// The original implementation (of "domain" parsing) has an issue with the go
+	// implementation of map, not being consistent with respect to ordering of
+	// elements.  With this loop we prevent that it works "by mistake" the first
+	// time (but not the second or third time)
+	for i := 0; i < 1000; i++ {
+		var appDef userconfig.V2AppDefinition
 
-	byteSlice := []byte(`{
+		byteSlice := []byte(`{
     "nodes": {
         "node1": {
         	"ports": [ "80/tcp" ],
             "image": "busybox",
             "domains": {
             	"foo.com": "80/tcp",
+            	"ape.org": "80/tcp",
             	"foobar.com": "80"
             }
-        }, 
+        },
         "node2": {
         	"ports": [ "80/tcp", "81/tcp" ],
             "image": "busybox",
             "domains": {
-            	"80/tcp": ["mouse.com", "mickey.com"],
+            	"80/tcp": ["mouse.com", "ape.org", "mickey.com"],
             	"81": "disney.com"
             }
         }
     }
 }`)
 
-	err := json.Unmarshal(byteSlice, &appDef)
-	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
+		err := json.Unmarshal(byteSlice, &appDef)
+		if err != nil {
+			t.Fatalf("Unmarshal failed: %#v", err)
+		}
 	}
 }

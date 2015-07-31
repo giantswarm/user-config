@@ -28,6 +28,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	if err := json.Unmarshal(b, &dirtyMap); err != nil {
 		return mask(err)
 	}
+
 	// Normalize fields to common format
 	v2NormalizeEnv(dirtyMap)
 	v2NormalizeDomains(dirtyMap)
@@ -41,6 +42,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 
 	// Also normalize the clean map for ports because marshalling
 	// ports preserves the input format
+	v2NormalizeDomains(cleanMap)
 	v2NormalizePorts(cleanMap)
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
@@ -74,7 +76,7 @@ func prettyJSONFieldError(diff string) error {
 		return maskf(UnknownJSONFieldError, "unknown JSON field: %s", path)
 	}
 
-	return maskf(InternalError, "invalid diff format '%s'", diff)
+	return maskf(WrongDiffOrderError, "wrong diff order: %s", strings.Trim(parts[1], " "))
 }
 
 // getMapEntry tries to get an entry in the given map that is a string map of
@@ -96,7 +98,7 @@ func getMapEntry(def map[string]interface{}, key string) map[string]interface{} 
 }
 
 // v2NormalizeEnv normalizes all struct "env" elements under service/component
-// to its natural array format.  This normalization function is expected to
+// to its natural array format. This normalization function is expected to
 // normalize "valid" data and passthrough everything else.
 func v2NormalizeEnv(def map[string]interface{}) {
 	nodes := getMapEntry(def, "nodes")
@@ -180,7 +182,7 @@ func v2NormalizeDomains(def map[string]interface{}) {
 			} else {
 				// Key is a port, keep the value
 				newKey = port.String()
-				newValue = v
+				newValue = sortStringSlice(v)
 			}
 			if existingValue, ok := newMap[newKey]; ok {
 				// Key already has a value, append to it
@@ -190,12 +192,25 @@ func v2NormalizeDomains(def map[string]interface{}) {
 				newMap[newKey] = sortStringSlice(appendInterfaceList(nil, newValue))
 			}
 		}
-		nodeMap["domains"] = newMap
+
+		// 'domains' is of map type, normalize it to an array
+		// Sort the keys first so the outcome it always the same
+		keys := []string{}
+		for k, _ := range newMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		sortedMap := make(map[string]interface{})
+		for _, k := range keys {
+			sortedMap[k] = newMap[k]
+		}
+		nodeMap["domains"] = sortedMap
 	}
 }
 
 // appendInterfaceList appends given value to given list.
-// list is assume to be of type []interface{}, value van be an array
+// list is assume to be of type []interface{}, value can be an array
 // or a single value
 func appendInterfaceList(list interface{}, value interface{}) interface{} {
 	valueAsList, ok := value.([]interface{})
@@ -218,9 +233,23 @@ func appendInterfaceList(list interface{}, value interface{}) interface{} {
 // sortStringSlice sorts the given value if it is a string slice.
 // if not the value is returned unmodified
 func sortStringSlice(value interface{}) interface{} {
-	if stringSlice, ok := value.([]string); ok {
+	if interfaceSlice, ok := value.([]interface{}); ok {
+		// sort the string slice
+		stringSlice := []string{}
+		for _, v := range interfaceSlice {
+			if s, ok := v.(string); ok {
+				stringSlice = append(stringSlice, s)
+			}
+		}
 		sort.Strings(stringSlice)
-		return stringSlice
+
+		// move sorted values back to an interface slice
+		newInterfaceSlice := []interface{}{}
+		for _, s := range stringSlice {
+			newInterfaceSlice = append(newInterfaceSlice, s)
+		}
+
+		return newInterfaceSlice
 	} else {
 		return value
 	}
@@ -231,6 +260,7 @@ func v2NormalizePorts(def map[string]interface{}) {
 	nodes := getMapEntry(def, "nodes")
 	if nodes == nil {
 		// No nodes element
+		return
 	}
 
 	for _, node := range nodes {
