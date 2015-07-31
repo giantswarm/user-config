@@ -151,7 +151,7 @@ func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
 	}
 
 	got = strings.Join(envStruct.Env, ", ")
-	expected = "KEY=env-array"
+	expected = "KEY=env-struct"
 	if got != expected {
 		t.Fatalf("Invalid result: got \n%s\nexpected\n%s", got, expected)
 	}

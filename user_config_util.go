@@ -60,6 +60,13 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}, keyPrefix string) map[
 		return j
 	}
 
+	// Exclude V2 env fields
+	keyPrefixParts := strings.Split(keyPrefix, "/")
+	if strings.HasPrefix(keyPrefix, "/nodes/") && keyPrefixParts[len(keyPrefixParts)-1] == "env" {
+		// We found a V2 "env" field
+		return j
+	}
+
 	for k, v := range j {
 		// This is really tricky. Node names must be arbitrary strings. We are not
 		// allowed to fix them. Further everything inside the nodes needs to be
