@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/giantswarm/generic-types-go"
 	"github.com/kr/pretty"
 )
 
@@ -28,6 +29,7 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	}
 	// Normalize fields to common format
 	v2NormalizeEnv(dirtyMap)
+	v2NormalizeDomains(dirtyMap)
 	v2NormalizeVolumeSizes(dirtyMap)
 
 	var cleanMap map[string]interface{}
@@ -47,13 +49,13 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 func prettyJSONFieldError(diff string) error {
 	parts := strings.Split(diff, ":")
 	if len(parts) != 2 {
-		return maskf(InternalError, "invalid diff format")
+		return maskf(InternalError, "invalid diff format '%s'", diff)
 	}
 	path := parts[0]
 
 	reason := strings.Split(parts[1], "!=")
 	if len(parts) != 2 {
-		return maskf(InternalError, "invalid diff format")
+		return maskf(InternalError, "invalid diff format '%s'", diff)
 	}
 	missing := strings.Contains(reason[0], "missing")
 	unknown := strings.Contains(reason[1], "missing")
@@ -66,7 +68,7 @@ func prettyJSONFieldError(diff string) error {
 		return maskf(UnknownJSONFieldError, "unknown JSON field: %s", path)
 	}
 
-	return maskf(InternalError, "invalid diff format")
+	return maskf(InternalError, "invalid diff format '%s'", diff)
 }
 
 // getMapEntry tries to get an entry in the given map that is a string map of
@@ -123,6 +125,98 @@ func v2NormalizeEnv(def map[string]interface{}) {
 			list = append(list, fmt.Sprintf("%s=%s", k, v))
 		}
 		nodeMap["env"] = list
+	}
+}
+
+// v2NormalizeDomains normalizes all domain objects to adhere to the
+// `port: domainList` format
+func v2NormalizeDomains(def map[string]interface{}) {
+	nodes := getMapEntry(def, "nodes")
+	if nodes == nil {
+		// No services element
+		return
+	}
+
+	for _, node := range nodes {
+		nodeMap, ok := node.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		domainMap := getMapEntry(nodeMap, "domains")
+		if domainMap == nil {
+			// No domains element
+			continue
+		}
+
+		// If the keys are not ports, reverse the map
+		newMap := make(map[string]interface{})
+		for k, v := range domainMap {
+			var newKey string
+			var newValue interface{}
+			// Try to unmarshal the key as a port
+			if port, err := generictypes.ParseDockerPort(k); err != nil {
+				// Key is not a port, assume it is a domain
+				// value should be a port then
+				if portStr, ok := v.(string); ok {
+					// Parse the port
+					if port, err := generictypes.ParseDockerPort(portStr); err != nil {
+						// It is not a valid port, give up
+						continue
+					} else {
+						newKey = port.String()
+						newValue = k
+					}
+				} else {
+					// Unknown format
+					continue
+				}
+			} else {
+				// Key is a port, keep the value
+				newKey = port.String()
+				newValue = v
+			}
+			if existingValue, ok := newMap[newKey]; ok {
+				// Key already has a value, append to it
+				newMap[newKey] = sortStringSlice(appendInterfaceList(existingValue, newValue))
+			} else {
+				// Key has no value yet, create it
+				newMap[newKey] = sortStringSlice(appendInterfaceList(nil, newValue))
+			}
+		}
+		nodeMap["domains"] = newMap
+	}
+}
+
+// appendInterfaceList appends given value to given list.
+// list is assume to be of type []interface{}, value van be an array
+// or a single value
+func appendInterfaceList(list interface{}, value interface{}) interface{} {
+	valueAsList, ok := value.([]interface{})
+	if !ok {
+		valueAsList = []interface{}{value}
+	}
+
+	if list == nil {
+		return valueAsList
+	}
+	if listAsList, ok := list.([]interface{}); !ok {
+		// This should not happen.
+		// Return list as this will trigger an error in the comparison phase
+		return list
+	} else {
+		return append(listAsList, valueAsList...)
+	}
+}
+
+// sortStringSlice sorts the given value if it is a string slice.
+// if not the value is returned unmodified
+func sortStringSlice(value interface{}) interface{} {
+	if stringSlice, ok := value.([]string); ok {
+		sort.Strings(stringSlice)
+		return stringSlice
+	} else {
+		return value
 	}
 }
 

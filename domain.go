@@ -34,11 +34,7 @@ func (dds *V2DomainDefinitions) UnmarshalJSON(data []byte) error {
 func (dds V2DomainDefinitions) MarshalJSON() ([]byte, error) {
 	portDomainMap := make(map[string]domainList)
 	for domain, port := range dds {
-		portData, err := port.MarshalJSON()
-		if err != nil {
-			return nil, mask(err)
-		}
-		portStr := string(portData)
+		portStr := port.String()
 		list, ok := portDomainMap[portStr]
 		if !ok {
 			list = domainList{}

@@ -106,3 +106,35 @@ func TestV2InvalidDomainValues(t *testing.T) {
 		}
 	}
 }
+
+func TestUnmarshalV2DomainFullService(t *testing.T) {
+	// Test the validator for full services containing various
+	// forms of domain definitions
+	var appDef userconfig.V2AppDefinition
+
+	byteSlice := []byte(`{
+    "nodes": {
+        "node1": {
+        	"ports": [ "80/tcp" ],
+            "image": "busybox",
+            "domains": {
+            	"foo.com": "80/tcp",
+            	"foobar.com": "80"
+            }
+        }, 
+        "node2": {
+        	"ports": [ "80/tcp", "81/tcp" ],
+            "image": "busybox",
+            "domains": {
+            	"80/tcp": ["mouse.com", "mickey.com"],
+            	"81": "disney.com"
+            }
+        }
+    }
+}`)
+
+	err := json.Unmarshal(byteSlice, &appDef)
+	if err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+}
