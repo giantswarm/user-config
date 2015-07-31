@@ -117,13 +117,15 @@ func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
         "env-array": {
             "image": "busybox",
             "env": [
-                "KEY=env-array"
+                "KEY=env-array",
+                "k=v"
             ]
         }, 
         "env-struct": {
             "image": "busybox",
             "env": {
-                "KEY": "env-struct"
+                "KEY": "env-struct",
+                "other": "value"
             }
         }
     }
@@ -140,7 +142,7 @@ func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
 	}
 
 	got := strings.Join(envArray.Env, ", ")
-	expected := "KEY=env-array"
+	expected := "KEY=env-array, k=v"
 	if got != expected {
 		t.Fatalf("Invalid result: got \n%s\nexpected\n%s", got, expected)
 	}
@@ -151,7 +153,7 @@ func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
 	}
 
 	got = strings.Join(envStruct.Env, ", ")
-	expected = "KEY=env-struct"
+	expected = "KEY=env-struct, other=value"
 	if got != expected {
 		t.Fatalf("Invalid result: got \n%s\nexpected\n%s", got, expected)
 	}
