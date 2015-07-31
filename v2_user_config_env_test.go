@@ -27,6 +27,9 @@ func TestUnmarshalV2EnvArray(t *testing.T) {
 }
 
 func TestUnmarshalV2EnvStruct(t *testing.T) {
+	// The original implementation (of "env" parsing) has an issue with the go implementation of map,
+	// not being consistent with respect to ordering of elements.
+	// With this loop we prevent that is works "by mistake" the first time (but not the second or third time)
 	for i := 0; i < 10000; i++ {
 		var nodeDef userconfig.NodeDefinition
 
