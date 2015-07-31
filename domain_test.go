@@ -56,7 +56,7 @@ func TestValidDomainValues(t *testing.T) {
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
 		}},
 		{`{ "foo.com": "8081/tcp", "old.io": "8082" }`, userconfig.DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8081"),
 			generictypes.Domain("old.io"):  generictypes.MustParseDockerPort("8082"),
 		}},
 		// Reverse (new) format: port: domainList

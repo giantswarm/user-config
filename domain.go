@@ -32,10 +32,10 @@ func (dds *DomainDefinitions) UnmarshalJSON(data []byte) error {
 // unmarshalJSONDomainPortMap tries to unmarshal the given data
 // in format: domain: port, domain2: port2
 func (dds *DomainDefinitions) unmarshalJSONDomainPortMap(data []byte) error {
-	var local1 map[generictypes.Domain]generictypes.DockerPort
-	if err := json.Unmarshal(data, &local1); err == nil {
+	var local map[generictypes.Domain]generictypes.DockerPort
+	if err := json.Unmarshal(data, &local); err == nil {
 		// Found a correct result
-		*dds = DomainDefinitions(local1)
+		*dds = DomainDefinitions(local)
 		return nil
 	} else {
 		return mask(err)
