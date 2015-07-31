@@ -23,7 +23,7 @@ type NodeDefinition struct {
 	Args []string `json:"args,omitempty" description:"List of arguments passed to the entry point of this service."`
 
 	// Domains to bind the port to:  domainName => port, e.g. "www.heise.de" => "80"
-	Domains DomainDefinitions `json:"domains,omitempty" description:"List of domains to bind exposed ports to."`
+	Domains V2DomainDefinitions `json:"domains,omitempty" description:"List of domains to bind exposed ports to."`
 
 	// Service names required by a service.
 	Links LinkDefinitions `json:"links,omitempty" description:"List of dependencies of this service."`

@@ -8,7 +8,7 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func TestUnmarshalValidDomains(t *testing.T) {
+func TestV2UnmarshalValidDomains(t *testing.T) {
 	app := ExampleDefinition()
 	app.Services[0].Components[0].Domains = map[generictypes.Domain]generictypes.DockerPort{
 		generictypes.Domain("i.am.correct.com"):       generictypes.MustParseDockerPort("80/tcp"),
@@ -28,7 +28,7 @@ func TestUnmarshalValidDomains(t *testing.T) {
 	}
 }
 
-func TestUnmarshalInvalidDomains(t *testing.T) {
+func TestV2UnmarshalInvalidDomains(t *testing.T) {
 	app := ExampleDefinition()
 	app.Services[0].Components[0].Domains = map[generictypes.Domain]generictypes.DockerPort{
 		generictypes.Domain("i.am.correct.com"):  generictypes.MustParseDockerPort("80/tcp"),
@@ -46,30 +46,30 @@ func TestUnmarshalInvalidDomains(t *testing.T) {
 	}
 }
 
-func TestValidDomainValues(t *testing.T) {
+func TestV2ValidDomainValues(t *testing.T) {
 	list := []struct {
 		Input  string
-		Result userconfig.DomainDefinitions
+		Result userconfig.V2DomainDefinitions
 	}{
 		// Original format: domain: port
-		{`{ "foo.com": "8080/tcp" }`, userconfig.DomainDefinitions{
+		{`{ "foo.com": "8080/tcp" }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
 		}},
-		{`{ "foo.com": "8081/tcp", "old.io": "8082" }`, userconfig.DomainDefinitions{
+		{`{ "foo.com": "8081/tcp", "old.io": "8082" }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8081"),
 			generictypes.Domain("old.io"):  generictypes.MustParseDockerPort("8082"),
 		}},
 		// Reverse (new) format: port: domainList
-		{`{ "8080": [ "foo.com" ] }`, userconfig.DomainDefinitions{
+		{`{ "8080": [ "foo.com" ] }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
 		}},
-		{`{ "8080": "foo.com" }`, userconfig.DomainDefinitions{
+		{`{ "8080": "foo.com" }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
 		}},
-		{`{ "8086/tcp": "foo.com" }`, userconfig.DomainDefinitions{
+		{`{ "8086/tcp": "foo.com" }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8086"),
 		}},
-		{`{ "8080": [ "foo.com", "intel.com" ], "6800": "motorola.com" }`, userconfig.DomainDefinitions{
+		{`{ "8080": [ "foo.com", "intel.com" ], "6800": "motorola.com" }`, userconfig.V2DomainDefinitions{
 			generictypes.Domain("foo.com"):      generictypes.MustParseDockerPort("8080"),
 			generictypes.Domain("intel.com"):    generictypes.MustParseDockerPort("8080"),
 			generictypes.Domain("motorola.com"): generictypes.MustParseDockerPort("6800"),
@@ -77,7 +77,7 @@ func TestValidDomainValues(t *testing.T) {
 	}
 
 	for _, test := range list {
-		var dds userconfig.DomainDefinitions
+		var dds userconfig.V2DomainDefinitions
 		if err := json.Unmarshal([]byte(test.Input), &dds); err != nil {
 			t.Fatalf("Valid domain definitions value '%s' considered invalid because %v", test.Input, err)
 		}
@@ -93,14 +93,14 @@ func TestValidDomainValues(t *testing.T) {
 	}
 }
 
-func TestInvalidDomainValues(t *testing.T) {
+func TestV2InvalidDomainValues(t *testing.T) {
 	list := []string{
 		``,
 		`{"field":"foo"}`,
 	}
 
 	for _, s := range list {
-		var dds userconfig.DomainDefinitions
+		var dds userconfig.V2DomainDefinitions
 		if err := json.Unmarshal([]byte(s), &dds); err == nil {
 			t.Fatalf("Invalid domain value '%s' considered valid", s)
 		}
