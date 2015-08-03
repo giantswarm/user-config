@@ -175,8 +175,18 @@ func v2NormalizeDomains(def map[string]interface{}) {
 						newKey = port.String()
 						newValue = k
 					}
+				} else if portFloat, ok := v.(float64); ok {
+					// key: domain, value: port (int)
+					portInt := strconv.FormatFloat(portFloat, 'f', 0, 64)
+					if port, err := generictypes.ParseDockerPort(portInt); err != nil {
+						// unknown format, this should not happen since validation should prevent that
+						continue
+					} else {
+						newKey = port.String()
+						newValue = k
+					}
 				} else {
-					// Unknown format
+					// unknown format, this should not happen since validation should prevent that
 					continue
 				}
 			} else {
@@ -184,6 +194,7 @@ func v2NormalizeDomains(def map[string]interface{}) {
 				newKey = port.String()
 				newValue = sortStringSlice(v)
 			}
+
 			if existingValue, ok := newMap[newKey]; ok {
 				// Key already has a value, append to it
 				newMap[newKey] = sortStringSlice(appendInterfaceList(existingValue, newValue))
