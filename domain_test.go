@@ -53,26 +53,26 @@ func TestV2ValidDomainValues(t *testing.T) {
 	}{
 		// Original format: domain: port
 		{`{ "foo.com": "8080/tcp" }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("foo.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("8080")},
 		}},
 		{`{ "foo.com": "8081/tcp", "old.io": "8082" }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8081"),
-			generictypes.Domain("old.io"):  generictypes.MustParseDockerPort("8082"),
+			generictypes.Domain("foo.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("8081")},
+			generictypes.Domain("old.io"):  userconfig.PortDefinitions{generictypes.MustParseDockerPort("8082")},
 		}},
 		// Reverse (new) format: port: domainList
 		{`{ "8080": [ "foo.com" ] }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("foo.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("8080")},
 		}},
 		{`{ "8080": "foo.com" }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8080"),
+			generictypes.Domain("foo.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("8080")},
 		}},
 		{`{ "8086/tcp": "foo.com" }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"): generictypes.MustParseDockerPort("8086"),
+			generictypes.Domain("foo.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("8086")},
 		}},
 		{`{ "8080": [ "foo.com", "intel.com" ], "6800": "motorola.com" }`, userconfig.V2DomainDefinitions{
-			generictypes.Domain("foo.com"):      generictypes.MustParseDockerPort("8080"),
-			generictypes.Domain("intel.com"):    generictypes.MustParseDockerPort("8080"),
-			generictypes.Domain("motorola.com"): generictypes.MustParseDockerPort("6800"),
+			generictypes.Domain("foo.com"):      userconfig.PortDefinitions{generictypes.MustParseDockerPort("8080")},
+			generictypes.Domain("intel.com"):    userconfig.PortDefinitions{generictypes.MustParseDockerPort("8080")},
+			generictypes.Domain("motorola.com"): userconfig.PortDefinitions{generictypes.MustParseDockerPort("6800")},
 		}},
 	}
 
@@ -84,10 +84,12 @@ func TestV2ValidDomainValues(t *testing.T) {
 		if len(dds) != len(test.Result) {
 			t.Fatalf("Invalid length, expected %v, got %v", len(test.Result), len(dds))
 		}
-		for d, p := range dds {
-			expected := test.Result[d]
-			if !p.Equals(expected) {
-				t.Fatalf("Invalid element for domain %s, expected %v, got %v", d, expected, p)
+		for d, ports := range dds {
+			for _, p := range ports {
+				expected := test.Result[d][0]
+				if !p.Equals(expected) {
+					t.Fatalf("Invalid element for domain %s, expected %v, got %v", d, expected, p)
+				}
 			}
 		}
 	}
@@ -126,7 +128,8 @@ func TestUnmarshalV2DomainFullService(t *testing.T) {
             "domains": {
             	"foo.com": "80/tcp",
             	"ape.org": "80/tcp",
-            	"foobar.com": "80"
+            	"foobar.com": "80",
+            	"int.com": 80
             }
         },
         "node2": {

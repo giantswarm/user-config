@@ -6,7 +6,7 @@ import (
 	"github.com/giantswarm/generic-types-go"
 )
 
-type V2DomainDefinitions map[generictypes.Domain]generictypes.DockerPort
+type V2DomainDefinitions map[generictypes.Domain]PortDefinitions
 type domainList []generictypes.Domain
 
 // UnmarshalJSON performs custom unmarshalling to support smart
@@ -33,14 +33,16 @@ func (dds *V2DomainDefinitions) UnmarshalJSON(data []byte) error {
 // port: domainList
 func (dds V2DomainDefinitions) MarshalJSON() ([]byte, error) {
 	portDomainMap := make(map[string]domainList)
-	for domain, port := range dds {
-		portStr := port.String()
-		list, ok := portDomainMap[portStr]
-		if !ok {
-			list = domainList{}
+	for domain, ports := range dds {
+		for _, port := range ports {
+			portStr := port.String()
+			list, ok := portDomainMap[portStr]
+			if !ok {
+				list = domainList{}
+			}
+			list = append(list, domain)
+			portDomainMap[portStr] = list
 		}
-		list = append(list, domain)
-		portDomainMap[portStr] = list
 	}
 
 	data, err := json.Marshal(portDomainMap)
@@ -53,7 +55,7 @@ func (dds V2DomainDefinitions) MarshalJSON() ([]byte, error) {
 // unmarshalJSONDomainPortMap tries to unmarshal the given data
 // in format: domain: port, domain2: port2
 func (dds *V2DomainDefinitions) unmarshalJSONDomainPortMap(data []byte) error {
-	var local map[generictypes.Domain]generictypes.DockerPort
+	var local map[generictypes.Domain]PortDefinitions
 	if err := json.Unmarshal(data, &local); err == nil {
 		// Found a correct result
 		*dds = V2DomainDefinitions(local)
@@ -76,7 +78,7 @@ func (dds *V2DomainDefinitions) unmarshalJSONPortDomainList(data []byte) error {
 				return mask(err)
 			}
 			for _, domain := range list {
-				newMap[domain] = port
+				newMap[domain] = PortDefinitions{port}
 			}
 		}
 		*dds = newMap
@@ -112,24 +114,28 @@ func (dl *domainList) UnmarshalJSON(data []byte) error {
 // map. This can be used for internal management once the validity of domains
 // and ports is given. That way dependencies between packages requiring hard
 // custom types can be dropped.
-func (dc V2DomainDefinitions) ToSimple() map[string]string {
+func (dds V2DomainDefinitions) ToSimple() map[string]string {
 	simpleDomains := map[string]string{}
 
-	for d, p := range dc {
-		simpleDomains[d.String()] = p.Port
+	for d, ports := range dds {
+		for _, port := range ports {
+			simpleDomains[d.String()] = port.Port
+		}
 	}
 
 	return simpleDomains
 }
 
-func (dc V2DomainDefinitions) validate(exportedPorts PortDefinitions) error {
-	for domainName, domainPort := range dc {
+func (dds V2DomainDefinitions) validate(exportedPorts PortDefinitions) error {
+	for domainName, ports := range dds {
 		if err := domainName.Validate(); err != nil {
 			return mask(err)
 		}
 
-		if !exportedPorts.contains(domainPort) {
-			return maskf(InvalidDomainDefinitionError, "port '%s' of domain '%s' must be exported", domainPort.Port, domainName)
+		for _, port := range ports {
+			if !exportedPorts.contains(port) {
+				return maskf(InvalidDomainDefinitionError, "port '%s' of domain '%s' must be exported", port, domainName)
+			}
 		}
 	}
 

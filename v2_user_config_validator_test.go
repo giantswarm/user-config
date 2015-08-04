@@ -55,8 +55,8 @@ func TestParseV2AppDef(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing domain")
 	}
-	if port.String() != "80/tcp" {
-		t.Fatalf("invalid port: %s", port.String())
+	if port[0].String() != "80/tcp" {
+		t.Fatalf("invalid port: %s", port[0].String())
 	}
 
 	if nodeA.Image.Registry != "registry" {

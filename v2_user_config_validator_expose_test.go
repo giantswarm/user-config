@@ -14,7 +14,6 @@ func TestV2UserConfigExposeValidator(t *testing.T) {
 }
 
 var _ = Describe("v2 user config stable API validator", func() {
-
 	testNode := func() *NodeDefinition {
 		return &NodeDefinition{
 			Image: MustParseImageDefinition("registry/namespace/repository:version"),
