@@ -101,19 +101,19 @@ func getMapEntry(def map[string]interface{}, key string) map[string]interface{} 
 // to its natural array format. This normalization function is expected to
 // normalize "valid" data and passthrough everything else.
 func v2NormalizeEnv(def map[string]interface{}) {
-	nodes := getMapEntry(def, "nodes")
-	if nodes == nil {
-		// No nodes element
+	components := getMapEntry(def, "components")
+	if components == nil {
+		// No components element
 		return
 	}
 
-	for _, node := range nodes {
-		nodeMap, ok := node.(map[string]interface{})
+	for _, component := range components {
+		componentMap, ok := component.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		envMap := getMapEntry(nodeMap, "env")
+		envMap := getMapEntry(componentMap, "env")
 		if envMap == nil {
 			// No env field formatted as map
 			continue
@@ -132,26 +132,26 @@ func v2NormalizeEnv(def map[string]interface{}) {
 			v := envMap[k]
 			list = append(list, fmt.Sprintf("%s=%s", k, v))
 		}
-		nodeMap["env"] = list
+		componentMap["env"] = list
 	}
 }
 
 // v2NormalizeDomains normalizes all domain objects to adhere to the
 // `port: domainList` format
 func v2NormalizeDomains(def map[string]interface{}) {
-	nodes := getMapEntry(def, "nodes")
-	if nodes == nil {
+	components := getMapEntry(def, "components")
+	if components == nil {
 		// No services element
 		return
 	}
 
-	for _, node := range nodes {
-		nodeMap, ok := node.(map[string]interface{})
+	for _, component := range components {
+		componentMap, ok := component.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		domainMap := getMapEntry(nodeMap, "domains")
+		domainMap := getMapEntry(componentMap, "domains")
 		if domainMap == nil {
 			// No domains element
 			continue
@@ -216,7 +216,7 @@ func v2NormalizeDomains(def map[string]interface{}) {
 		for _, k := range keys {
 			sortedMap[k] = newMap[k]
 		}
-		nodeMap["domains"] = sortedMap
+		componentMap["domains"] = sortedMap
 	}
 }
 
@@ -268,19 +268,19 @@ func sortStringSlice(value interface{}) interface{} {
 
 // v2NormalizePorts normalizes all values of "ports" elements
 func v2NormalizePorts(def map[string]interface{}) {
-	nodes := getMapEntry(def, "nodes")
-	if nodes == nil {
-		// No nodes element
+	components := getMapEntry(def, "components")
+	if components == nil {
+		// No components element
 		return
 	}
 
-	for _, node := range nodes {
-		nodeMap, ok := node.(map[string]interface{})
+	for _, component := range components {
+		componentMap, ok := component.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		portsRaw, ok := nodeMap["ports"]
+		portsRaw, ok := componentMap["ports"]
 		if !ok {
 			// No ports field
 			continue
@@ -289,14 +289,14 @@ func v2NormalizePorts(def map[string]interface{}) {
 		// Check for string value
 		if portsStr, ok := portsRaw.(string); ok {
 			// Port is a string value, wrap it in an array
-			nodeMap["ports"] = []interface{}{normalizeSinglePort(portsStr)}
+			componentMap["ports"] = []interface{}{normalizeSinglePort(portsStr)}
 			continue
 		}
 
 		// Check for number values
 		if portsNum, ok := portsRaw.(float64); ok {
 			// Port is a number
-			nodeMap["ports"] = []interface{}{normalizeSinglePort(portsNum)}
+			componentMap["ports"] = []interface{}{normalizeSinglePort(portsNum)}
 			continue
 		}
 
@@ -306,7 +306,7 @@ func v2NormalizePorts(def map[string]interface{}) {
 			for i, v := range portsArr {
 				portsArr[i] = normalizeSinglePort(v)
 			}
-			nodeMap["ports"] = portsArr
+			componentMap["ports"] = portsArr
 			continue
 		}
 	}
@@ -341,19 +341,19 @@ func normalizeSinglePort(input interface{}) interface{} {
 // of "number GB" This normalization function is expected to normalize "valid"
 // data and passthrough everything else.
 func v2NormalizeVolumeSizes(def map[string]interface{}) {
-	nodes := getMapEntry(def, "nodes")
-	if nodes == nil {
+	components := getMapEntry(def, "components")
+	if components == nil {
 		// No services element
 		return
 	}
 
-	for _, node := range nodes {
-		nodeMap, ok := node.(map[string]interface{})
+	for _, component := range components {
+		componentMap, ok := component.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		volumes := getArrayEntry(nodeMap, "volumes")
+		volumes := getArrayEntry(componentMap, "volumes")
 		if volumes == nil {
 			// No volumes element
 			continue
@@ -396,21 +396,21 @@ func v2NormalizeVolumeSizes(def map[string]interface{}) {
 }
 
 // validatePods checks that all pods are well formed.
-func (nds NodeDefinitions) validatePods() error {
-	for name, nodeDef := range nds {
-		if nodeDef.Pod == PodChildren || nodeDef.Pod == PodInherit {
-			// Check that there are least 2 pod nodes
-			children, err := nds.PodNodes(name)
+func (nds ComponentDefinitions) validatePods() error {
+	for name, componentDef := range nds {
+		if componentDef.Pod == PodChildren || componentDef.Pod == PodInherit {
+			// Check that there are least 2 pod components
+			children, err := nds.PodComponents(name)
 			if err != nil {
 				return mask(err)
 			}
 			if len(children) < 2 {
-				return maskf(InvalidPodConfigError, "node '%s' must have at least 2 child nodes because if defines 'pod' as '%s'", name, nodeDef.Pod)
+				return maskf(InvalidPodConfigError, "component '%s' must have at least 2 child components because if defines 'pod' as '%s'", name, componentDef.Pod)
 			}
 			// Children may not have pod set to anything other than empty
 			for childName, childDef := range children {
 				if childDef.Pod != "" {
-					return maskf(InvalidPodConfigError, "node '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
+					return maskf(InvalidPodConfigError, "component '%s' must cannot set 'pod' to '%s' because it is already part of another pod", childName.String(), childDef.Pod)
 				}
 			}
 		}
@@ -418,13 +418,13 @@ func (nds NodeDefinitions) validatePods() error {
 	return nil
 }
 
-// validateLeafs checks that all leaf nodes are a component.
-func (nds NodeDefinitions) validateLeafs() error {
-	for nodeName, nodeDef := range nds {
-		if nds.IsLeaf(nodeName) {
+// validateLeafs checks that all leaf components are a component.
+func (nds ComponentDefinitions) validateLeafs() error {
+	for componentName, componentDef := range nds {
+		if nds.IsLeaf(componentName) {
 			// It has to be a component
-			if !nodeDef.IsComponent() {
-				return maskf(InvalidNodeDefinitionError, "node '%s' must have an 'image'", nodeName.String())
+			if !componentDef.IsComponent() {
+				return maskf(InvalidComponentDefinitionError, "component '%s' must have an 'image'", componentName.String())
 			}
 		}
 	}

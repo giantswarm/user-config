@@ -7,25 +7,25 @@ import (
 type LinkDefinition struct {
 	Service AppName `json:"service,omitempty" description:"Name of the service that is linked to"`
 
-	// Name of a required node
-	Node NodeName `json:"node,omitempty" description:"Name of a node that is linked to"`
+	// Name of a required component
+	Component ComponentName `json:"component,omitempty" description:"Name of a component that is linked to"`
 
 	// The name how this dependency should appear in the container
 	Alias string `json:"alias,omitempty" description:"The name how this dependency should appear in the container"`
 
-	// Port of the required node
-	TargetPort generictypes.DockerPort `json:"target_port" description:"Port on the node that is linked to"`
+	// Port of the required component
+	TargetPort generictypes.DockerPort `json:"target_port" description:"Port on the component that is linked to"`
 }
 
 type LinkDefinitions []LinkDefinition
 
 func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
-	if ld.Node.Empty() && ld.Service.Empty() {
-		return maskf(InvalidLinkDefinitionError, "link node must not be empty")
+	if ld.Component.Empty() && ld.Service.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link component must not be empty")
 	}
-	if !ld.Node.Empty() {
-		if err := ld.Node.Validate(); err != nil {
-			return maskf(InvalidLinkDefinitionError, "invalid link node: %s", err.Error())
+	if !ld.Component.Empty() {
+		if err := ld.Component.Validate(); err != nil {
+			return maskf(InvalidLinkDefinitionError, "invalid link component: %s", err.Error())
 		}
 	}
 	if !ld.Service.Empty() {
@@ -33,8 +33,8 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 			return maskf(InvalidLinkDefinitionError, "invalid link service: %s", err.Error())
 		}
 	}
-	if !ld.Node.Empty() && !ld.Service.Empty() {
-		return maskf(InvalidLinkDefinitionError, "link service and node cannot be set both")
+	if !ld.Component.Empty() && !ld.Service.Empty() {
+		return maskf(InvalidLinkDefinitionError, "link service and component cannot be set both")
 	}
 
 	// for easy validation we create a port definitions type and use its
@@ -48,18 +48,18 @@ func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 }
 
 // LinkName returns the name of this link as it will be used inside
-// the node.
+// the component.
 // This defaults to the alias. If that is not specified, the local name
-// of the Node name will be used, or if that is also empty, the app name.
+// of the Component name will be used, or if that is also empty, the app name.
 func (ld LinkDefinition) LinkName() (string, error) {
 	if ld.Alias != "" {
 		return ld.Alias, nil
 	}
-	if !ld.Node.Empty() {
-		// Take the dependency name from the last part of the node name
+	if !ld.Component.Empty() {
+		// Take the dependency name from the last part of the component name
 		// (using `LocalName()`).
 		// This is done to prevent that the dependency name has '/' in it.
-		return ld.Node.LocalName().String(), nil
+		return ld.Component.LocalName().String(), nil
 	}
 	if !ld.Service.Empty() {
 		return ld.Service.String(), nil
@@ -68,13 +68,13 @@ func (ld LinkDefinition) LinkName() (string, error) {
 }
 
 // LinksToOtherService returns true if this definition defines
-// a link between a node an another service.
+// a link between a component an another service.
 func (ld LinkDefinition) LinksToOtherService() bool {
 	return !ld.Service.Empty()
 }
 
 // LinksToSameService returns true if this definition defines
-// a link between a node and another node within the same service.
+// a link between a component and another component within the same service.
 func (ld LinkDefinition) LinksToSameService() bool {
 	return ld.Service.Empty()
 }
@@ -102,24 +102,24 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 }
 
 // Resolve resolves the implementation of the given link in the context of the given
-// node definitions.
-// Resolve returns the name of the node that implements this link and its implementation port.
+// component definitions.
+// Resolve returns the name of the component that implements this link and its implementation port.
 // If this link cannot be resolved, an error is returned.
-func (link LinkDefinition) Resolve(nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
+func (link LinkDefinition) Resolve(nds ComponentDefinitions) (ComponentName, generictypes.DockerPort, error) {
 	// Resolve initial link target
-	targetName := link.Node
-	targetNode, err := nds.NodeByName(targetName)
+	targetName := link.Component
+	targetComponent, err := nds.ComponentByName(targetName)
 	if err != nil {
-		return "", generictypes.DockerPort{}, maskf(NodeNotFoundError, link.Node.String())
+		return "", generictypes.DockerPort{}, maskf(ComponentNotFoundError, link.Component.String())
 	}
 
-	// If the linked to port exposed by the target node?
-	if expDef, err := targetNode.Expose.defByPort(link.TargetPort); err == nil {
+	// If the linked to port exposed by the target component?
+	if expDef, err := targetComponent.Expose.defByPort(link.TargetPort); err == nil {
 		// Link to exposed port, let expose definition resolve this further
 		return expDef.Resolve(targetName, nds)
 	}
 
-	if targetNode.Ports.contains(link.TargetPort) {
+	if targetComponent.Ports.contains(link.TargetPort) {
 		// Link points directly to an exported port of the target
 		return targetName, link.TargetPort, nil
 	}
@@ -129,60 +129,60 @@ func (link LinkDefinition) Resolve(nds NodeDefinitions) (NodeName, generictypes.
 }
 
 // validateLinks
-func (nds NodeDefinitions) validateLinks() error {
-	for nodeName, node := range nds {
+func (nds ComponentDefinitions) validateLinks() error {
+	for componentName, component := range nds {
 		// detect invalid links
-		for _, link := range node.Links {
+		for _, link := range component.Links {
 			// If the link is inter-service, we cannot validate it here.
 			if link.LinksToOtherService() {
 				continue
 			}
 
-			// Try to find the target node
-			targetName := NodeName(link.Node)
-			targetNode, err := nds.NodeByName(targetName)
+			// Try to find the target component
+			targetName := ComponentName(link.Component)
+			targetComponent, err := nds.ComponentByName(targetName)
 			if err != nil {
-				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not exists", link.Node)
+				return maskf(InvalidComponentDefinitionError, "invalid link to component '%s': does not exists", link.Component)
 			}
 
-			// Does the target node expose the linked to port?
-			if !targetNode.Expose.contains(link.TargetPort) && !targetNode.Ports.contains(link.TargetPort) {
-				return maskf(InvalidNodeDefinitionError, "invalid link to node '%s': does not export port '%s'", link.Node, link.TargetPort)
+			// Does the target component expose the linked to port?
+			if !targetComponent.Expose.contains(link.TargetPort) && !targetComponent.Ports.contains(link.TargetPort) {
+				return maskf(InvalidComponentDefinitionError, "invalid link to component '%s': does not export port '%s'", link.Component, link.TargetPort)
 			}
 
-			// Is the node allowed to link to the target node?
-			if !isLinkAllowed(nodeName, targetName) {
-				return maskf(InvalidLinkDefinitionError, "invalid link to node '%s': node '%s' is not allowed to link to it", link.Node, nodeName)
+			// Is the component allowed to link to the target component?
+			if !isLinkAllowed(componentName, targetName) {
+				return maskf(InvalidLinkDefinitionError, "invalid link to component '%s': component '%s' is not allowed to link to it", link.Component, componentName)
 			}
 		}
 	}
 	return nil
 }
 
-// isLinkAllowed returns true if a node with given name is allowed to
-// link to a node with given target name.
-func isLinkAllowed(nodeName, targetName NodeName) bool {
-	// If target is a child or grand child of node, it is ok.
-	if targetName.IsChildOf(nodeName) {
+// isLinkAllowed returns true if a component with given name is allowed to
+// link to a component with given target name.
+func isLinkAllowed(componentName, targetName ComponentName) bool {
+	// If target is a child or grand child of component, it is ok.
+	if targetName.IsChildOf(componentName) {
 		return true
 	}
 
 	// If target is a parent/sibling ("up or right-left"), it is ok.
-	if isParentOrSiblingRecursive(nodeName, targetName) {
+	if isParentOrSiblingRecursive(componentName, targetName) {
 		return true
 	}
 
 	return false
 }
 
-// isParentOrSiblingRecursive returns true if targetName is a parent of nodeName,
-// or targetName is a sibling of node name.
+// isParentOrSiblingRecursive returns true if targetName is a parent of componentName,
+// or targetName is a sibling of component name.
 // The test is done recursively.
-func isParentOrSiblingRecursive(nodeName, targetName NodeName) bool {
-	if nodeName.IsSiblingOf(targetName) {
+func isParentOrSiblingRecursive(componentName, targetName ComponentName) bool {
+	if componentName.IsSiblingOf(targetName) {
 		return true
 	}
-	parentName, err := nodeName.ParentName()
+	parentName, err := componentName.ParentName()
 	if err != nil {
 		// No more parent
 		return false
