@@ -14,13 +14,13 @@ func TestV2UserConfigExposeValidator(t *testing.T) {
 }
 
 var _ = Describe("v2 user config stable API validator", func() {
-	testComponent := func() *ComponentDefinition {
-		return &ComponentDefinition{
+	testNode := func() *NodeDefinition {
+		return &NodeDefinition{
 			Image: MustParseImageDefinition("registry/namespace/repository:version"),
 		}
 	}
 
-	addExpose := func(config *ComponentDefinition, exp ...ExposeDefinition) *ComponentDefinition {
+	addExpose := func(config *NodeDefinition, exp ...ExposeDefinition) *NodeDefinition {
 		if config.Expose == nil {
 			config.Expose = exp
 		} else {
@@ -29,7 +29,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 		return config
 	}
 
-	addLinks := func(config *ComponentDefinition, link ...LinkDefinition) *ComponentDefinition {
+	addLinks := func(config *NodeDefinition, link ...LinkDefinition) *NodeDefinition {
 		if config.Links == nil {
 			config.Links = link
 		} else {
@@ -38,7 +38,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 		return config
 	}
 
-	addPorts := func(config *ComponentDefinition, ports ...generictypes.DockerPort) *ComponentDefinition {
+	addPorts := func(config *NodeDefinition, ports ...generictypes.DockerPort) *NodeDefinition {
 		if config.Ports == nil {
 			config.Ports = ports
 		} else {
@@ -47,8 +47,8 @@ var _ = Describe("v2 user config stable API validator", func() {
 		return config
 	}
 
-	testApp := func() ComponentDefinitions {
-		return make(ComponentDefinitions)
+	testApp := func() NodeDefinitions {
+		return make(NodeDefinitions)
 	}
 
 	port := func(p string) generictypes.DockerPort {
@@ -56,7 +56,7 @@ var _ = Describe("v2 user config stable API validator", func() {
 	}
 
 	maxScale := 7
-	validate := func(nds ComponentDefinitions) error {
+	validate := func(nds NodeDefinitions) error {
 		vctx := &ValidationContext{
 			Protocols:     []string{"tcp"},
 			MinVolumeSize: "1 GB",
@@ -73,15 +73,15 @@ var _ = Describe("v2 user config stable API validator", func() {
 
 	Describe("intra-app tests", func() {
 		Describe("check relations between expose and defined ports", func() {
-			Describe("test valid expose implemented by child component with specific implementation port", func() {
+			Describe("test valid expose implemented by child node with specific implementation port", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b", TargetPort: port("456")})
-					components["a/b"] = addPorts(testComponent(), port("456"))
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should not throw an error", func() {
@@ -89,15 +89,15 @@ var _ = Describe("v2 user config stable API validator", func() {
 				})
 			})
 
-			Describe("test valid expose implemented by child component without implementation port", func() {
+			Describe("test valid expose implemented by child node without implementation port", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b/c"})
-					components["a/b/c"] = addPorts(testComponent(), port("123"))
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b/c"})
+					nodes["a/b/c"] = addPorts(testNode(), port("123"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should not throw an error", func() {
@@ -105,14 +105,14 @@ var _ = Describe("v2 user config stable API validator", func() {
 				})
 			})
 
-			Describe("test valid expose implemented by same component with specific implementation port", func() {
+			Describe("test valid expose implemented by same node with specific implementation port", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addPorts(addExpose(testComponent(), ExposeDefinition{Port: port("123"), TargetPort: port("456")}), port("456"))
+					nodes := testApp()
+					nodes["a"] = addPorts(addExpose(testNode(), ExposeDefinition{Port: port("123"), TargetPort: port("456")}), port("456"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should not throw an error", func() {
@@ -120,54 +120,54 @@ var _ = Describe("v2 user config stable API validator", func() {
 				})
 			})
 
-			Describe("test invalid expose implemented by non-child component with specific implementation port", func() {
+			Describe("test invalid expose implemented by non-child node with specific implementation port", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "b", TargetPort: port("456")})
-					components["b"] = addPorts(testComponent(), port("456"))
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "b", TargetPort: port("456")})
+					nodes["b"] = addPorts(testNode(), port("456"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`invalid expose to component 'b': is not a child of 'a'`))
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`invalid expose to node 'b': is not a child of 'a'`))
 				})
 			})
 
-			Describe("test invalid expose implemented by child component with specific implementation port that does not exist in port list", func() {
+			Describe("test invalid expose implemented by child node with specific implementation port that does not exist in port list", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b", TargetPort: port("456")})
-					components["a/b"] = addPorts(testComponent(), port("789"))
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("789"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`invalid expose to component 'a/b': does not export port '456/tcp'`))
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`invalid expose to node 'a/b': does not export port '456/tcp'`))
 				})
 			})
 
-			Describe("test invalid expose implemented by child component without specific implementation port that does not exist in port list", func() {
+			Describe("test invalid expose implemented by child node without specific implementation port that does not exist in port list", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b"})
-					components["a/b"] = testComponent()
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b"})
+					nodes["a/b"] = testNode()
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`invalid expose to component 'a/b': does not export port '123/tcp'`))
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`invalid expose to node 'a/b': does not export port '123/tcp'`))
 				})
 			})
 
@@ -175,18 +175,18 @@ var _ = Describe("v2 user config stable API validator", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(),
-						ExposeDefinition{Port: port("123"), Component: "a/b"},
-						ExposeDefinition{Port: port("123"), Component: "a/b"},
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(),
+						ExposeDefinition{Port: port("123"), Node: "a/b"},
+						ExposeDefinition{Port: port("123"), Node: "a/b"},
 					)
-					components["a/b"] = testComponent()
+					nodes["a/b"] = testNode()
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
 					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed more than once`))
 				})
 			})
@@ -197,12 +197,12 @@ var _ = Describe("v2 user config stable API validator", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b", TargetPort: port("456")})
-					components["a/b"] = addPorts(testComponent(), port("456"))
-					components["c"] = addLinks(testComponent(), LinkDefinition{Component: "a", TargetPort: port("123")})
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("123")})
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should not throw an error", func() {
@@ -214,17 +214,17 @@ var _ = Describe("v2 user config stable API validator", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b", TargetPort: port("456")})
-					components["a/b"] = addPorts(testComponent(), port("456"))
-					components["c"] = addLinks(testComponent(), LinkDefinition{Component: "a", TargetPort: port("789")})
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
+					nodes["c"] = addLinks(testNode(), LinkDefinition{Node: "a", TargetPort: port("789")})
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`invalid link to component 'a': does not export port '789/tcp'`))
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`invalid link to node 'a': does not export port '789/tcp'`))
 				})
 			})
 		})
@@ -234,10 +234,10 @@ var _ = Describe("v2 user config stable API validator", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addLinks(testComponent(), LinkDefinition{Service: "other", TargetPort: port("123")})
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", TargetPort: port("123")})
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should not throw an error", func() {
@@ -249,35 +249,35 @@ var _ = Describe("v2 user config stable API validator", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addLinks(testComponent(), LinkDefinition{Service: "other", Component: "b", TargetPort: port("123")})
-					components["b"] = addPorts(testComponent(), port("123"))
+					nodes := testApp()
+					nodes["a"] = addLinks(testNode(), LinkDefinition{Service: "other", Node: "b", TargetPort: port("123")})
+					nodes["b"] = addPorts(testNode(), port("123"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
 				It("should throw an InvalidLinkDefinitionError", func() {
 					Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`link service and component cannot be set both`))
+					Expect(err.Error()).To(Equal(`link service and node cannot be set both`))
 				})
 			})
 
-			Describe("test exposing the same port on multiple root components (which is not allowed)", func() {
+			Describe("test exposing the same port on multiple root nodes (which is not allowed)", func() {
 				var err error
 
 				BeforeEach(func() {
-					components := testApp()
-					components["a"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "a/b", TargetPort: port("456")})
-					components["a/b"] = addPorts(testComponent(), port("456"))
-					components["c"] = addExpose(testComponent(), ExposeDefinition{Port: port("123"), Component: "c/b", TargetPort: port("456")})
-					components["c/b"] = addPorts(testComponent(), port("456"))
+					nodes := testApp()
+					nodes["a"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "a/b", TargetPort: port("456")})
+					nodes["a/b"] = addPorts(testNode(), port("456"))
+					nodes["c"] = addExpose(testNode(), ExposeDefinition{Port: port("123"), Node: "c/b", TargetPort: port("456")})
+					nodes["c/b"] = addPorts(testNode(), port("456"))
 
-					err = validate(components)
+					err = validate(nodes)
 				})
 
-				It("should throw an InvalidComponentDefinitionError", func() {
-					Expect(IsInvalidComponentDefinition(err)).To(BeTrue())
-					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed by multiple root components`))
+				It("should throw an InvalidNodeDefinitionError", func() {
+					Expect(IsInvalidNodeDefinition(err)).To(BeTrue())
+					Expect(err.Error()).To(Equal(`port '123/tcp' is exposed by multiple root nodes`))
 				})
 			})
 		})

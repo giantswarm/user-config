@@ -6,56 +6,56 @@ import (
 
 type ExposeDefinition struct {
 	Port       generictypes.DockerPort `json:"port" description:"Port of the stable API."`
-	Component  ComponentName           `json:"component,omitempty" description:"Name of the component that implements the stable API."`
-	TargetPort generictypes.DockerPort `json:"target_port,omitempty" description:"Port of the given component that implements the stable API."`
+	Node       NodeName                `json:"node,omitempty" description:"Name of the node that implements the stable API."`
+	TargetPort generictypes.DockerPort `json:"target_port,omitempty" description:"Port of the given node that implements the stable API."`
 }
 
 type ExposeDefinitions []ExposeDefinition
 
 // validateExpose
-func (nds ComponentDefinitions) validateExpose() error {
-	rootComponents := []*ComponentDefinition{}
-	for componentName, component := range nds {
+func (nds NodeDefinitions) validateExpose() error {
+	rootNodes := []*NodeDefinition{}
+	for nodeName, node := range nds {
 		// detect invalid exposes
-		for _, expose := range component.Expose {
-			// Try to find the implementation component
-			implName := expose.Component
-			var implComponent *ComponentDefinition
+		for _, expose := range node.Expose {
+			// Try to find the implementation node
+			implName := expose.Node
+			var implNode *NodeDefinition
 			if implName.Empty() {
-				// Expose refers to own component
-				implComponent = component
+				// Expose refers to own node
+				implNode = node
 			} else {
-				// Implementation component refers to a child component
-				if !implName.IsChildOf(componentName) {
-					return maskf(InvalidComponentDefinitionError, "invalid expose to component '%s': is not a child of '%s'", implName, componentName)
+				// Implementation node refers to a child node
+				if !implName.IsChildOf(nodeName) {
+					return maskf(InvalidNodeDefinitionError, "invalid expose to node '%s': is not a child of '%s'", implName, nodeName)
 				}
-				// Find implementation component
+				// Find implementation node
 				var err error
-				implComponent, err = nds.ComponentByName(implName)
+				implNode, err = nds.NodeByName(implName)
 				if err != nil {
-					return maskf(InvalidComponentDefinitionError, "invalid expose to component '%s': does not exists", implName)
+					return maskf(InvalidNodeDefinitionError, "invalid expose to node '%s': does not exists", implName)
 				}
 			}
 
-			// Does the implementation component expose the targeted port?
+			// Does the implementation node expose the targeted port?
 			implPort := expose.ImplementationPort()
-			if !implComponent.Ports.contains(implPort) {
-				return maskf(InvalidComponentDefinitionError, "invalid expose to component '%s': does not export port '%s'", implName, implPort)
+			if !implNode.Ports.contains(implPort) {
+				return maskf(InvalidNodeDefinitionError, "invalid expose to node '%s': does not export port '%s'", implName, implPort)
 			}
 		}
 
-		// Collect root components
-		if nds.IsRoot(componentName) {
-			rootComponents = append(rootComponents, component)
+		// Collect root nodes
+		if nds.IsRoot(nodeName) {
+			rootNodes = append(rootNodes, node)
 		}
 	}
 
-	// Check for duplicate exposed ports on root components
-	for i, component := range rootComponents {
-		for _, expose := range component.Expose {
-			for j := i + 1; j < len(rootComponents); j++ {
-				if rootComponents[j].Expose.contains(expose.Port) {
-					return maskf(InvalidComponentDefinitionError, "port '%s' is exposed by multiple root components", expose.Port)
+	// Check for duplicate exposed ports on root nodes
+	for i, node := range rootNodes {
+		for _, expose := range node.Expose {
+			for j := i + 1; j < len(rootNodes); j++ {
+				if rootNodes[j].Expose.contains(expose.Port) {
+					return maskf(InvalidNodeDefinitionError, "port '%s' is exposed by multiple root nodes", expose.Port)
 				}
 			}
 		}
@@ -69,13 +69,13 @@ func (eds ExposeDefinitions) validate() error {
 	for i, ed := range eds {
 		if ed.Port.Empty() {
 			// Invalid exposed port found
-			return maskf(InvalidComponentDefinitionError, "cannot expose with empty port")
+			return maskf(InvalidNodeDefinitionError, "cannot expose with empty port")
 		}
 
 		for j := i + 1; j < len(eds); j++ {
 			if eds[j].Port.Equals(ed.Port) {
 				// Duplicate exposed port found
-				return maskf(InvalidComponentDefinitionError, "port '%s' is exposed more than once", ed.Port)
+				return maskf(InvalidNodeDefinitionError, "port '%s' is exposed more than once", ed.Port)
 			}
 		}
 	}
@@ -106,15 +106,15 @@ func (eds ExposeDefinitions) defByPort(port generictypes.DockerPort) (ExposeDefi
 	return ExposeDefinition{}, maskf(PortNotFoundError, "port '%s' not found", port)
 }
 
-// ImplementationComponentName returns the name of the component that implements the stable API exposed by this definition.
-func (ed *ExposeDefinition) ImplementationComponentName(containingComponentName ComponentName) ComponentName {
-	if ed.Component.Empty() {
-		return containingComponentName
+// ImplementationNodeName returns the name of the node that implements the stable API exposed by this definition.
+func (ed *ExposeDefinition) ImplementationNodeName(containingNodeName NodeName) NodeName {
+	if ed.Node.Empty() {
+		return containingNodeName
 	}
-	return ed.Component
+	return ed.Node
 }
 
-// ImplementationPort returns the port on the component that implements the stable API exposed by this definition.
+// ImplementationPort returns the port on the node that implements the stable API exposed by this definition.
 func (ed *ExposeDefinition) ImplementationPort() generictypes.DockerPort {
 	if ed.TargetPort.Empty() {
 		return ed.Port
@@ -123,33 +123,33 @@ func (ed *ExposeDefinition) ImplementationPort() generictypes.DockerPort {
 }
 
 // resolve resolves the implementation of the given Expose definition in the context of the given
-// component definitions.
-// Resolve returns the name of the component the implements this expose and its implementation port.
+// node definitions.
+// Resolve returns the name of the node the implements this expose and its implementation port.
 // If this expose definition cannot be resolved, an error is returned.
-func (ed *ExposeDefinition) Resolve(containingComponentName ComponentName, nds ComponentDefinitions) (ComponentName, generictypes.DockerPort, error) {
-	// Get implementation component name
-	implName := ed.ImplementationComponentName(containingComponentName)
+func (ed *ExposeDefinition) Resolve(containingNodeName NodeName, nds NodeDefinitions) (NodeName, generictypes.DockerPort, error) {
+	// Get implementation node name
+	implName := ed.ImplementationNodeName(containingNodeName)
 	// Get implementation port
 	implPort := ed.ImplementationPort()
 
-	// Find implementation component
-	component, err := nds.ComponentByName(implName)
+	// Find implementation node
+	node, err := nds.NodeByName(implName)
 	if err != nil {
 		return "", generictypes.DockerPort{}, mask(err)
 	}
 
-	// Check expose definitions of component
-	if implExpDef, err := component.Expose.defByPort(implPort); err == nil {
-		// Recurse into the implementation component
+	// Check expose definitions of node
+	if implExpDef, err := node.Expose.defByPort(implPort); err == nil {
+		// Recurse into the implementation node
 		return implExpDef.Resolve(implName, nds)
 	}
 
-	// Check exported ports of component
-	if component.Ports.contains(implPort) {
-		// Found implementation component and port
+	// Check exported ports of node
+	if node.Ports.contains(implPort) {
+		// Found implementation node and port
 		return implName, implPort, nil
 	}
 
-	// Port is not exposed, not exported by implementation component
-	return "", generictypes.DockerPort{}, maskf(PortNotFoundError, "component '%s' does not export port '%s'", implName, implPort)
+	// Port is not exposed, not exported by implementation node
+	return "", generictypes.DockerPort{}, maskf(PortNotFoundError, "node '%s' does not export port '%s'", implName, implPort)
 }

@@ -14,10 +14,10 @@ func TestV2AppLinksScaleDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validation failed: %s", err.Error())
 	}
-	if a.Components["component/a"].Scale.Min != valCtx.MinScaleSize {
+	if a.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
 		t.Fatalf("expected default min scale to be '%d'", valCtx.MinScaleSize)
 	}
-	if a.Components["component/a"].Scale.Max != valCtx.MaxScaleSize {
+	if a.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
 		t.Fatalf("expected default max scale to be '%d'", valCtx.MaxScaleSize)
 	}
 }
@@ -32,10 +32,10 @@ func TestV2AppScaleHideDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("setting defaults failed: %s", err.Error())
 	}
-	if a.Components["component/a"].Scale.Min != valCtx.MinScaleSize {
+	if a.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
 		t.Fatalf("expected default min scale to be '%d'", valCtx.MinScaleSize)
 	}
-	if a.Components["component/a"].Scale.Max != valCtx.MaxScaleSize {
+	if a.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
 		t.Fatalf("expected default max scale to be '%d'", valCtx.MaxScaleSize)
 	}
 
@@ -44,7 +44,7 @@ func TestV2AppScaleHideDefaults(t *testing.T) {
 		t.Fatalf("hiding defaults failed: %s", err.Error())
 	}
 
-	if b.Components["component/a"].Scale != nil {
+	if b.Nodes["node/a"].Scale != nil {
 		t.Fatalf("scale not hidden")
 	}
 }
@@ -55,7 +55,7 @@ func TestV2AppScaleHideMinScale(t *testing.T) {
 	customScale := 6
 
 	a := V2ExampleDefinition()
-	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
+	a.Nodes["node/a"].Scale = &userconfig.ScaleDefinition{
 		Max: customScale,
 	}
 
@@ -67,10 +67,10 @@ func TestV2AppScaleHideMinScale(t *testing.T) {
 	if err != nil {
 		t.Fatalf("setting defaults failed: %s", err.Error())
 	}
-	if a.Components["component/a"].Scale.Min != valCtx.MinScaleSize {
+	if a.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
 		t.Fatalf("expected default min scale to be '%d'", valCtx.MinScaleSize)
 	}
-	if a.Components["component/a"].Scale.Max != customScale {
+	if a.Nodes["node/a"].Scale.Max != customScale {
 		t.Fatalf("expected max scale to be '%d'", customScale)
 	}
 
@@ -79,11 +79,11 @@ func TestV2AppScaleHideMinScale(t *testing.T) {
 		t.Fatalf("hiding defaults failed: %s", err.Error())
 	}
 
-	if b.Components["component/a"].Scale == nil {
+	if b.Nodes["node/a"].Scale == nil {
 		t.Fatalf("scale hidden")
 	}
 
-	if b.Components["component/a"].Scale.Min != 0 {
+	if b.Nodes["node/a"].Scale.Min != 0 {
 		t.Fatalf("min scale NOT hidden")
 	}
 }
@@ -94,7 +94,7 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 	customScale := 6
 
 	a := V2ExampleDefinition()
-	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
+	a.Nodes["node/a"].Scale = &userconfig.ScaleDefinition{
 		Min: customScale,
 	}
 
@@ -106,10 +106,10 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 	if err != nil {
 		t.Fatalf("setting defaults failed: %s", err.Error())
 	}
-	if a.Components["component/a"].Scale.Min != customScale {
+	if a.Nodes["node/a"].Scale.Min != customScale {
 		t.Fatalf("expected custom min scale to be '%d'", customScale)
 	}
-	if a.Components["component/a"].Scale.Max != valCtx.MaxScaleSize {
+	if a.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
 		t.Fatalf("expected default max scale to be '%d'", valCtx.MaxScaleSize)
 	}
 
@@ -118,11 +118,11 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 		t.Fatalf("hiding defaults failed: %s", err.Error())
 	}
 
-	if b.Components["component/a"].Scale == nil {
+	if b.Nodes["node/a"].Scale == nil {
 		t.Fatalf("scale hidden")
 	}
 
-	if b.Components["component/a"].Scale.Max != 0 {
+	if b.Nodes["node/a"].Scale.Max != 0 {
 		t.Fatalf("max scale NOT hidden")
 	}
 }

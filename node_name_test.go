@@ -6,66 +6,66 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func TestValidComponentNames(t *testing.T) {
+func TestValidNodeNames(t *testing.T) {
 	list := map[string]string{
-		"a":                   "component name should be allowed to be normal single character",
-		"x":                   "component name should be allowed to be normal single character",
-		"0":                   "component name should be allowed to be normal single character",
-		"3":                   "component name should be allowed to be normal single character",
-		"wjehfg":              "component name should be allowed to contain normal words",
-		"a/b/c":               "component name should be allowed to be path",
-		"0/1/2":               "component name should be allowed to be path",
-		"wjehfg/skdjcsd/jshg": "component name should be allowed to be path",
-		"a-0/b-1/c-2":         "component name should be allowed to be path containing special chars",
+		"a":                   "node name should be allowed to be normal single character",
+		"x":                   "node name should be allowed to be normal single character",
+		"0":                   "node name should be allowed to be normal single character",
+		"3":                   "node name should be allowed to be normal single character",
+		"wjehfg":              "node name should be allowed to contain normal words",
+		"a/b/c":               "node name should be allowed to be path",
+		"0/1/2":               "node name should be allowed to be path",
+		"wjehfg/skdjcsd/jshg": "node name should be allowed to be path",
+		"a-0/b-1/c-2":         "node name should be allowed to be path containing special chars",
 	}
 
 	for name, reason := range list {
-		componentName := userconfig.ComponentName(name)
-		err := componentName.Validate()
+		nodeName := userconfig.NodeName(name)
+		err := nodeName.Validate()
 
 		if err != nil {
-			t.Fatalf("valid component name '%s' detected to be invalid: %s", name, reason)
+			t.Fatalf("valid node name '%s' detected to be invalid: %s", name, reason)
 		}
 	}
 }
 
-func TestInvalidComponentNames(t *testing.T) {
+func TestInvalidNodeNames(t *testing.T) {
 	list := map[string]string{
-		"":      "component name must not be empty",
-		"-":     "component name must not start with special chars",
-		"-/-/-": "component name must not start with special chars",
-		"_/-":   "component name must not start with special chars",
-		"/_/-":  "component name must not start with special chars",
-		"///":   "component name must not start with special chars",
-		"/a":    "component name must not start with special chars",
-		"-x":    "component name must not start with special chars",
-		"&0":    "component name must not start with special chars",
-		"$3":    "component name must not start with special chars",
-		"()wjehfg/skdjcsd/jshg": "component name must not start with special chars",
-		"-a-0/b-1/c-2":          "component name must not start with special chars",
-		"a/b/c/":                "component name must not end with '/'",
-		"/a/b/c":                "component name must not start with '/'",
-		"a//b/c":                "component name must not contain '//'",
-		"a/---/b/c":             "component name parts must contain at least one letter or digit",
-		"/":                     "component name must not start with '/'",
-		" ":                     "component name parts must contain at least one letter or digit",
-		"a ":                    "component name parts must not contain spaces",
+		"":      "node name must not be empty",
+		"-":     "node name must not start with special chars",
+		"-/-/-": "node name must not start with special chars",
+		"_/-":   "node name must not start with special chars",
+		"/_/-":  "node name must not start with special chars",
+		"///":   "node name must not start with special chars",
+		"/a":    "node name must not start with special chars",
+		"-x":    "node name must not start with special chars",
+		"&0":    "node name must not start with special chars",
+		"$3":    "node name must not start with special chars",
+		"()wjehfg/skdjcsd/jshg": "node name must not start with special chars",
+		"-a-0/b-1/c-2":          "node name must not start with special chars",
+		"a/b/c/":                "node name must not end with '/'",
+		"/a/b/c":                "node name must not start with '/'",
+		"a//b/c":                "node name must not contain '//'",
+		"a/---/b/c":             "node name parts must contain at least one letter or digit",
+		"/":                     "node name must not start with '/'",
+		" ":                     "node name parts must contain at least one letter or digit",
+		"a ":                    "node name parts must not contain spaces",
 	}
 
 	for name, reason := range list {
-		componentName := userconfig.ComponentName(name)
-		err := componentName.Validate()
+		nodeName := userconfig.NodeName(name)
+		err := nodeName.Validate()
 
 		if err == nil {
-			t.Fatalf("invalid component name '%s' not detected: %s", name, reason)
+			t.Fatalf("invalid node name '%s' not detected: %s", name, reason)
 		}
-		if !userconfig.IsInvalidComponentName(err) {
-			t.Fatalf("expected error to be InvalidComponentNameError")
+		if !userconfig.IsInvalidNodeName(err) {
+			t.Fatalf("expected error to be InvalidNodeNameError")
 		}
 	}
 }
 
-func TestComponentNameParentName(t *testing.T) {
+func TestNodeNameParentName(t *testing.T) {
 	list := []struct {
 		Name       string
 		ParentName string
@@ -78,7 +78,7 @@ func TestComponentNameParentName(t *testing.T) {
 	}
 
 	for _, test := range list {
-		child := userconfig.ComponentName(test.Name)
+		child := userconfig.NodeName(test.Name)
 		parent, err := child.ParentName()
 		if test.IsValid {
 			if err != nil {
@@ -95,7 +95,7 @@ func TestComponentNameParentName(t *testing.T) {
 	}
 }
 
-func TestComponentNameLocalName(t *testing.T) {
+func TestNodeNameLocalName(t *testing.T) {
 	list := []struct {
 		Name      string
 		LocalName string
@@ -107,7 +107,7 @@ func TestComponentNameLocalName(t *testing.T) {
 	}
 
 	for _, test := range list {
-		child := userconfig.ComponentName(test.Name)
+		child := userconfig.NodeName(test.Name)
 		local := child.LocalName()
 		if local.String() != test.LocalName {
 			t.Fatalf("Test %v failed: got '%s', expected '%s'", test, local.String(), test.LocalName)
@@ -115,7 +115,7 @@ func TestComponentNameLocalName(t *testing.T) {
 	}
 }
 
-func TestComponentNameIsDirectChild(t *testing.T) {
+func TestNodeNameIsDirectChild(t *testing.T) {
 	list := []struct {
 		ParentName string
 		ChildName  string
@@ -128,8 +128,8 @@ func TestComponentNameIsDirectChild(t *testing.T) {
 	}
 
 	for _, test := range list {
-		child := userconfig.ComponentName(test.ChildName)
-		parent := userconfig.ComponentName(test.ParentName)
+		child := userconfig.NodeName(test.ChildName)
+		parent := userconfig.NodeName(test.ParentName)
 		result := child.IsDirectChildOf(parent)
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
@@ -137,7 +137,7 @@ func TestComponentNameIsDirectChild(t *testing.T) {
 	}
 }
 
-func TestComponentNameIsChild(t *testing.T) {
+func TestNodeNameIsChild(t *testing.T) {
 	list := []struct {
 		ParentName string
 		ChildName  string
@@ -151,8 +151,8 @@ func TestComponentNameIsChild(t *testing.T) {
 	}
 
 	for _, test := range list {
-		child := userconfig.ComponentName(test.ChildName)
-		parent := userconfig.ComponentName(test.ParentName)
+		child := userconfig.NodeName(test.ChildName)
+		parent := userconfig.NodeName(test.ParentName)
 		result := child.IsChildOf(parent)
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
@@ -160,7 +160,7 @@ func TestComponentNameIsChild(t *testing.T) {
 	}
 }
 
-func TestComponentNameIsSibling(t *testing.T) {
+func TestNodeNameIsSibling(t *testing.T) {
 	list := []struct {
 		Name1  string
 		Name2  string
@@ -176,8 +176,8 @@ func TestComponentNameIsSibling(t *testing.T) {
 	}
 
 	for _, test := range list {
-		name1 := userconfig.ComponentName(test.Name1)
-		name2 := userconfig.ComponentName(test.Name2)
+		name1 := userconfig.NodeName(test.Name1)
+		name2 := userconfig.NodeName(test.Name2)
 		result := name1.IsSiblingOf(name2)
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)
@@ -185,7 +185,7 @@ func TestComponentNameIsSibling(t *testing.T) {
 	}
 }
 
-func TestComponentNameEmpty(t *testing.T) {
+func TestNodeNameEmpty(t *testing.T) {
 	list := []struct {
 		Name   string
 		Result bool
@@ -196,7 +196,7 @@ func TestComponentNameEmpty(t *testing.T) {
 	}
 
 	for _, test := range list {
-		name := userconfig.ComponentName(test.Name)
+		name := userconfig.NodeName(test.Name)
 		result := name.Empty()
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)

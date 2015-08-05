@@ -62,7 +62,7 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}, keyPrefix string) map[
 
 	// Exclude V2 env fields
 	keyPrefixParts := strings.Split(keyPrefix, "/")
-	if strings.HasPrefix(keyPrefix, "/components/") && keyPrefixParts[len(keyPrefixParts)-1] == "env" {
+	if strings.HasPrefix(keyPrefix, "/nodes/") && keyPrefixParts[len(keyPrefixParts)-1] == "env" {
 		// We found a V2 "env" field
 		return j
 	}
@@ -73,16 +73,16 @@ func fixJSONFieldNamesRecursive(j map[string]interface{}, keyPrefix string) map[
 		return j
 	}
 
-	if strings.HasPrefix(keyPrefix, "/components/") && keyPrefixParts[len(keyPrefixParts)-1] == "domains" {
+	if strings.HasPrefix(keyPrefix, "/nodes/") && keyPrefixParts[len(keyPrefixParts)-1] == "domains" {
 		// We found a V2 "env" field
 		return j
 	}
 
 	for k, v := range j {
-		// This is really tricky. Component names must be arbitrary strings. We are not
-		// allowed to fix them. Further everything inside the components needs to be
-		// fixed. So we just ignore the component names itself.
-		if keyPrefix != "/components" {
+		// This is really tricky. Node names must be arbitrary strings. We are not
+		// allowed to fix them. Further everything inside the nodes needs to be
+		// fixed. So we just ignore the node names itself.
+		if keyPrefix != "/nodes" {
 			delete(j, k)
 			k = FixFieldName(k)
 			j[k] = v

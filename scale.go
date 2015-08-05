@@ -55,19 +55,19 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 }
 
 // validateScalingPolicyInPods checks that there all scaling policies within a pod are either not set or the same
-func (nds *ComponentDefinitions) validateScalingPolicyInPods() error {
-	for componentName, componentDef := range *nds {
-		if !componentDef.IsPodRoot() {
+func (nds *NodeDefinitions) validateScalingPolicyInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
 			continue
 		}
 
 		// Collect all scaling policies
-		podComponents, err := nds.PodComponents(componentName)
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}
 		list := []ScaleDefinition{}
-		for _, c := range podComponents {
+		for _, c := range podNodes {
 			if c.Scale == nil {
 				// No scaling policy set
 				continue
@@ -82,13 +82,13 @@ func (nds *ComponentDefinitions) validateScalingPolicyInPods() error {
 				if p1.Min != 0 && p2.Min != 0 {
 					// Both minimums specified, must be the same
 					if p1.Min != p2.Min {
-						return maskf(InvalidScalingConfigError, "different minimum scaling policies in pod under '%s'", componentName.String())
+						return maskf(InvalidScalingConfigError, "different minimum scaling policies in pod under '%s'", nodeName.String())
 					}
 				}
 				if p1.Max != 0 && p2.Max != 0 {
 					// Both maximums specified, must be the same
 					if p1.Max != p2.Max {
-						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod under '%s'", componentName.String())
+						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod under '%s'", nodeName.String())
 					}
 				}
 			}

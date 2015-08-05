@@ -77,19 +77,19 @@ func contains(protocols []string, protocol string) bool {
 }
 
 // validateUniqueDependenciesInPods checks that there are no dependencies with same alias and different port/name
-func (nds *ComponentDefinitions) validateUniqueDependenciesInPods() error {
-	for componentName, componentDef := range *nds {
-		if !componentDef.IsPodRoot() {
+func (nds *NodeDefinitions) validateUniqueDependenciesInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
 			continue
 		}
 
 		// Collect all dependencies in this pod
-		podComponents, err := nds.PodComponents(componentName)
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}
 		list := LinkDefinitions{}
-		for _, pn := range podComponents {
+		for _, pn := range podNodes {
 			if pn.Links == nil {
 				// No dependencies
 				continue
@@ -112,10 +112,10 @@ func (nds *ComponentDefinitions) validateUniqueDependenciesInPods() error {
 				if alias1 == alias2 {
 					// Same alias, Port must match and Name must match
 					if !l1.TargetPort.Equals(l2.TargetPort) {
-						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod under '%s'", alias1, componentName.String())
+						return maskf(InvalidDependencyConfigError, "duplicate (with different ports) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
-					if l1.Component != l2.Component {
-						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod under '%s'", alias1, componentName.String())
+					if l1.Node != l2.Node {
+						return maskf(InvalidDependencyConfigError, "duplicate (with different names) dependency '%s' in pod under '%s'", alias1, nodeName.String())
 					}
 				}
 			}
@@ -127,19 +127,19 @@ func (nds *ComponentDefinitions) validateUniqueDependenciesInPods() error {
 }
 
 // validateUniquePortsInPods checks that there are no duplicate ports in a single pod
-func (nds *ComponentDefinitions) validateUniquePortsInPods() error {
-	for componentName, componentDef := range *nds {
-		if !componentDef.IsPodRoot() {
+func (nds *NodeDefinitions) validateUniquePortsInPods() error {
+	for nodeName, nodeDef := range *nds {
+		if !nodeDef.IsPodRoot() {
 			continue
 		}
 
 		// Collect all ports in this pod
-		podComponents, err := nds.PodComponents(componentName)
+		podNodes, err := nds.PodNodes(nodeName)
 		if err != nil {
 			return mask(err)
 		}
 		list := []generictypes.DockerPort{}
-		for _, pn := range podComponents {
+		for _, pn := range podNodes {
 			if pn.Ports == nil {
 				// No dependencies
 				continue
@@ -152,7 +152,7 @@ func (nds *ComponentDefinitions) validateUniquePortsInPods() error {
 			for j := i + 1; j < len(list); j++ {
 				port2 := list[j]
 				if port1.Equals(port2) {
-					return maskf(InvalidPortConfigError, "multiple components export port '%s' in pod under '%s'", port1.String(), componentName.String())
+					return maskf(InvalidPortConfigError, "multiple nodes export port '%s' in pod under '%s'", port1.String(), nodeName.String())
 				}
 			}
 		}

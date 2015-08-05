@@ -121,8 +121,8 @@ func TestUnmarshalV2DomainFullService(t *testing.T) {
 		var appDef userconfig.V2AppDefinition
 
 		byteSlice := []byte(`{
-    "components": {
-        "component1": {
+    "nodes": {
+        "node1": {
         	"ports": [ "80/tcp" ],
             "image": "busybox",
             "domains": {
@@ -132,7 +132,7 @@ func TestUnmarshalV2DomainFullService(t *testing.T) {
             	"int.com": 80
             }
         },
-        "component2": {
+        "node2": {
         	"ports": [ "80/tcp", "81/tcp" ],
             "image": "busybox",
             "domains": {

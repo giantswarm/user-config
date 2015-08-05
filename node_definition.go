@@ -1,8 +1,8 @@
 package userconfig
 
-// ComponentDefinition represents either a runnable service inside a container or a
-// component configuration
-type ComponentDefinition struct {
+// NodeDefinition represents either a runnable service inside a container or a
+// node configuration
+type NodeDefinition struct {
 	// Name of a docker image to use when running a container. The image includes
 	// tags. E.g. dockerfile/redis:latest.
 	Image *ImageDefinition `json:"image,omitempty" description:"Name of a docker image to use when running a container. The image includes tags."`
@@ -30,14 +30,14 @@ type ComponentDefinition struct {
 
 	Expose ExposeDefinitions `json:"expose,omitempty" description:"List of port mappings to define a stable API."`
 
-	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the component."`
+	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the node."`
 
-	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this component and its children."`
+	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this node and its children."`
 }
 
-// validate performs semantic validations of this ComponentDefinition.
+// validate performs semantic validations of this NodeDefinition.
 // Return the first possible error.
-func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
+func (nd *NodeDefinition) validate(valCtx *ValidationContext) error {
 	if nd.Image != nil {
 		if err := nd.Image.Validate(valCtx); err != nil {
 			return mask(err)
@@ -73,7 +73,7 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
-func (nd *ComponentDefinition) hideDefaults(valCtx *ValidationContext) *ComponentDefinition {
+func (nd *NodeDefinition) hideDefaults(valCtx *ValidationContext) *NodeDefinition {
 	if nd.Scale != nil {
 		nd.Scale = nd.Scale.hideDefaults(valCtx)
 	}
@@ -81,7 +81,7 @@ func (nd *ComponentDefinition) hideDefaults(valCtx *ValidationContext) *Componen
 	return nd
 }
 
-func (nd *ComponentDefinition) setDefaults(valCtx *ValidationContext) {
+func (nd *NodeDefinition) setDefaults(valCtx *ValidationContext) {
 	// set default scale definition if not set
 	if nd.Scale == nil {
 		nd.Scale = &ScaleDefinition{}
@@ -90,12 +90,12 @@ func (nd *ComponentDefinition) setDefaults(valCtx *ValidationContext) {
 	nd.Scale.setDefaults(valCtx)
 }
 
-// IsComponent returns true if the component has a defined container image, false otherwise.
-func (nd *ComponentDefinition) IsComponent() bool {
+// IsComponent returns true if the node has a defined container image, false otherwise.
+func (nd *NodeDefinition) IsComponent() bool {
 	return nd.Image != nil
 }
 
 // IsPodRoot returns true if Pod is set to children or inherit.
-func (nd *ComponentDefinition) IsPodRoot() bool {
+func (nd *NodeDefinition) IsPodRoot() bool {
 	return nd.Pod == PodChildren || nd.Pod == PodInherit
 }

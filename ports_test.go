@@ -54,27 +54,27 @@ func TestUnmarshalV2PortsFullService(t *testing.T) {
 	var appDef userconfig.V2AppDefinition
 
 	byteSlice := []byte(`{
-    "components": {
-        "component1": {
+    "nodes": {
+        "node1": {
             "image": "busybox",
             "ports": [ "80" ]
-        },
-        "component2": {
+        }, 
+        "node2": {
             "image": "busybox",
             "ports": [ "80/tcp", 81 ]
-        },
-        "component3": {
+        }, 
+        "node3": {
             "image": "busybox",
             "ports": "80"
-        },
-        "component4": {
+        }, 
+        "node4": {
             "image": "busybox",
             "ports": "80/tcp"
-        },
-        "component5": {
+        }, 
+        "node5": {
             "image": "busybox",
             "ports": 8086
-        }
+        } 
     }
 }`)
 

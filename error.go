@@ -6,32 +6,32 @@ import (
 )
 
 var (
-	UnknownJSONFieldError           = errgo.New("Unknown JSON field.")
-	MissingJSONFieldError           = errgo.New("missing JSON field")
-	InvalidSizeError                = errgo.New("Invalid size.")
-	DuplicateVolumePathError        = errgo.New("Duplicate volume path.")
-	InvalidEnvListFormatError       = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
-	CrossServicePodError            = errgo.New("Pod is used in different services.")
-	PodUsedOnlyOnceError            = errgo.New("Pod is used in only 1 component.")
-	InvalidVolumeConfigError        = errgo.New("Invalid volume configuration.")
-	InvalidDependencyConfigError    = errgo.New("Invalid dependency configuration.")
-	InvalidScalingConfigError       = errgo.New("Invalid scaling configuration.")
-	InvalidPortConfigError          = errgo.New("Invalid port configuration.")
-	InvalidDomainDefinitionError    = errgo.New("invalid domain definition")
-	InvalidLinkDefinitionError      = errgo.New("invalid link definition")
-	InvalidAppDefinitionError       = errgo.New("invalid app definition")
-	InvalidComponentDefinitionError = errgo.New("invalid component definition")
-	InvalidImageDefinitionError     = errgo.New("invalid image definition")
-	InvalidAppNameError             = errgo.New("invalid app name")
-	InvalidComponentNameError       = errgo.New("invalid component name")
-	InvalidPodConfigError           = errgo.New("invalid pod configuration")
-	PortNotFoundError               = errgo.New("port not found")
-	ComponentNotFoundError          = errgo.New("component not found")
-	InternalError                   = errgo.New("internal error")
-	MissingValidationContextError   = errgo.New("missing validation context")
-	InvalidArgumentError            = errgo.New("invalid argument")
-	VolumeCycleError                = errgo.New("cycle detected in volume configuration")
-	WrongDiffOrderError             = errgo.New("wrong diff order")
+	UnknownJSONFieldError         = errgo.New("Unknown JSON field.")
+	MissingJSONFieldError         = errgo.New("missing JSON field")
+	InvalidSizeError              = errgo.New("Invalid size.")
+	DuplicateVolumePathError      = errgo.New("Duplicate volume path.")
+	InvalidEnvListFormatError     = errgo.Newf("Unable to parse 'env'. Objects or Array of strings expected.")
+	CrossServicePodError          = errgo.New("Pod is used in different services.")
+	PodUsedOnlyOnceError          = errgo.New("Pod is used in only 1 component.")
+	InvalidVolumeConfigError      = errgo.New("Invalid volume configuration.")
+	InvalidDependencyConfigError  = errgo.New("Invalid dependency configuration.")
+	InvalidScalingConfigError     = errgo.New("Invalid scaling configuration.")
+	InvalidPortConfigError        = errgo.New("Invalid port configuration.")
+	InvalidDomainDefinitionError  = errgo.New("invalid domain definition")
+	InvalidLinkDefinitionError    = errgo.New("invalid link definition")
+	InvalidAppDefinitionError     = errgo.New("invalid app definition")
+	InvalidNodeDefinitionError    = errgo.New("invalid node definition")
+	InvalidImageDefinitionError   = errgo.New("invalid image definition")
+	InvalidAppNameError           = errgo.New("invalid app name")
+	InvalidNodeNameError          = errgo.New("invalid node name")
+	InvalidPodConfigError         = errgo.New("invalid pod configuration")
+	PortNotFoundError             = errgo.New("port not found")
+	NodeNotFoundError             = errgo.New("node not found")
+	InternalError                 = errgo.New("internal error")
+	MissingValidationContextError = errgo.New("missing validation context")
+	InvalidArgumentError          = errgo.New("invalid argument")
+	VolumeCycleError              = errgo.New("cycle detected in volume configuration")
+	WrongDiffOrderError           = errgo.New("wrong diff order")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -49,11 +49,11 @@ var (
 		IsInvalidDomainDefinition,
 		IsInvalidLinkDefinition,
 		IsInvalidAppDefinition,
-		IsInvalidComponentDefinition,
+		IsInvalidNodeDefinition,
 		IsInvalidImageDefinition,
 		IsInvalidAppName,
-		IsInvalidComponentName,
-		IsComponentNotFound,
+		IsInvalidNodeName,
+		IsNodeNotFound,
 		IsPortNotFound,
 		IsInternal,
 		IsMissingValidationContext,
@@ -140,8 +140,8 @@ func IsInvalidAppDefinition(err error) bool {
 	return errgo.Cause(err) == InvalidAppDefinitionError
 }
 
-func IsInvalidComponentDefinition(err error) bool {
-	return errgo.Cause(err) == InvalidComponentDefinitionError
+func IsInvalidNodeDefinition(err error) bool {
+	return errgo.Cause(err) == InvalidNodeDefinitionError
 }
 
 func IsInvalidImageDefinition(err error) bool {
@@ -152,12 +152,12 @@ func IsInvalidAppName(err error) bool {
 	return errgo.Cause(err) == InvalidAppNameError
 }
 
-func IsInvalidComponentName(err error) bool {
-	return errgo.Cause(err) == InvalidComponentNameError
+func IsInvalidNodeName(err error) bool {
+	return errgo.Cause(err) == InvalidNodeNameError
 }
 
-func IsComponentNotFound(err error) bool {
-	return errgo.Cause(err) == ComponentNotFoundError
+func IsNodeNotFound(err error) bool {
+	return errgo.Cause(err) == NodeNotFoundError
 }
 
 func IsPortNotFound(err error) bool {

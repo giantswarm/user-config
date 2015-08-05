@@ -46,7 +46,7 @@ func TestVolumesDuplicatedPath(t *testing.T) {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
 
-	if err.Error() != "duplicate volume '/data' found in component 'component/a'" {
+	if err.Error() != "duplicate volume '/data' found in node 'node/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsInvalidVolumeConfig(err) {
@@ -68,7 +68,7 @@ func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
 
-	if err.Error() != "duplicate volume '/data' found in component 'component/a'" {
+	if err.Error() != "duplicate volume '/data' found in node 'node/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsInvalidVolumeConfig(err) {

@@ -10,12 +10,12 @@ import (
 
 func V2ExampleDefinition() userconfig.V2AppDefinition {
 	return userconfig.V2AppDefinition{
-		Components: userconfig.ComponentDefinitions{
-			userconfig.ComponentName("component/a"): &userconfig.ComponentDefinition{
+		Nodes: userconfig.NodeDefinitions{
+			userconfig.NodeName("node/a"): &userconfig.NodeDefinition{
 				Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
 				Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 			},
-			userconfig.ComponentName("component/b"): &userconfig.ComponentDefinition{
+			userconfig.NodeName("node/b"): &userconfig.NodeDefinition{
 				Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/giantswarm/b:0.10.0"),
 				Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 			},
@@ -25,9 +25,9 @@ func V2ExampleDefinition() userconfig.V2AppDefinition {
 
 func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefinition {
 	appDef := V2ExampleDefinition()
-	componentA, ok := appDef.Components["component/a"]
+	nodeA, ok := appDef.Nodes["node/a"]
 	if !ok {
-		panic("missing component")
+		panic("missing node")
 	}
 
 	if len(paths) != len(sizes) {
@@ -37,17 +37,17 @@ func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefini
 	for i, path := range paths {
 		volumes = append(volumes, userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(sizes[i])})
 	}
-	componentA.Volumes = volumes
-	appDef.Components["component/a"] = componentA
+	nodeA.Volumes = volumes
+	appDef.Nodes["node/a"] = nodeA
 
 	return appDef
 }
 
 func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinition {
 	appDef := V2ExampleDefinition()
-	componentA, ok := appDef.Components["component/a"]
+	nodeA, ok := appDef.Nodes["node/a"]
 	if !ok {
-		panic("missing component")
+		panic("missing node")
 	}
 
 	if len(names) != len(ports) {
@@ -55,10 +55,10 @@ func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinit
 	}
 	links := userconfig.LinkDefinitions{}
 	for i, name := range names {
-		links = append(links, userconfig.LinkDefinition{Component: userconfig.ComponentName(name), TargetPort: generictypes.MustParseDockerPort(ports[i])})
+		links = append(links, userconfig.LinkDefinition{Node: userconfig.NodeName(name), TargetPort: generictypes.MustParseDockerPort(ports[i])})
 	}
-	componentA.Links = links
-	appDef.Components["component/a"] = componentA
+	nodeA.Links = links
+	appDef.Nodes["node/a"] = nodeA
 
 	return appDef
 }
@@ -74,15 +74,15 @@ func NewValidationContext() *userconfig.ValidationContext {
 }
 
 func TestV2AppValidLinks(t *testing.T) {
-	a := V2ExampleDefinitionWithLinks([]string{"component/b"}, []string{"80/tcp"})
+	a := V2ExampleDefinitionWithLinks([]string{"node/b"}, []string{"80/tcp"})
 	_, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 }
 
-func TestV2AppLinksInvalidComponent(t *testing.T) {
-	a := V2ExampleDefinitionWithLinks([]string{"component/c"}, []string{"80/tcp"})
+func TestV2AppLinksInvalidNode(t *testing.T) {
+	a := V2ExampleDefinitionWithLinks([]string{"node/c"}, []string{"80/tcp"})
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
@@ -93,11 +93,11 @@ func TestV2AppLinksInvalidComponent(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != "invalid link to component 'component/c': does not exists" {
+	if err.Error() != "invalid link to node 'node/c': does not exists" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsInvalidComponentDefinition(err) {
-		t.Fatalf("expetced error to be InvalidComponentDefinitionError")
+	if !userconfig.IsInvalidNodeDefinition(err) {
+		t.Fatalf("expetced error to be InvalidNodeDefinitionError")
 	}
 }
 
@@ -120,7 +120,7 @@ func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
 	}
 
-	if b.Components["component/a"].Scale != nil {
+	if b.Nodes["node/a"].Scale != nil {
 		t.Fatalf("scale not hidden")
 	}
 }
@@ -148,11 +148,11 @@ func TestV2AppSetDefaults(t *testing.T) {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
 	}
 
-	if b.Components["component/a"].Scale.Min != valCtx.MinScaleSize {
+	if b.Nodes["node/a"].Scale.Min != valCtx.MinScaleSize {
 		t.Fatalf("min scale size not set")
 	}
 
-	if b.Components["component/a"].Scale.Max != valCtx.MaxScaleSize {
+	if b.Nodes["node/a"].Scale.Max != valCtx.MaxScaleSize {
 		t.Fatalf("max scale size not set")
 	}
 }
@@ -185,7 +185,7 @@ func TestV2AppHideDefaults(t *testing.T) {
 		t.Fatalf("hiding defaults failed: %s", err.Error())
 	}
 
-	if c.Components["component/a"].Scale != nil {
+	if c.Nodes["node/a"].Scale != nil {
 		t.Fatalf("scale not hidden")
 	}
 }
@@ -196,7 +196,7 @@ func TestV2AbsentAppName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Name failed: %#v", err)
 	}
-	expectedName := "2308909c"
+	expectedName := "e27445c0"
 	if name != expectedName {
 		t.Fatalf("Name result is invalid, got '%s', expected '%s'", name, expectedName)
 	}

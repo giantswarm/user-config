@@ -6,50 +6,50 @@ import (
 )
 
 var (
-	componentNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_/-]{0,99}$")
-	lettersAndDigits    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	nodeNameRegExp   = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_/-]{0,99}$")
+	lettersAndDigits = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
-type ComponentName string
+type NodeName string
 
-// String returns a string version of the given ComponentName.
-func (nn ComponentName) String() string {
+// String returns a string version of the given NodeName.
+func (nn NodeName) String() string {
 	return string(nn)
 }
 
-// Empty returns true if the given ComponentName is empty, false otherwise.
-func (nn ComponentName) Empty() bool {
+// Empty returns true if the given NodeName is empty, false otherwise.
+func (nn NodeName) Empty() bool {
 	return nn == ""
 }
 
-// Equals returns true if the given ComponentName is equal to the other
-// given component name, false otherwise.
-func (nn ComponentName) Equals(other ComponentName) bool {
+// Equals returns true if the given NodeName is equal to the other
+// given node name, false otherwise.
+func (nn NodeName) Equals(other NodeName) bool {
 	return nn == other
 }
 
-// Validate checks that the given ComponentName is a valid ComponentName.
-func (nn ComponentName) Validate() error {
+// Validate checks that the given NodeName is a valid NodeName.
+func (nn NodeName) Validate() error {
 	if nn.Empty() {
-		return maskf(InvalidComponentNameError, "component name must not be empty")
+		return maskf(InvalidNodeNameError, "node name must not be empty")
 	}
 
 	nnStr := nn.String()
-	if !componentNameRegExp.MatchString(nnStr) {
-		return maskf(InvalidComponentNameError, "component name '%s' must match regexp: %s", nnStr, componentNameRegExp)
+	if !nodeNameRegExp.MatchString(nnStr) {
+		return maskf(InvalidNodeNameError, "node name '%s' must match regexp: %s", nnStr, nodeNameRegExp)
 	}
 
 	if strings.HasSuffix(nnStr, "/") {
-		return maskf(InvalidComponentNameError, "component name '%s' must not end with '/'", nnStr)
+		return maskf(InvalidNodeNameError, "node name '%s' must not end with '/'", nnStr)
 	}
 
 	parts := strings.Split(nnStr, "/")
 	for _, part := range parts {
 		if part == "" {
-			return maskf(InvalidComponentNameError, "component name '%s' must not have empty parts", nnStr)
+			return maskf(InvalidNodeNameError, "node name '%s' must not have empty parts", nnStr)
 		}
 		if !strings.ContainsAny(part, lettersAndDigits) {
-			return maskf(InvalidComponentNameError, "component name '%s' (part '%s') must contain at least one letter or digit", nnStr, part)
+			return maskf(InvalidNodeNameError, "node name '%s' (part '%s') must contain at least one letter or digit", nnStr, part)
 		}
 	}
 
@@ -57,27 +57,27 @@ func (nn ComponentName) Validate() error {
 }
 
 // ParentName returns the parent name of the given name, or InvalidArgumentError if the name has no parent.
-func (nn ComponentName) ParentName() (ComponentName, error) {
+func (nn NodeName) ParentName() (NodeName, error) {
 	parts := strings.Split(nn.String(), "/")
 	if len(parts) > 1 {
 		parts = parts[:len(parts)-1]
 		parentName := strings.Join(parts, "/")
-		return ComponentName(parentName), nil
+		return NodeName(parentName), nil
 	}
-	return ComponentName(""), maskf(InvalidArgumentError, "'%s' has no parent", nn.String())
+	return NodeName(""), maskf(InvalidArgumentError, "'%s' has no parent", nn.String())
 }
 
 // LocalName returns the last part of the given name.
-func (nn ComponentName) LocalName() ComponentName {
+func (nn NodeName) LocalName() NodeName {
 	parts := strings.Split(nn.String(), "/")
-	return ComponentName(parts[len(parts)-1])
+	return NodeName(parts[len(parts)-1])
 }
 
 // IsDirectChildOf returns true if the given child name is a direct child of the given parent name.
 // E.g.
 // - "a/b".IsDirectChildOf("a") -> true
 // - "a/b/c".IsDirectChildOf("a") -> false
-func (childName ComponentName) IsDirectChildOf(parentName ComponentName) bool {
+func (childName NodeName) IsDirectChildOf(parentName NodeName) bool {
 	prefix := parentName.String()
 	if !strings.HasSuffix(prefix, "/") {
 		prefix = prefix + "/"
@@ -98,7 +98,7 @@ func (childName ComponentName) IsDirectChildOf(parentName ComponentName) bool {
 // E.g.
 // - "a/b".IsChildOf("a") -> true
 // - "a/b/c".IsChildOf("a") -> true
-func (childName ComponentName) IsChildOf(parentName ComponentName) bool {
+func (childName NodeName) IsChildOf(parentName NodeName) bool {
 	prefix := parentName.String()
 	if !strings.HasSuffix(prefix, "/") {
 		prefix = prefix + "/"
@@ -115,7 +115,7 @@ func (childName ComponentName) IsChildOf(parentName ComponentName) bool {
 // - "a/b".IsSiblingOf("a") -> false
 // - "a/c".IsSiblingOf("a/b") -> true
 // - "a/b/c".IsSiblingOf("a/b") -> false
-func (name ComponentName) IsSiblingOf(otherName ComponentName) bool {
+func (name NodeName) IsSiblingOf(otherName NodeName) bool {
 	parentName, err := name.ParentName()
 	if err != nil {
 		parentName = ""
