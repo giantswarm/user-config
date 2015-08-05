@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 )
 
-// Type of the "pod" field in a node definition.
+// Type of the "pod" field in a component definition.
 type PodEnum string
 
 const (
 	PodNone     PodEnum = "none"     // No pod is created and no resources are shared.
-	PodChildren PodEnum = "children" // A node defining this only configures its direct children to be placed into a pod.
-	PodInherit  PodEnum = "inherit"  // A node defining this configures all its children and grand-children to be placed into a pod.
+	PodChildren PodEnum = "children" // A component defining this only configures its direct children to be placed into a pod.
+	PodInherit  PodEnum = "inherit"  // A component defining this configures all its children and grand-children to be placed into a pod.
 )
 
 // UnmarshalJSON performs a validation during unmarshaling.

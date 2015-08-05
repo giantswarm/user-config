@@ -11,13 +11,13 @@ type V2AppDefinition struct {
 	// Optional app name
 	AppName AppName `json:"name,omitempty"`
 
-	// Nodes
-	Nodes NodeDefinitions `json:"nodes"`
+	// Components
+	Components ComponentDefinitions `json:"components"`
 }
 
 func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 	// We fix the json buffer so V2CheckForUnknownFields doesn't complain about
-	// `Nodes` (with uper N).
+	// `Components` (with uper N).
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
 		return err
@@ -64,8 +64,8 @@ type ValidationContext struct {
 // validate performs semantic validations of this V2AppDefinition.
 // Return the first possible error.
 func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
-	if len(ad.Nodes) == 0 {
-		return maskf(InvalidAppDefinitionError, "nodes must not be empty")
+	if len(ad.Components) == 0 {
+		return maskf(InvalidAppDefinitionError, "components must not be empty")
 	}
 
 	if !ad.AppName.Empty() {
@@ -74,7 +74,7 @@ func (ad *V2AppDefinition) Validate(valCtx *ValidationContext) error {
 		}
 	}
 
-	if err := ad.Nodes.validate(valCtx); err != nil {
+	if err := ad.Components.validate(valCtx); err != nil {
 		return mask(err)
 	}
 
@@ -89,7 +89,7 @@ func (ad *V2AppDefinition) HideDefaults(valCtx *ValidationContext) (*V2AppDefini
 		return &V2AppDefinition{}, maskf(MissingValidationContextError, "cannot hide defaults")
 	}
 
-	ad.Nodes = ad.Nodes.hideDefaults(valCtx)
+	ad.Components = ad.Components.hideDefaults(valCtx)
 	return ad, nil
 }
 
@@ -99,7 +99,7 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 		return maskf(MissingValidationContextError, "cannot set defaults")
 	}
 
-	ad.Nodes.setDefaults(valCtx)
+	ad.Components.setDefaults(valCtx)
 	return nil
 }
 

@@ -13,17 +13,17 @@ func TestExpose(t *testing.T) {
 		ImplName string
 		ImplPort string
 	}{
-		// Empty node, empty node port should refer to self with identical port
+		// Empty component, empty component port should refer to self with identical port
 		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp")}, ImplName: "self", ImplPort: "80/tcp"},
-		// Set node, empty node port should refer to node with identical port
-		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), Node: userconfig.NodeName("foo")}, ImplName: "foo", ImplPort: "80/tcp"},
-		// Empty node, specified node port should refer to self with specified port
+		// Set component, empty component port should refer to component with identical port
+		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), Component: userconfig.ComponentName("foo")}, ImplName: "foo", ImplPort: "80/tcp"},
+		// Empty component, specified component port should refer to self with specified port
 		{Expose: userconfig.ExposeDefinition{Port: generictypes.MustParseDockerPort("80/tcp"), TargetPort: generictypes.MustParseDockerPort("8080/tcp")}, ImplName: "self", ImplPort: "8080/tcp"},
 	}
 
 	for _, test := range list {
-		implName := test.Expose.ImplementationNodeName(userconfig.NodeName("self"))
-		if !implName.Equals(userconfig.NodeName(test.ImplName)) {
+		implName := test.Expose.ImplementationComponentName(userconfig.ComponentName("self"))
+		if !implName.Equals(userconfig.ComponentName(test.ImplName)) {
 			t.Fatalf("invalid impl name detected: got '%s', expected '%s'", implName, test.ImplName)
 		}
 

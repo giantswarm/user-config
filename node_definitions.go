@@ -1,17 +1,17 @@
 package userconfig
 
-type NodeDefinitions map[NodeName]*NodeDefinition
+type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
-func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
-	for nodeName, _ := range nds {
-		if err := nodeName.Validate(); err != nil {
+func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
+	for componentName, _ := range nds {
+		if err := componentName.Validate(); err != nil {
 			return mask(err)
 		}
 
 		// because of defaulting when validating we need to reference the to the
-		// address of the node. so its changes effect the app definition after
+		// address of the component. so its changes effect the app definition after
 		// parsing.
-		if err := nds[nodeName].validate(valCtx); err != nil {
+		if err := nds[componentName].validate(valCtx); err != nil {
 			return mask(err)
 		}
 	}
@@ -42,7 +42,7 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
-	// Check node relations in pods
+	// Check component relations in pods
 	if err := nds.validatePods(); err != nil {
 		return mask(err)
 	}
@@ -60,110 +60,110 @@ func (nds NodeDefinitions) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
-func (nds NodeDefinitions) hideDefaults(valCtx *ValidationContext) NodeDefinitions {
-	for nodeName, node := range nds {
-		nds[nodeName] = node.hideDefaults(valCtx)
+func (nds ComponentDefinitions) hideDefaults(valCtx *ValidationContext) ComponentDefinitions {
+	for componentName, component := range nds {
+		nds[componentName] = component.hideDefaults(valCtx)
 	}
 
 	return nds
 }
 
-func (nds NodeDefinitions) setDefaults(valCtx *ValidationContext) {
-	for nodeName, _ := range nds {
-		nds[nodeName].setDefaults(valCtx)
+func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
+	for componentName, _ := range nds {
+		nds[componentName].setDefaults(valCtx)
 	}
 }
 
-func (nds *NodeDefinitions) NodeByName(name NodeName) (*NodeDefinition, error) {
-	for nodeName, nodeDef := range *nds {
-		if name == nodeName {
-			return nodeDef, nil
+func (nds *ComponentDefinitions) ComponentByName(name ComponentName) (*ComponentDefinition, error) {
+	for componentName, componentDef := range *nds {
+		if name == componentName {
+			return componentDef, nil
 		}
 	}
 
-	return nil, maskf(NodeNotFoundError, name.String())
+	return nil, maskf(ComponentNotFoundError, name.String())
 }
 
-// ParentOf returns the closest parent of the node with the given name.
-// If there is no such node, a NodeNotFoundError is returned.
-func (nds *NodeDefinitions) ParentOf(name NodeName) (NodeName, *NodeDefinition, error) {
+// ParentOf returns the closest parent of the component with the given name.
+// If there is no such component, a ComponentNotFoundError is returned.
+func (nds *ComponentDefinitions) ParentOf(name ComponentName) (ComponentName, *ComponentDefinition, error) {
 	for {
 		parentName, err := name.ParentName()
 		if err != nil {
-			return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
+			return "", nil, maskf(ComponentNotFoundError, "'%s' has no parent", name)
 		}
-		if parent, err := nds.NodeByName(parentName); err == nil {
+		if parent, err := nds.ComponentByName(parentName); err == nil {
 			return parentName, parent, nil
 		}
 		name = parentName
 	}
-	return "", nil, maskf(NodeNotFoundError, "'%s' has no parent", name)
+	return "", nil, maskf(ComponentNotFoundError, "'%s' has no parent", name)
 }
 
-// IsRoot returns true if the given node name has no more parent nodes
-// in this set of nodes.
-func (nds *NodeDefinitions) IsRoot(name NodeName) bool {
+// IsRoot returns true if the given component name has no more parent components
+// in this set of components.
+func (nds *ComponentDefinitions) IsRoot(name ComponentName) bool {
 	_, _, err := nds.ParentOf(name)
 	return err != nil
 }
 
-// FilterNodes returns a set of all my nodes for which the given predicate returns true.
-func (nds *NodeDefinitions) FilterNodes(predicate func(nodeName NodeName, nodeDef NodeDefinition) bool) NodeDefinitions {
-	list := make(NodeDefinitions)
-	for nodeName, nodeDef := range *nds {
-		if predicate(nodeName, *nodeDef) {
-			list[nodeName] = nodeDef
+// FilterComponents returns a set of all my components for which the given predicate returns true.
+func (nds *ComponentDefinitions) FilterComponents(predicate func(componentName ComponentName, componentDef ComponentDefinition) bool) ComponentDefinitions {
+	list := make(ComponentDefinitions)
+	for componentName, componentDef := range *nds {
+		if predicate(componentName, *componentDef) {
+			list[componentName] = componentDef
 		}
 	}
 	return list
 }
 
-// ChildNodes returns a map of all nodes that are a direct child of a node with
+// ChildComponents returns a map of all components that are a direct child of a component with
 // the given name.
-func (nds *NodeDefinitions) ChildNodes(name NodeName) NodeDefinitions {
-	return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-		return nodeName.IsDirectChildOf(name)
+func (nds *ComponentDefinitions) ChildComponents(name ComponentName) ComponentDefinitions {
+	return nds.FilterComponents(func(componentName ComponentName, componentDef ComponentDefinition) bool {
+		return componentName.IsDirectChildOf(name)
 	})
 }
 
-// ChildNodesRecursive returns a list of all nodes that are a direct child of a node with
-// the given name and all child nodes of this children (recursive).
-func (nds *NodeDefinitions) ChildNodesRecursive(name NodeName) NodeDefinitions {
-	return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-		return nodeName.IsChildOf(name)
+// ChildComponentsRecursive returns a list of all components that are a direct child of a component with
+// the given name and all child components of this children (recursive).
+func (nds *ComponentDefinitions) ChildComponentsRecursive(name ComponentName) ComponentDefinitions {
+	return nds.FilterComponents(func(componentName ComponentName, componentDef ComponentDefinition) bool {
+		return componentName.IsChildOf(name)
 	})
 }
 
-// PodNodes returns a map of all nodes that are part of the pod specified by a node with
+// PodComponents returns a map of all components that are part of the pod specified by a component with
 // the given name.
-func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
-	parent, err := nds.NodeByName(name)
+func (nds *ComponentDefinitions) PodComponents(name ComponentName) (ComponentDefinitions, error) {
+	parent, err := nds.ComponentByName(name)
 	if err != nil {
 		return nil, mask(err)
 	}
 	switch parent.Pod {
 	case PodChildren:
-		// Collect all direct child nodes that do not have pod set to 'none'.
-		return nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-			return nodeName.IsDirectChildOf(name) && nodeDef.Pod != PodNone
+		// Collect all direct child components that do not have pod set to 'none'.
+		return nds.FilterComponents(func(componentName ComponentName, componentDef ComponentDefinition) bool {
+			return componentName.IsDirectChildOf(name) && componentDef.Pod != PodNone
 		}), nil
 	case PodInherit:
-		// Collect all child nodes that do not have pod set to 'none'.
-		noneNames := []NodeName{}
-		children := nds.FilterNodes(func(nodeName NodeName, nodeDef NodeDefinition) bool {
-			if !nodeName.IsChildOf(name) {
+		// Collect all child components that do not have pod set to 'none'.
+		noneNames := []ComponentName{}
+		children := nds.FilterComponents(func(componentName ComponentName, componentDef ComponentDefinition) bool {
+			if !componentName.IsChildOf(name) {
 				return false
 			}
-			if nodeDef.Pod == PodNone {
-				noneNames = append(noneNames, nodeName)
+			if componentDef.Pod == PodNone {
+				noneNames = append(noneNames, componentName)
 				return false
 			}
 			return true
 		})
 		// We now  go over the list and remove all children that have some parent with pod='none'
-		for _, nodeName := range noneNames {
+		for _, componentName := range noneNames {
 			for childName, _ := range children {
-				if childName.IsChildOf(nodeName) {
+				if childName.IsChildOf(componentName) {
 					// Child of pod='none', remove from list
 					delete(children, childName)
 				}
@@ -171,13 +171,13 @@ func (nds *NodeDefinitions) PodNodes(name NodeName) (NodeDefinitions, error) {
 		}
 		return children, nil
 	default:
-		return nil, maskf(InvalidArgumentError, "Node '%s' a has no pod setting", name)
+		return nil, maskf(InvalidArgumentError, "Component '%s' a has no pod setting", name)
 	}
 }
 
-// PodRoot returns the node that defines the pod the node with given name is a part of.
-// If there is no such node, NodeNotFoundError is returned.
-func (nds *NodeDefinitions) PodRoot(name NodeName) (NodeName, *NodeDefinition, error) {
+// PodRoot returns the component that defines the pod the component with given name is a part of.
+// If there is no such component, ComponentNotFoundError is returned.
+func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *ComponentDefinition, error) {
 	for {
 		// Find first parent
 		parentName, parent, err := nds.ParentOf(name)
@@ -193,46 +193,46 @@ func (nds *NodeDefinitions) PodRoot(name NodeName) (NodeName, *NodeDefinition, e
 	}
 }
 
-// IsLeaf returns true if the node with the given name has no children,
+// IsLeaf returns true if the component with the given name has no children,
 // false otherwise.
-func (nds *NodeDefinitions) IsLeaf(name NodeName) bool {
-	for nodeName, _ := range *nds {
-		if nodeName.IsChildOf(name) {
+func (nds *ComponentDefinitions) IsLeaf(name ComponentName) bool {
+	for componentName, _ := range *nds {
+		if componentName.IsChildOf(name) {
 			return false
 		}
 	}
 	return true
 }
 
-// MountPoints returns a list of all mount points of a node, that is given by
+// MountPoints returns a list of all mount points of a component, that is given by
 // name
-func (nds *NodeDefinitions) MountPoints(name NodeName) ([]string, error) {
+func (nds *ComponentDefinitions) MountPoints(name ComponentName) ([]string, error) {
 	visited := make(map[string]string)
 	return nds.mountPointsRecursive(name, visited)
 }
 
-// mountPointsRecursive creates a list of all mount points of a node
-func (nds *NodeDefinitions) mountPointsRecursive(name NodeName, visited map[string]string) ([]string, error) {
+// mountPointsRecursive creates a list of all mount points of a component
+func (nds *ComponentDefinitions) mountPointsRecursive(name ComponentName, visited map[string]string) ([]string, error) {
 	// prevent cycles
 	if _, ok := visited[name.String()]; ok {
 		return nil, maskf(VolumeCycleError, "volume cycle detected in '%s'", name)
 	}
 	visited[name.String()] = name.String()
 
-	node, err := nds.NodeByName(name)
+	component, err := nds.ComponentByName(name)
 	if err != nil {
 		return nil, mask(err)
 	}
 
 	// get all mountpoints
 	mountPoints := []string{}
-	for _, vol := range node.Volumes {
+	for _, vol := range component.Volumes {
 		if vol.Path != "" {
 			mountPoints = append(mountPoints, normalizeFolder(vol.Path))
 		} else if vol.VolumePath != "" {
 			mountPoints = append(mountPoints, normalizeFolder(vol.VolumePath))
 		} else if vol.VolumesFrom != "" {
-			p, err := nds.mountPointsRecursive(NodeName(vol.VolumesFrom), visited)
+			p, err := nds.mountPointsRecursive(ComponentName(vol.VolumesFrom), visited)
 			if err != nil {
 				return nil, err
 			}
