@@ -65,8 +65,8 @@ func TestDiffServiceRename(t *testing.T) {
 	newCfg.Services[0].ServiceName = "service1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
+		DiffInfo{Type: InfoComponentAdded, Name: []string{"app", "service1#changed"}},
+		DiffInfo{Type: InfoComponentRemoved, Name: []string{"app", "service1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -78,8 +78,8 @@ func TestDiffComponentRename(t *testing.T) {
 	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoComponentAdded, Name: []string{"app", "service1", "service1component1#changed"}},
+		DiffInfo{Type: InfoComponentRemoved, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -134,8 +134,8 @@ func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
 	newCfg.Services[0].ServiceName = "service1#changed"
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
+		DiffInfo{Type: InfoComponentAdded, Name: []string{"app", "service1#changed"}},
+		DiffInfo{Type: InfoComponentRemoved, Name: []string{"app", "service1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
@@ -154,9 +154,9 @@ func TestDiffMultipleChanges(t *testing.T) {
 	})
 
 	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component2"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
+		DiffInfo{Type: InfoComponentAdded, Name: []string{"app", "service1", "service1component1#changed"}},
+		DiffInfo{Type: InfoComponentAdded, Name: []string{"app", "service1", "service1component2"}},
+		DiffInfo{Type: InfoComponentRemoved, Name: []string{"app", "service1", "service1component1"}},
 	}
 
 	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)

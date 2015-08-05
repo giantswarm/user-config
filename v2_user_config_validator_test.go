@@ -9,17 +9,17 @@ import (
 
 func TestParseV2AppDef(t *testing.T) {
 	b := []byte(`{
-		"nodes": {
-			"node/a": {
+		"components": {
+			"component/a": {
 				"image": "registry/namespace/repository:version",
 				"ports": [ "80/tcp" ],
 				"links": [
-					{ "node": "node/b", "target_port": 6379 },
+					{ "component": "component/b", "target_port": 6379 },
 					{ "service": "otherapp", "target_port": 1234 }
 				],
 				"domains": { "test.domain.io": "80" }
 			},
-			"node/b": {
+			"component/b": {
 				"image": "dockerfile/redis",
 				"ports": [ "6379/tcp" ],
 				"volumes": [
@@ -38,20 +38,20 @@ func TestParseV2AppDef(t *testing.T) {
 		t.Fatalf("json.Unmarshal failed: %v", err)
 	}
 
-	if len(appDef.Nodes) != 2 {
-		t.Fatalf("expected two nodes: %d given", len(appDef.Nodes))
+	if len(appDef.Components) != 2 {
+		t.Fatalf("expected two components: %d given", len(appDef.Components))
 	}
 
-	nodeA, ok := appDef.Nodes["node/a"]
+	componentA, ok := appDef.Components["component/a"]
 	if !ok {
-		t.Fatalf("missing node")
+		t.Fatalf("missing component")
 	}
 
-	if len(nodeA.Domains) != 1 {
-		t.Fatalf("expected one domain: %d given", len(nodeA.Domains))
+	if len(componentA.Domains) != 1 {
+		t.Fatalf("expected one domain: %d given", len(componentA.Domains))
 	}
 
-	port, ok := nodeA.Domains["test.domain.io"]
+	port, ok := componentA.Domains["test.domain.io"]
 	if !ok {
 		t.Fatalf("missing domain")
 	}
@@ -59,42 +59,42 @@ func TestParseV2AppDef(t *testing.T) {
 		t.Fatalf("invalid port: %s", port[0].String())
 	}
 
-	if nodeA.Image.Registry != "registry" {
-		t.Fatalf("invalid registry: %s", nodeA.Image.Registry)
+	if componentA.Image.Registry != "registry" {
+		t.Fatalf("invalid registry: %s", componentA.Image.Registry)
 	}
-	if nodeA.Image.Namespace != "namespace" {
-		t.Fatalf("invalid namespace: %s", nodeA.Image.Namespace)
+	if componentA.Image.Namespace != "namespace" {
+		t.Fatalf("invalid namespace: %s", componentA.Image.Namespace)
 	}
-	if nodeA.Image.Repository != "repository" {
-		t.Fatalf("invalid repository: %s", nodeA.Image.Repository)
+	if componentA.Image.Repository != "repository" {
+		t.Fatalf("invalid repository: %s", componentA.Image.Repository)
 	}
-	if nodeA.Image.Version != "version" {
-		t.Fatalf("invalid version: %s", nodeA.Image.Version)
+	if componentA.Image.Version != "version" {
+		t.Fatalf("invalid version: %s", componentA.Image.Version)
 	}
 
-	nodeB, ok := appDef.Nodes["node/b"]
+	componentB, ok := appDef.Components["component/b"]
 	if !ok {
-		t.Fatalf("missing node")
+		t.Fatalf("missing component")
 	}
 
-	if nodeB.Image.Registry != "" {
-		t.Fatalf("invalid registry: %s", nodeB.Image.Registry)
+	if componentB.Image.Registry != "" {
+		t.Fatalf("invalid registry: %s", componentB.Image.Registry)
 	}
-	if nodeB.Image.Namespace != "dockerfile" {
-		t.Fatalf("invalid namespace: %s", nodeB.Image.Namespace)
+	if componentB.Image.Namespace != "dockerfile" {
+		t.Fatalf("invalid namespace: %s", componentB.Image.Namespace)
 	}
-	if nodeB.Image.Repository != "redis" {
-		t.Fatalf("invalid repository: %s", nodeB.Image.Repository)
+	if componentB.Image.Repository != "redis" {
+		t.Fatalf("invalid repository: %s", componentB.Image.Repository)
 	}
-	if nodeB.Image.Version != "" {
-		t.Fatalf("invalid version: %s", nodeB.Image.Version)
+	if componentB.Image.Version != "" {
+		t.Fatalf("invalid version: %s", componentB.Image.Version)
 	}
 }
 
 func TestV2AppDefFixFieldName(t *testing.T) {
 	b := []byte(`{
-		"Nodes": {
-			"node/fooBar": {
+		"Components": {
+			"component/fooBar": {
 				"Image": "registry/namespace/repository:version"
 			}
 		}
@@ -106,28 +106,28 @@ func TestV2AppDefFixFieldName(t *testing.T) {
 		t.Fatalf("json.Unmarshal failed: %v", err)
 	}
 
-	nodeFooBar, ok := appDef.Nodes["node/fooBar"]
+	componentFooBar, ok := appDef.Components["component/fooBar"]
 	if !ok {
-		t.Fatalf("missing node")
+		t.Fatalf("missing component")
 	}
 
-	if nodeFooBar.Image.Registry != "registry" {
-		t.Fatalf("invalid registry: %s", nodeFooBar.Image.Registry)
+	if componentFooBar.Image.Registry != "registry" {
+		t.Fatalf("invalid registry: %s", componentFooBar.Image.Registry)
 	}
-	if nodeFooBar.Image.Namespace != "namespace" {
-		t.Fatalf("invalid namespace: %s", nodeFooBar.Image.Namespace)
+	if componentFooBar.Image.Namespace != "namespace" {
+		t.Fatalf("invalid namespace: %s", componentFooBar.Image.Namespace)
 	}
-	if nodeFooBar.Image.Repository != "repository" {
-		t.Fatalf("invalid repository: %s", nodeFooBar.Image.Repository)
+	if componentFooBar.Image.Repository != "repository" {
+		t.Fatalf("invalid repository: %s", componentFooBar.Image.Repository)
 	}
-	if nodeFooBar.Image.Version != "version" {
-		t.Fatalf("invalid version: %s", nodeFooBar.Image.Version)
+	if componentFooBar.Image.Version != "version" {
+		t.Fatalf("invalid version: %s", componentFooBar.Image.Version)
 	}
 }
 
 func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	b := []byte(`{
-		"nodes": {
+		"components": {
 			"foo/bar": {
 				"imaGe": "registry/namespace/repository:version"
 			}
@@ -139,7 +139,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `unknown JSON field: ["nodes"]["foo/bar"]["ima_ge"]` {
+	if err.Error() != `unknown JSON field: ["components"]["foo/bar"]["ima_ge"]` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsUnknownJsonField(err) {
@@ -150,7 +150,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	// "image" is missing
 	b := []byte(`{
-		"nodes": {
+		"components": {
 			"foo/bar": {}
 		}
 	}`)
@@ -160,17 +160,17 @@ func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `node 'foo/bar' must have an 'image'` {
+	if err.Error() != `component 'foo/bar' must have an 'image'` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
-	if !userconfig.IsInvalidNodeDefinition(err) {
+	if !userconfig.IsInvalidComponentDefinition(err) {
 		t.Fatalf("expected error to be MissingJSONFieldError")
 	}
 }
 
 func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
 	b := []byte(`{
-		"nodes": {
+		"components": {
 			"foo/bar": {
 				"image": "registry/namespace/repository:version",
 				"unknown": "unknown"
@@ -183,7 +183,7 @@ func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
 	}
-	if err.Error() != `unknown JSON field: ["nodes"]["foo/bar"]["unknown"]` {
+	if err.Error() != `unknown JSON field: ["components"]["foo/bar"]["unknown"]` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
 	if !userconfig.IsUnknownJsonField(err) {

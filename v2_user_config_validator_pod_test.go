@@ -15,19 +15,18 @@ func TestV2UserConfigPodValidator(t *testing.T) {
 }
 
 var _ = Describe("v2 user config pod validator", func() {
-
-	testNode := func() *NodeDefinition {
-		return &NodeDefinition{
+	testComponent := func() *ComponentDefinition {
+		return &ComponentDefinition{
 			Image: MustParseImageDefinition("registry/namespace/repository:version"),
 		}
 	}
 
-	setPod := func(config *NodeDefinition, pod PodEnum) *NodeDefinition {
+	setPod := func(config *ComponentDefinition, pod PodEnum) *ComponentDefinition {
 		config.Pod = pod
 		return config
 	}
 
-	addVols := func(config *NodeDefinition, vol ...VolumeConfig) *NodeDefinition {
+	addVols := func(config *ComponentDefinition, vol ...VolumeConfig) *ComponentDefinition {
 		if config.Volumes == nil {
 			config.Volumes = vol
 		} else {
@@ -36,7 +35,7 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	addLinks := func(config *NodeDefinition, link ...LinkDefinition) *NodeDefinition {
+	addLinks := func(config *ComponentDefinition, link ...LinkDefinition) *ComponentDefinition {
 		if config.Links == nil {
 			config.Links = link
 		} else {
@@ -45,7 +44,7 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	addPorts := func(config *NodeDefinition, ports ...generictypes.DockerPort) *NodeDefinition {
+	addPorts := func(config *ComponentDefinition, ports ...generictypes.DockerPort) *ComponentDefinition {
 		if config.Ports == nil {
 			config.Ports = ports
 		} else {
@@ -54,7 +53,7 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	addScale := func(config *NodeDefinition, min, max int) *NodeDefinition {
+	addScale := func(config *ComponentDefinition, min, max int) *ComponentDefinition {
 		config.Scale = &ScaleDefinition{
 			Min: min,
 			Max: max,
@@ -62,12 +61,12 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	testApp := func() NodeDefinitions {
-		return make(NodeDefinitions)
+	testApp := func() ComponentDefinitions {
+		return make(ComponentDefinitions)
 	}
 
 	maxScale := 7
-	validate := func(nds NodeDefinitions) error {
+	validate := func(nds ComponentDefinitions) error {
 		vctx := &ValidationContext{
 			Protocols:     []string{"tcp"},
 			MinVolumeSize: "1 GB",
@@ -83,16 +82,16 @@ var _ = Describe("v2 user config pod validator", func() {
 	}
 
 	Describe("pod tests ", func() {
-		Describe("parsing (valid) pod==children on a node that has 2 children", func() {
+		Describe("parsing (valid) pod==children on a component that has 2 children", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b"] = testNode()
-				nodes["node/a/c"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b"] = testComponent()
+				components["component/a/c"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should not throw any errors", func() {
@@ -100,50 +99,50 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing (invalid) pod==children on a node that has no children", func() {
+		Describe("parsing (invalid) pod==children on a component that has no children", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+				Expect(err.Error()).To(Equal(`component 'component/a' must have at least 2 child components because if defines 'pod' as 'children'`))
 			})
 		})
 
-		Describe("parsing (invalid) pod==children on a node that has 2 children (recursive), but only 1 direct", func() {
+		Describe("parsing (invalid) pod==children on a component that has 2 children (recursive), but only 1 direct", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b"] = testNode()
-				nodes["node/a/b/c"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b"] = testComponent()
+				components["component/a/b/c"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'children'`))
+				Expect(err.Error()).To(Equal(`component 'component/a' must have at least 2 child components because if defines 'pod' as 'children'`))
 			})
 		})
 
-		Describe("parsing (valid) pod==inherit on a node that has 2 children (recursive)", func() {
+		Describe("parsing (valid) pod==inherit on a component that has 2 children (recursive)", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodInherit)
-				nodes["node/a/b"] = testNode()
-				nodes["node/a/b/c"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodInherit)
+				components["component/a/b"] = testComponent()
+				components["component/a/b/c"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should not throw any errors", func() {
@@ -151,20 +150,20 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing (invalid) pod==inherit on a node that has not enough children", func() {
+		Describe("parsing (invalid) pod==inherit on a component that has not enough children", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodInherit)
-				nodes["node/a/b"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodInherit)
+				components["component/a/b"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`node 'node/a' must have at least 2 child nodes because if defines 'pod' as 'inherit'`))
+				Expect(err.Error()).To(Equal(`component 'component/a' must have at least 2 child components because if defines 'pod' as 'inherit'`))
 			})
 		})
 
@@ -172,19 +171,19 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b/c1"] = testNode()
-				nodes["node/a/b/c2"] = testNode()
-				nodes["node/a/c"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b"] = setPod(testComponent(), PodChildren)
+				components["component/a/b/c1"] = testComponent()
+				components["component/a/b/c2"] = testComponent()
+				components["component/a/c"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error IsInvalidPodConfig", func() {
 				Expect(IsInvalidPodConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`node 'node/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
+				Expect(err.Error()).To(Equal(`component 'component/a/b' must cannot set 'pod' to 'children' because it is already part of another pod`))
 			})
 		})
 
@@ -196,7 +195,7 @@ var _ = Describe("v2 user config pod validator", func() {
 
 			BeforeEach(func() {
 				byteSlice := []byte(`{
-		          "nodes": {
+		          "components": {
 		              "session1":
 		                {
 		                  "pod": "children"
@@ -239,24 +238,24 @@ var _ = Describe("v2 user config pod validator", func() {
 				Expect(err).To(BeNil())
 			})
 
-			It("should parse 5 nodes", func() {
-				Expect(appDef.Nodes).To(HaveLen(5))
+			It("should parse 5 components", func() {
+				Expect(appDef.Components).To(HaveLen(5))
 			})
 
 			It("should parse one volume for each component", func() {
-				Expect(appDef.Nodes[NodeName("session1/api")].Volumes).To(HaveLen(1))
-				Expect(appDef.Nodes[NodeName("session1/alt1")].Volumes).To(HaveLen(1))
-				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes).To(HaveLen(1))
-				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes).To(HaveLen(1))
+				Expect(appDef.Components[ComponentName("session1/api")].Volumes).To(HaveLen(1))
+				Expect(appDef.Components[ComponentName("session1/alt1")].Volumes).To(HaveLen(1))
+				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes).To(HaveLen(1))
+				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes).To(HaveLen(1))
 
-				Expect(appDef.Nodes[NodeName("session1/api")].Volumes[0].Path).To(Equal("/data1"))
-				Expect(appDef.Nodes[NodeName("session1/api")].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
-				Expect(appDef.Nodes[NodeName("session1/alt1")].Volumes[0].VolumesFrom).To(Equal("session1/api"))
-				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
-				Expect(appDef.Nodes[NodeName("session1/alt2")].Volumes[0].VolumePath).To(Equal("/data1"))
-				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
-				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].VolumePath).To(Equal("/data1"))
-				Expect(appDef.Nodes[NodeName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
+				Expect(appDef.Components[ComponentName("session1/api")].Volumes[0].Path).To(Equal("/data1"))
+				Expect(appDef.Components[ComponentName("session1/api")].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
+				Expect(appDef.Components[ComponentName("session1/alt1")].Volumes[0].VolumesFrom).To(Equal("session1/api"))
+				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
 
 			})
 		})
@@ -265,12 +264,12 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumesFrom: "node/a/b2"})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumesFrom: "component/a/b2"})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -283,12 +282,12 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "node/a/b2"})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB"), VolumeFrom: "component/a/b2"})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
@@ -301,17 +300,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Path: "/alt1"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1", Path: "/alt1"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`path for volumes-from 'node/a/b1' should be empty`))
+				Expect(err.Error()).To(Equal(`path for volumes-from 'component/a/b1' should be empty`))
 			})
 		})
 
@@ -319,17 +318,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", Size: VolumeSize("5 GB")})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1", Size: VolumeSize("5 GB")})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`size for volumes-from 'node/a/b1' should be empty`))
+				Expect(err.Error()).To(Equal(`size for volumes-from 'component/a/b1' should be empty`))
 			})
 		})
 
@@ -337,17 +336,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1", VolumeFrom: "node/a/b1"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1", VolumeFrom: "component/a/b1"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`volume-from for volumes-from 'node/a/b1' should be empty`))
+				Expect(err.Error()).To(Equal(`volume-from for volumes-from 'component/a/b1' should be empty`))
 			})
 		})
 
@@ -355,17 +354,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/data1", Size: VolumeSize("5GB")})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumeFrom: "component/a/b1", VolumePath: "/data1", Size: VolumeSize("5GB")})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`size for volume-from 'node/a/b1' should be empty`))
+				Expect(err.Error()).To(Equal(`size for volume-from 'component/a/b1' should be empty`))
 			})
 		})
 
@@ -373,17 +372,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b2"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`cannot refer to own node 'node/a/b2'`))
+				Expect(err.Error()).To(Equal(`cannot refer to own component 'component/a/b2'`))
 			})
 		})
 
@@ -391,17 +390,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b2", VolumePath: "/data1"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumeFrom: "component/a/b2", VolumePath: "/data1"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`cannot refer to own node 'node/a/b2'`))
+				Expect(err.Error()).To(Equal(`cannot refer to own component 'component/a/b2'`))
 			})
 		})
 
@@ -409,17 +408,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/unknown"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/data1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumeFrom: "component/a/b1", VolumePath: "/unknown"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidVolumeConfigError", func() {
 				Expect(IsInvalidVolumeConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`cannot find path '/unknown' on node 'node/a/b1'`))
+				Expect(err.Error()).To(Equal(`cannot find path '/unknown' on component 'component/a/b1'`))
 			})
 		})
 
@@ -427,18 +426,18 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = addVols(testNode(),
+				components := testApp()
+				components["component/a"] = addVols(testComponent(),
 					VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")},
 					VolumeConfig{Path: "/xdata1/", Size: VolumeSize("27 GB")},
 				)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a'`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'component/a'`))
 			})
 		})
 
@@ -446,20 +445,20 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(),
-					VolumeConfig{VolumesFrom: "node/a/b1"},
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(),
+					VolumeConfig{VolumesFrom: "component/a/b1"},
 					VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
 				)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				//Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b2'`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'component/a/b2'`))
 			})
 		})
 
@@ -467,20 +466,20 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(),
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(),
 					VolumeConfig{Path: "/xdata1", Size: VolumeSize("5GB")},
-					VolumeConfig{VolumeFrom: "node/a/b1", VolumePath: "/xdata1"},
+					VolumeConfig{VolumeFrom: "component/a/b1", VolumePath: "/xdata1"},
 				)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b2'`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'component/a/b2'`))
 			})
 		})
 
@@ -488,21 +487,21 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
-				nodes["node/a/b3"] = addVols(testNode(),
-					VolumeConfig{VolumesFrom: "node/a/b1"},
-					VolumeConfig{VolumesFrom: "node/a/b2"},
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{Path: "/xdata1", Size: VolumeSize("27 GB")})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1"})
+				components["component/a/b3"] = addVols(testComponent(),
+					VolumeConfig{VolumesFrom: "component/a/b1"},
+					VolumeConfig{VolumesFrom: "component/a/b2"},
 				)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error DuplicateVolumePathError", func() {
 				Expect(IsDuplicateVolumePath(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in node 'node/a/b3'`))
+				Expect(err.Error()).To(Equal(`duplicate volume '/xdata1' found in component 'component/a/b3'`))
 			})
 		})
 
@@ -510,13 +509,13 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b3"})
-				nodes["node/a/b2"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b1"})
-				nodes["node/a/b3"] = addVols(testNode(), VolumeConfig{VolumesFrom: "node/a/b2"})
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b3"})
+				components["component/a/b2"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b1"})
+				components["component/a/b3"] = addVols(testComponent(), VolumeConfig{VolumesFrom: "component/a/b2"})
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error VolumeCycleError", func() {
@@ -528,13 +527,13 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b2"] = addLinks(testComponent(), LinkDefinition{Component: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should not throw an error", func() {
@@ -546,19 +545,19 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Node: "redis1", TargetPort: generictypes.MustParseDockerPort("1234")})
-				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
-				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b2"] = addLinks(testComponent(), LinkDefinition{Component: "redis1", TargetPort: generictypes.MustParseDockerPort("1234")})
+				components["redis1"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+				components["redis2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'redis1' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'redis1' in pod under 'component/a'`))
 			})
 		})
 
@@ -566,19 +565,19 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Alias: "db", Component: "redis1", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b2"] = addLinks(testComponent(), LinkDefinition{Alias: "db", Component: "redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["redis1"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
+				components["redis2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'db' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'db' in pod under 'component/a'`))
 			})
 		})
 
@@ -586,21 +585,21 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "redis", Node: "node/redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["redis1"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["node/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
-				nodes["node/redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "component/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b2"] = addLinks(testComponent(), LinkDefinition{Alias: "redis", Component: "component/redis2", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["redis1"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
+				components["redis2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
+				components["component/redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
+				components["component/redis2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'redis' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`duplicate (with different names) dependency 'redis' in pod under 'component/a'`))
 			})
 		})
 
@@ -608,50 +607,50 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b2"] = addLinks(testNode(), LinkDefinition{Alias: "db", Node: "redis", TargetPort: generictypes.MustParseDockerPort("9736")})
-				nodes["redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("9736"))
-				nodes["redis2"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Alias: "db", Component: "redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b2"] = addLinks(testComponent(), LinkDefinition{Alias: "db", Component: "redis", TargetPort: generictypes.MustParseDockerPort("9736")})
+				components["redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("9736"))
+				components["redis2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidDependencyConfigError", func() {
 				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'db' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'db' in pod under 'component/a'`))
 			})
 		})
 
-		Describe("parsing invalid dependency configs, linking to a node that is not a parent/sibling", func() {
+		Describe("parsing invalid dependency configs, linking to a component that is not a parent/sibling", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/b/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/b/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = testComponent()
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "component/b/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/b/redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidLinkDefinitionError", func() {
 				Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`invalid link to node 'node/b/redis': node 'node/a/b1' is not allowed to link to it`))
+				Expect(err.Error()).To(Equal(`invalid link to component 'component/b/redis': component 'component/a/b1' is not allowed to link to it`))
 			})
 		})
 
-		Describe("parsing valid dependency configs, linking to a node that is a parent/sibling", func() {
+		Describe("parsing valid dependency configs, linking to a component that is a parent/sibling", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = testComponent()
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "component/a/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should now throw an error", func() {
@@ -659,16 +658,16 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing valid dependency configs, linking to a node that is a child", func() {
+		Describe("parsing valid dependency configs, linking to a component that is a child", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/b1/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b1/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = testComponent()
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "component/a/b1/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b1/redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should now throw an error", func() {
@@ -676,16 +675,16 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing valid dependency configs, linking to a node that is a grandchild", func() {
+		Describe("parsing valid dependency configs, linking to a component that is a grandchild", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = testNode()
-				nodes["node/a/b1"] = addLinks(testNode(), LinkDefinition{Node: "node/a/b1/c/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
-				nodes["node/a/b1/c/redis"] = addPorts(testNode(), generictypes.MustParseDockerPort("6379"))
+				components := testApp()
+				components["component/a"] = testComponent()
+				components["component/a/b1"] = addLinks(testComponent(), LinkDefinition{Component: "component/a/b1/c/redis", TargetPort: generictypes.MustParseDockerPort("6379")})
+				components["component/a/b1/c/redis"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should now throw an error", func() {
@@ -693,18 +692,18 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing valid scaling configs in pods, scaling values should be the same in all nodes of a pod or not set", func() {
+		Describe("parsing valid scaling configs in pods, scaling values should be the same in all components of a pod or not set", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addScale(testNode(), 1, maxScale)
-				nodes["node/a/b2"] = addScale(testNode(), 0, maxScale)
-				nodes["node/a/b3"] = addScale(testNode(), 1, 0)
-				nodes["node/a/b4"] = testNode()
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addScale(testComponent(), 1, maxScale)
+				components["component/a/b2"] = addScale(testComponent(), 0, maxScale)
+				components["component/a/b3"] = addScale(testComponent(), 1, 0)
+				components["component/a/b4"] = testComponent()
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should not throw an error", func() {
@@ -712,21 +711,21 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing invalid scaling definition in pods, minimum scaling values should be the same in all nodes of a pod", func() {
+		Describe("parsing invalid scaling definition in pods, minimum scaling values should be the same in all components of a pod", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addScale(testNode(), 1, 5)
-				nodes["node/a/b2"] = addScale(testNode(), 2, 5)
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addScale(testComponent(), 1, 5)
+				components["component/a/b2"] = addScale(testComponent(), 2, 5)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`different minimum scaling policies in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`different minimum scaling policies in pod under 'component/a'`))
 			})
 		})
 
@@ -734,17 +733,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addScale(testNode(), 2, 5)
-				nodes["node/a/b2"] = addScale(testNode(), 2, 7)
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addScale(testComponent(), 2, 5)
+				components["component/a/b2"] = addScale(testComponent(), 2, 7)
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`different maximum scaling policies in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`different maximum scaling policies in pod under 'component/a'`))
 			})
 		})
 
@@ -752,17 +751,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
-				nodes["node/a/b2"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addPorts(testComponent(), generictypes.MustParseDockerPort("80"))
+				components["component/a/b2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("80"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`multiple nodes export port '80/tcp' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`multiple components export port '80/tcp' in pod under 'component/a'`))
 			})
 		})
 
@@ -770,17 +769,17 @@ var _ = Describe("v2 user config pod validator", func() {
 			var err error
 
 			BeforeEach(func() {
-				nodes := testApp()
-				nodes["node/a"] = setPod(testNode(), PodChildren)
-				nodes["node/a/b1"] = addPorts(testNode(), generictypes.MustParseDockerPort("80"))
-				nodes["node/a/b2"] = addPorts(testNode(), generictypes.MustParseDockerPort("80/tcp"))
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addPorts(testComponent(), generictypes.MustParseDockerPort("80"))
+				components["component/a/b2"] = addPorts(testComponent(), generictypes.MustParseDockerPort("80/tcp"))
 
-				err = validate(nodes)
+				err = validate(components)
 			})
 
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`multiple nodes export port '80/tcp' in pod under 'node/a'`))
+				Expect(err.Error()).To(Equal(`multiple components export port '80/tcp' in pod under 'component/a'`))
 			})
 		})
 

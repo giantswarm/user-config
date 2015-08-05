@@ -10,11 +10,11 @@ const (
 	// Used to indicate that the app-name in the two files was changed
 	InfoAppNameChanged DiffType = "infoAppNameChanged"
 
-	// Used to indicate that a node (service or component) was added. `Name` in the DiffInfo describes the node that was added.
-	InfoNodeAdded DiffType = "node-added"
+	// Used to indicate that a component (service or component) was added. `Name` in the DiffInfo describes the component that was added.
+	InfoComponentAdded DiffType = "component-added"
 
-	// Used to indicate that a node (service or component) was removed. `Name` in the DiffInfo describes the node that was removed.
-	InfoNodeRemoved DiffType = "node-removed"
+	// Used to indicate that a component (service or component) was removed. `Name` in the DiffInfo describes the component that was removed.
+	InfoComponentRemoved DiffType = "component-removed"
 
 	// Used to indicate that the scaling config of a component changed.
 	InfoComponentScalingUpdated DiffType = "component-scaling-changed"
@@ -22,7 +22,7 @@ const (
 	// Used to indicate that the InstanceConfig in the ComponentConfig identified by `Name` changed.
 	InfoInstanceConfigUpdated DiffType = "instance-update"
 
-	// Used to indicate that the component itself changed (but not the underlying InstanceConfig). `Name` in the DiffInfo describes the node that was changed.
+	// Used to indicate that the component itself changed (but not the underlying InstanceConfig). `Name` in the DiffInfo describes the component that was changed.
 	InfoComponentUpdated DiffType = "component-update"
 )
 
@@ -30,7 +30,7 @@ type DiffInfo struct {
 	// What type changed: app, service, component
 	Type DiffType
 
-	// Path to the node that changed.
+	// Path to the component that changed.
 	Name []string
 }
 
@@ -45,7 +45,7 @@ func Diff(newConfig, oldConfig AppDefinition) []DiffInfo {
 	changes := []DiffInfo{}
 	c := make(chan DiffInfo)
 	go func() {
-		diffHierarchy([]string{newConfig.AppName}, appNode(newConfig), appNode(oldConfig), c)
+		diffHierarchy([]string{newConfig.AppName}, appComponent(newConfig), appComponent(oldConfig), c)
 		close(c)
 	}()
 
@@ -55,59 +55,59 @@ func Diff(newConfig, oldConfig AppDefinition) []DiffInfo {
 	return changes
 }
 
-type node interface {
+type component interface {
 	Name() string
-	Children() []node
+	Children() []component
 
-	// Diff is called by diffHierarchy when two nodes have the same name and should be checked
+	// Diff is called by diffHierarchy when two components have the same name and should be checked
 	// for internal differences. Diffs should be written to changes.
-	Diff(path []string, other node, changes chan<- DiffInfo)
+	Diff(path []string, other component, changes chan<- DiffInfo)
 }
 
-type appNode AppDefinition
+type appComponent AppDefinition
 
-func (n appNode) Name() string { return n.AppName }
-func (n appNode) Children() []node {
-	nodes := []node{}
+func (n appComponent) Name() string { return n.AppName }
+func (n appComponent) Children() []component {
+	components := []component{}
 	for _, service := range n.Services {
-		nodes = append(nodes, serviceNode(service))
+		components = append(components, serviceComponent(service))
 	}
-	return nodes
+	return components
 }
-func (n appNode) Diff(path []string, other node, changes chan<- DiffInfo) {
+func (n appComponent) Diff(path []string, other component, changes chan<- DiffInfo) {
 	diffHierarchy(path, n, other, changes)
 }
 
-type serviceNode ServiceConfig
+type serviceComponent ServiceConfig
 
-func (s serviceNode) Name() string { return s.ServiceName }
-func (s serviceNode) Children() []node {
-	nodes := []node{}
+func (s serviceComponent) Name() string { return s.ServiceName }
+func (s serviceComponent) Children() []component {
+	components := []component{}
 	for _, component := range s.Components {
-		nodes = append(nodes, componentNode(component))
+		components = append(components, componentComponent(component))
 	}
-	return nodes
+	return components
 }
-func (n serviceNode) Diff(path []string, other node, changes chan<- DiffInfo) {
+func (n serviceComponent) Diff(path []string, other component, changes chan<- DiffInfo) {
 	diffHierarchy(path, n, other, changes)
 }
 
-type componentNode ComponentConfig
+type componentComponent ComponentConfig
 
-func (c componentNode) Name() string { return c.ComponentName }
-func (c componentNode) Children() []node {
-	nodes := []node{}
-	return nodes
+func (c componentComponent) Name() string { return c.ComponentName }
+func (c componentComponent) Children() []component {
+	components := []component{}
+	return components
 }
 
 // Diff compares c with other. If the InstanceConfigs differ, a DiffInfo of type
 // infoInstanceConfigUpdated will be send to DiffInfo.
-// If the InstanceConfig is the equal but the nodes itself differ, an infoComponentUpdated
+// If the InstanceConfig is the equal but the components itself differ, an infoComponentUpdated
 // is sent.
 // This allows to differ between changes that need to be applied to existing instances
 // and infos that relates to scaling (at the moment).
-func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) {
-	otherComponent := other.(componentNode)
+func (c componentComponent) Diff(path []string, other component, changes chan<- DiffInfo) {
+	otherComponent := other.(componentComponent)
 
 	instanceConfigChanged := !reflect.DeepEqual(c.InstanceConfig, otherComponent.InstanceConfig)
 	componentScalingChanged := !reflect.DeepEqual(c.ScalingPolicy, otherComponent.ScalingPolicy)
@@ -127,29 +127,29 @@ func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) 
 	}
 }
 
-func diffHierarchy(path []string, newNode, oldNode node, changes chan<- DiffInfo) {
-	oldNodes := map[string]node{}
-	for _, child := range oldNode.Children() {
-		oldNodes[child.Name()] = child
+func diffHierarchy(path []string, newComponent, oldComponent component, changes chan<- DiffInfo) {
+	oldComponents := map[string]component{}
+	for _, child := range oldComponent.Children() {
+		oldComponents[child.Name()] = child
 	}
 
-	// Search for nodes that were added or changed
-	for _, child := range newNode.Children() {
+	// Search for components that were added or changed
+	for _, child := range newComponent.Children() {
 		name := child.Name()
 
-		oldNode, oldNodeExists := oldNodes[name]
-		if oldNodeExists {
-			child.Diff(append(path, name), oldNode, changes)
+		oldComponent, oldComponentExists := oldComponents[name]
+		if oldComponentExists {
+			child.Diff(append(path, name), oldComponent, changes)
 
-			// This helps us later to determine which nodes were removed
-			delete(oldNodes, name)
+			// This helps us later to determine which components were removed
+			delete(oldComponents, name)
 		} else {
-			changes <- DiffInfo{Type: InfoNodeAdded, Name: append(path, name)}
+			changes <- DiffInfo{Type: InfoComponentAdded, Name: append(path, name)}
 		}
 	}
 
-	// Catch all nodes that were removed (the once left do not longer exist in the new config)
-	for name, _ := range oldNodes {
-		changes <- DiffInfo{Type: InfoNodeRemoved, Name: append(path, name)}
+	// Catch all components that were removed (the once left do not longer exist in the new config)
+	for name, _ := range oldComponents {
+		changes <- DiffInfo{Type: InfoComponentRemoved, Name: append(path, name)}
 	}
 }
