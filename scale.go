@@ -1,11 +1,20 @@
 package userconfig
 
+type Placement string
+
+const (
+	DefaultPlacement       Placement = "simple"
+	OnePerMachinePlacement Placement = "one-per-machine"
+)
+
 type ScaleDefinition struct {
 	// Minimum instances to launch.
 	Min int `json:"min,omitempty" description:"Minimum number of instances to launch"`
 
 	// Maximum instances to launch.
 	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
+
+	Placement Placement `json:"placement,omitempty" description:"Placement strategy when scaling a component. Can be empty or one-per-machine"`
 }
 
 func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
@@ -25,6 +34,12 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 		return maskf(InvalidScalingConfigError, "scale min '%d' cannot be greater than scale max '%d'", sd.Min, sd.Max)
 	}
 
+	switch sd.Placement {
+	case DefaultPlacement, OnePerMachinePlacement:
+	default:
+		return maskf(InvalidScalingConfigError, "unknown value for scale placement: '%s'", sd.Placement)
+	}
+
 	return nil
 }
 
@@ -35,6 +50,10 @@ func (sd *ScaleDefinition) setDefaults(valCtx *ValidationContext) {
 
 	if sd.Max == 0 {
 		sd.Max = valCtx.MaxScaleSize
+	}
+
+	if sd.Placement == "" {
+		sd.Placement = DefaultPlacement
 	}
 }
 
@@ -49,6 +68,10 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 
 	if sd.Max == valCtx.MaxScaleSize {
 		sd.Max = 0
+	}
+
+	if sd.Placement == DefaultPlacement {
+		sd.Placement = ""
 	}
 
 	return sd
@@ -89,6 +112,12 @@ func (nds *ComponentDefinitions) validateScalingPolicyInPods() error {
 					// Both maximums specified, must be the same
 					if p1.Max != p2.Max {
 						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod under '%s'", componentName.String())
+					}
+				}
+
+				if p1.Placement != "" && p2.Placement != "" {
+					if p1.Placement != p2.Placement {
+						return maskf(InvalidScalingConfigError, "different scaling placement policies in pod under '%s'", componentName.String())
 					}
 				}
 			}
