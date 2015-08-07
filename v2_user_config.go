@@ -107,9 +107,26 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 // It is does not exist, it generates an app name.
 func V2AppName(b []byte) (string, error) {
 	// parse and validate
-	appDef, err := ParseV2AppDefinition(b)
-	if err != nil {
-		return "", mask(err)
+	appDef, parseErr := ParseV2AppDefinition(b)
+	if parseErr != nil {
+		// try to fetch the name from a simple definition
+		var simple map[string]interface{}
+		if err := json.Unmarshal(b, &simple); err != nil {
+			return "", mask(err)
+		}
+
+		for k, v := range simple {
+			if strings.EqualFold(k, "name") {
+				if name, ok := v.(string); ok {
+					return name, nil
+				} else {
+					// name is not a string, break and return original error
+					break
+				}
+			}
+		}
+
+		return "", mask(parseErr)
 	}
 
 	// Get name
