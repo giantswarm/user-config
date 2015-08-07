@@ -106,18 +106,24 @@ func (ad *V2AppDefinition) SetDefaults(valCtx *ValidationContext) error {
 // V2AppName returns the name of the given definition if it exists.
 // It is does not exist, it generates an app name.
 func V2AppName(b []byte) (string, error) {
-	// parse and validate
-	appDef, err := ParseV2AppDefinition(b)
-	if err != nil {
+	// try to fetch the name from a simple definition
+	var simple map[string]interface{}
+	if err := json.Unmarshal(b, &simple); err != nil {
 		return "", mask(err)
 	}
 
-	// Get name
-	if name, err := appDef.Name(); err != nil {
-		return "", mask(err)
-	} else {
-		return name, nil
+	for k, v := range simple {
+		if strings.EqualFold(k, "name") {
+			if name, ok := v.(string); ok {
+				return name, nil
+			} else {
+				// name is not a string, break and return original error
+				break
+			}
+		}
 	}
+
+	return "", maskf(InvalidAppDefinitionError, "cannot parse service name")
 }
 
 // Name returns the name of the given definition if it exists.
