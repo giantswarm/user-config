@@ -80,7 +80,7 @@ func (ld LinkDefinition) LinksToSameService() bool {
 }
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
-	links := map[string]bool{}
+	links := map[string]string{}
 
 	for _, link := range lds {
 		if err := link.Validate(valCtx); err != nil {
@@ -92,10 +92,10 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 		if err != nil {
 			return mask(err)
 		}
-		if _, ok := links[linkName]; ok {
+		if port, ok := links[linkName]; ok && link.TargetPort.String() == port {
 			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", linkName)
 		}
-		links[linkName] = true
+		links[linkName] = link.TargetPort.String()
 	}
 
 	return nil
