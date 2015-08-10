@@ -123,7 +123,17 @@ func V2AppName(b []byte) (string, error) {
 		}
 	}
 
-	return "", maskf(InvalidAppDefinitionError, "cannot parse service name")
+	appDef, err := ParseV2AppDefinition(b)
+	if err != nil {
+		return "", mask(err)
+	}
+
+	name, err := appDef.Name()
+	if err != nil {
+		return "", mask(err)
+	}
+
+	return name, nil
 }
 
 // Name returns the name of the given definition if it exists.
