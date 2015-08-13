@@ -90,7 +90,7 @@ func parseVolumeSize(sz string) (int, SizeUnit, error) {
 		}
 		// Re-test
 		if matches == nil || len(matches) < 1 || len(matches) > 3 {
-			return 0, GB, maskf(InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
+			return 0, GB, maskf(InvalidSizeError, "invalid size '%s' detected.", sz)
 		}
 	}
 	unit := "GB"
@@ -102,7 +102,7 @@ func parseVolumeSize(sz string) (int, SizeUnit, error) {
 	}
 	// Check size being a proper number
 	if nr, err := strconv.ParseUint(matches[1], 10, 32); err != nil {
-		return 0, GB, maskf(InvalidSizeError, "Cannot parse app config. Invalid size '%s' detected.", sz)
+		return 0, GB, maskf(InvalidSizeError, "invalid size '%s' detected.", sz)
 	} else {
 		return int(nr), SizeUnit(unit), nil
 	}

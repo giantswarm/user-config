@@ -35,17 +35,17 @@ type DiffInfo struct {
 }
 
 // Diff compares the two AppConfigs and returns a list of changes between the two.
-func Diff(newConfig, oldConfig AppDefinition) []DiffInfo {
+func Diff(newConfig, oldConfig V2AppDefinition) []DiffInfo {
 	if newConfig.AppName != oldConfig.AppName {
 		return []DiffInfo{
-			DiffInfo{Type: InfoAppNameChanged, Name: []string{oldConfig.AppName}},
+			DiffInfo{Type: InfoAppNameChanged, Name: []string{oldConfig.AppName.String()}},
 		}
 	}
 
 	changes := []DiffInfo{}
 	c := make(chan DiffInfo)
 	go func() {
-		diffHierarchy([]string{newConfig.AppName}, appNode(newConfig), appNode(oldConfig), c)
+		diffHierarchy([]string{newConfig.AppName.String()}, serviceNode(newConfig), serviceNode(oldConfig), c)
 		close(c)
 	}()
 
@@ -64,27 +64,13 @@ type node interface {
 	Diff(path []string, other node, changes chan<- DiffInfo)
 }
 
-type appNode AppDefinition
+type serviceNode V2AppDefinition
 
-func (n appNode) Name() string { return n.AppName }
-func (n appNode) Children() []node {
-	nodes := []node{}
-	for _, service := range n.Services {
-		nodes = append(nodes, serviceNode(service))
-	}
-	return nodes
-}
-func (n appNode) Diff(path []string, other node, changes chan<- DiffInfo) {
-	diffHierarchy(path, n, other, changes)
-}
-
-type serviceNode ServiceConfig
-
-func (s serviceNode) Name() string { return s.ServiceName }
+func (s serviceNode) Name() string { return s.AppName.String() }
 func (s serviceNode) Children() []node {
 	nodes := []node{}
-	for _, component := range s.Components {
-		nodes = append(nodes, componentNode(component))
+	for name, component := range s.Components {
+		nodes = append(nodes, componentNode{name: name, definition: *component})
 	}
 	return nodes
 }
@@ -92,9 +78,12 @@ func (n serviceNode) Diff(path []string, other node, changes chan<- DiffInfo) {
 	diffHierarchy(path, n, other, changes)
 }
 
-type componentNode ComponentConfig
+type componentNode struct {
+	name       ComponentName
+	definition ComponentDefinition
+}
 
-func (c componentNode) Name() string { return c.ComponentName }
+func (c componentNode) Name() string { return c.name.String() }
 func (c componentNode) Children() []node {
 	nodes := []node{}
 	return nodes
@@ -109,21 +98,10 @@ func (c componentNode) Children() []node {
 func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) {
 	otherComponent := other.(componentNode)
 
-	instanceConfigChanged := !reflect.DeepEqual(c.InstanceConfig, otherComponent.InstanceConfig)
-	componentScalingChanged := !reflect.DeepEqual(c.ScalingPolicy, otherComponent.ScalingPolicy)
-	componentChanged := !reflect.DeepEqual(c, other)
+	instanceConfigChanged := !reflect.DeepEqual(c.definition, otherComponent.definition)
 
 	if instanceConfigChanged {
 		changes <- DiffInfo{Type: InfoInstanceConfigUpdated, Name: path}
-	}
-	if componentScalingChanged {
-		changes <- DiffInfo{Type: InfoComponentScalingUpdated, Name: path}
-	}
-
-	// NOTE: This shouldn't trigger at the moment, a component only consist of scalingpolicy + instanceconfig
-	// This is just here if we extend the component in the future so it also gets reported
-	if !instanceConfigChanged && !componentScalingChanged && componentChanged {
-		changes <- DiffInfo{Type: InfoComponentUpdated, Name: path}
 	}
 }
 

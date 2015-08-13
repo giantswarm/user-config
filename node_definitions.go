@@ -1,5 +1,9 @@
 package userconfig
 
+import (
+	"os"
+)
+
 type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
 func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
@@ -240,4 +244,16 @@ func (nds *ComponentDefinitions) mountPointsRecursive(name ComponentName, visite
 		}
 	}
 	return mountPoints, nil
+}
+
+// normalizeFolder removes any trailing path separator from the given path.
+func normalizeFolder(path string) string {
+	if path == "" {
+		return ""
+	}
+	l := len(path)
+	if os.IsPathSeparator(path[l-1]) {
+		path = path[:l-1]
+	}
+	return path
 }

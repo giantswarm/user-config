@@ -430,3 +430,21 @@ func (nds ComponentDefinitions) validateLeafs() error {
 	}
 	return nil
 }
+
+// getArrayEntry tries to get an entry in the given map that is an array of
+// objects.
+func getArrayEntry(def map[string]interface{}, key string) []interface{} {
+	entry, ok := def[key]
+	if !ok {
+		// No key element found
+		return nil
+	}
+
+	entryArr, ok := entry.([]interface{})
+	if !ok {
+		// entry not right type
+		return nil
+	}
+
+	return entryArr
+}
