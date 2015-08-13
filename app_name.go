@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	appNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_-]{0,99}$")
+	appNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_.-]{0,99}$")
 )
 
 type AppName string
