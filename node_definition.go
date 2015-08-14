@@ -33,6 +33,9 @@ type ComponentDefinition struct {
 	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the component."`
 
 	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this component and its children."`
+
+	// If true, user will write into a socket to notify when the user component is ready to handle incomming traffic.
+	SignalReady bool `json:"signal_ready,omitempty" description:"If true, user has to notify when the component is ready."`
 }
 
 // validate performs semantic validations of this ComponentDefinition.
