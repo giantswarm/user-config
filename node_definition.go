@@ -35,7 +35,7 @@ type ComponentDefinition struct {
 	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this component and its children."`
 
 	// If true, user will write into a socket to notify when the user component is ready to handle incomming traffic.
-	SignalReady bool `json:"signal_ready,omitempty" description:"If true, user has to notify when the component is ready."`
+	SignalReady SignalReady `json:"signal_ready,omitempty" description:"If true, user has to notify when the component is ready."`
 }
 
 // validate performs semantic validations of this ComponentDefinition.
@@ -70,6 +70,10 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 	}
 
 	if err := nd.Expose.validate(); err != nil {
+		return mask(err)
+	}
+
+	if err := nd.SignalReady.Validate(); err != nil {
 		return mask(err)
 	}
 

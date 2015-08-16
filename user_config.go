@@ -195,7 +195,7 @@ type InstanceConfig struct {
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
 
 	// If true, user will write into a socket to notify when the user component is ready.
-	SignalReady bool `json:"signal_ready,omitempty" description:"If true, user notify when the component is ready."`
+	SignalReady string `json:"signal_ready,omitempty" description:"If true, user notify when the component is ready."`
 }
 
 type PodConfig struct {

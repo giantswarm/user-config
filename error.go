@@ -32,6 +32,7 @@ var (
 	InvalidArgumentError            = errgo.New("invalid argument")
 	VolumeCycleError                = errgo.New("cycle detected in volume configuration")
 	WrongDiffOrderError             = errgo.New("wrong diff order")
+	InvalidSignalReadyError         = errgo.New("invalid signal ready value")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -59,6 +60,7 @@ var (
 		IsMissingValidationContext,
 		IsInvalidArgument,
 		IsSyntax,
+		IsInvalidSignalReady,
 	)
 )
 
@@ -174,6 +176,10 @@ func IsMissingValidationContext(err error) bool {
 
 func IsInvalidArgument(err error) bool {
 	return errgo.Cause(err) == InvalidArgumentError
+}
+
+func IsInvalidSignalReady(err error) bool {
+	return errgo.Cause(err) == InvalidSignalReadyError
 }
 
 // IsSyntax returns true if the cause of the given error in a json.SyntaxError
