@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/giantswarm/user-config"
 	generictypes "github.com/giantswarm/generic-types-go" // Added `generictypes` alias here as a workaround for swagger in api docs
 	"github.com/juju/errgo"
 )
