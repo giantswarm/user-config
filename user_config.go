@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/giantswarm/user-config"
 	generictypes "github.com/giantswarm/generic-types-go" // Added `generictypes` alias here as a workaround for swagger in api docs
 	"github.com/juju/errgo"
 )
@@ -194,8 +195,8 @@ type InstanceConfig struct {
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
 
-	// If true, user will write into a socket to notify when the user component is ready.
-	SignalReady string `json:"signal_ready,omitempty" description:"If true, user notify when the component is ready."`
+	// If given, user will write into a socket to notify when the user component is ready.
+	SignalReady userconfig.SignalReady `json:"signal_ready,omitempty" description:"If given, user will notify when the component is ready."`
 }
 
 type PodConfig struct {
