@@ -783,5 +783,24 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
+		Describe("parsing links to the same component with different ports, should give a name conflict", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component/a"] = addLinks(testComponent(),
+					LinkDefinition{Component: "redisX", TargetPort: generictypes.MustParseDockerPort("6379")},
+					LinkDefinition{Component: "redisX", TargetPort: generictypes.MustParseDockerPort("1234")})
+				components["redisX"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+
+				err = validate(components)
+			})
+
+			It("should throw error InvalidLinkDefinitionError", func() {
+				Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`duplicate link: redisX`))
+			})
+		})
+
 	})
 })
