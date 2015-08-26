@@ -74,3 +74,56 @@ func TestExposeResolveRecursive(t *testing.T) {
 		}
 	}
 }
+
+func TestExposeResolve(t *testing.T) {
+	// Test that verifies that ExposeDefinition.Resolve uses absolute names
+	// and handles recursion correctly.
+	nds := userconfig.ComponentDefinitions{}
+	nds["a"] = &userconfig.ComponentDefinition{
+		Expose: userconfig.ExposeDefinitions{
+			userconfig.ExposeDefinition{
+				Port:       generictypes.MustParseDockerPort("80/tcp"),
+				TargetPort: generictypes.MustParseDockerPort("8086/tcp"),
+				Component:  "a/a",
+			},
+		},
+	}
+	nds["a/a"] = &userconfig.ComponentDefinition{
+		Expose: userconfig.ExposeDefinitions{
+			userconfig.ExposeDefinition{
+				Port:       generictypes.MustParseDockerPort("8086/tcp"),
+				TargetPort: generictypes.MustParseDockerPort("85/tcp"),
+				Component:  "a/a/a",
+			},
+		},
+		Image: userconfig.MustParseImageDefinition("busybox"),
+		Ports: userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("8086/tcp"),
+		},
+	}
+	nds["a/a/a"] = &userconfig.ComponentDefinition{
+		Image: userconfig.MustParseImageDefinition("busybox"),
+		Ports: userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("85/tcp"),
+		},
+	}
+
+	a, err := nds.ComponentByName("a")
+	if err != nil {
+		t.Fatalf("Cannot get a %#v", err)
+	}
+
+	resolvedName, resolvedPort, err := a.Expose[0].Resolve("a", nds)
+	if err != nil {
+		t.Fatalf("Cannot resolve a.Expose %#v", err)
+	}
+
+	if !resolvedName.Equals("a/a/a") {
+		t.Fatal("Resolve yielded wrong implementation component")
+	}
+
+	if !resolvedPort.Equals(generictypes.MustParseDockerPort("85/tcp")) {
+		t.Fatal("Resolve yielded wrong implementation port")
+	}
+
+}
