@@ -1,11 +1,42 @@
 package userconfig
 
+import (
+	"encoding/json"
+)
+
 type Placement string
 
 const (
 	DefaultPlacement       Placement = "simple"
 	OnePerMachinePlacement Placement = "one-per-machine"
 )
+
+// UnmarshalJSON performs a validation during unmarshaling.
+func (pl *Placement) UnmarshalJSON(data []byte) error {
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return mask(err)
+	}
+
+	pv := Placement(s)
+	if err := pv.Validate(); err != nil {
+		return mask(err)
+	}
+
+	*pl = pv
+	return nil
+}
+
+// Validate checks that the given enum is a valid value.
+func (pl Placement) Validate() error {
+	switch pl {
+	case DefaultPlacement, OnePerMachinePlacement:
+	default:
+		return maskf(InvalidScalingConfigError, "unknown value for scale placement: '%s'", pl)
+	}
+	return nil
+}
 
 type ScaleDefinition struct {
 	// Minimum instances to launch.
@@ -34,10 +65,8 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 		return maskf(InvalidScalingConfigError, "scale min '%d' cannot be greater than scale max '%d'", sd.Min, sd.Max)
 	}
 
-	switch sd.Placement {
-	case DefaultPlacement, OnePerMachinePlacement:
-	default:
-		return maskf(InvalidScalingConfigError, "unknown value for scale placement: '%s'", sd.Placement)
+	if err := sd.Placement.Validate(); err != nil {
+		return mask(err)
 	}
 
 	return nil
