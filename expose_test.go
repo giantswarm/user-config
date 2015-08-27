@@ -33,3 +33,97 @@ func TestExpose(t *testing.T) {
 		}
 	}
 }
+
+func TestExposeResolveRecursive(t *testing.T) {
+	implPorts := []generictypes.DockerPort{
+		generictypes.MustParseDockerPort("80/tcp"),   // Same as exposed port
+		generictypes.MustParseDockerPort("8086/tcp"), // Different from exposed port
+	}
+	// Test resolve of an ExposeDefinition that is implemented by the component itself.
+	for _, implPort := range implPorts {
+		nds := userconfig.ComponentDefinitions{}
+		nds["self"] = &userconfig.ComponentDefinition{
+			Image: userconfig.MustParseImageDefinition("busybox"),
+			Ports: userconfig.PortDefinitions{
+				implPort,
+			},
+			Expose: userconfig.ExposeDefinitions{
+				userconfig.ExposeDefinition{
+					Port:       generictypes.MustParseDockerPort("80/tcp"),
+					TargetPort: implPort,
+				},
+			},
+		}
+
+		self, err := nds.ComponentByName("self")
+		if err != nil {
+			t.Fatalf("Cannot get self %#v", err)
+		}
+
+		resolvedName, resolvedPort, err := self.Expose[0].Resolve("self", nds)
+		if err != nil {
+			t.Fatalf("Cannot resolve self.Expose %#v", err)
+		}
+
+		if !resolvedName.Equals("self") {
+			t.Fatal("Resolve yielded wrong implementation component")
+		}
+
+		if !resolvedPort.Equals(implPort) {
+			t.Fatal("Resolve yielded wrong implementation port")
+		}
+	}
+}
+
+func TestExposeResolve(t *testing.T) {
+	// Test that verifies that ExposeDefinition.Resolve uses absolute names
+	// and handles recursion correctly.
+	nds := userconfig.ComponentDefinitions{}
+	nds["a"] = &userconfig.ComponentDefinition{
+		Expose: userconfig.ExposeDefinitions{
+			userconfig.ExposeDefinition{
+				Port:       generictypes.MustParseDockerPort("80/tcp"),
+				TargetPort: generictypes.MustParseDockerPort("8086/tcp"),
+				Component:  "a/a",
+			},
+		},
+	}
+	nds["a/a"] = &userconfig.ComponentDefinition{
+		Expose: userconfig.ExposeDefinitions{
+			userconfig.ExposeDefinition{
+				Port:       generictypes.MustParseDockerPort("8086/tcp"),
+				TargetPort: generictypes.MustParseDockerPort("85/tcp"),
+				Component:  "a/a/a",
+			},
+		},
+		Image: userconfig.MustParseImageDefinition("busybox"),
+		Ports: userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("8086/tcp"),
+		},
+	}
+	nds["a/a/a"] = &userconfig.ComponentDefinition{
+		Image: userconfig.MustParseImageDefinition("busybox"),
+		Ports: userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("85/tcp"),
+		},
+	}
+
+	a, err := nds.ComponentByName("a")
+	if err != nil {
+		t.Fatalf("Cannot get a %#v", err)
+	}
+
+	resolvedName, resolvedPort, err := a.Expose[0].Resolve("a", nds)
+	if err != nil {
+		t.Fatalf("Cannot resolve a.Expose %#v", err)
+	}
+
+	if !resolvedName.Equals("a/a/a") {
+		t.Fatal("Resolve yielded wrong implementation component")
+	}
+
+	if !resolvedPort.Equals(generictypes.MustParseDockerPort("85/tcp")) {
+		t.Fatal("Resolve yielded wrong implementation port")
+	}
+
+}
