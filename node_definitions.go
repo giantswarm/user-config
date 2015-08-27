@@ -60,6 +60,7 @@ func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+// hideDefaults goes over each component and removes default values.
 func (nds ComponentDefinitions) hideDefaults(valCtx *ValidationContext) ComponentDefinitions {
 	for componentName, component := range nds {
 		nds[componentName] = component.hideDefaults(valCtx)
@@ -68,7 +69,65 @@ func (nds ComponentDefinitions) hideDefaults(valCtx *ValidationContext) Componen
 	return nds
 }
 
+// setDefaults goes over each component and applies default values
+// if no values are set.
 func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
+	// Share defaults in pods
+	for componentName, component := range nds {
+		if component.IsPodRoot() {
+			// Found the start of a pod, make sure we share explicitly set values all over the pod
+			podComponents, err := nds.PodComponents(componentName)
+			if err == nil {
+				nds.shareExplicitSettingsInPod(podComponents)
+			}
+		}
+	}
+
+	// Apply all other defaults
+	nds.doSetDefaults(valCtx)
+}
+
+// shareExplicitSettingsInPod goes over each component in a given pod and
+// shares all explicitly set values in it,
+func (nds ComponentDefinitions) shareExplicitSettingsInPod(podComponents ComponentDefinitions) {
+	// Find explicitly set values
+	scale := ScaleDefinition{}
+	for _, c := range podComponents {
+		if c.Scale != nil {
+			if c.Scale.Min != 0 {
+				scale.Min = c.Scale.Min
+			}
+			if c.Scale.Max != 0 {
+				scale.Max = c.Scale.Max
+			}
+			if c.Scale.Placement != "" {
+				scale.Placement = c.Scale.Placement
+			}
+		}
+	}
+	// Are there are any explicit values?
+	if scale.Min != 0 || scale.Max != 0 || scale.Placement != "" {
+		// Apply found defaults
+		for _, c := range podComponents {
+			if c.Scale == nil {
+				c.Scale = &ScaleDefinition{}
+			}
+			if c.Scale.Min == 0 {
+				c.Scale.Min = scale.Min
+			}
+			if c.Scale.Max == 0 {
+				c.Scale.Max = scale.Max
+			}
+			if c.Scale.Placement == "" {
+				c.Scale.Placement = scale.Placement
+			}
+		}
+	}
+}
+
+// doSetDefaults goes over each component and applies default values
+// if no values are set.
+func (nds ComponentDefinitions) doSetDefaults(valCtx *ValidationContext) {
 	for componentName, _ := range nds {
 		nds[componentName].setDefaults(valCtx)
 	}
