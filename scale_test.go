@@ -1,6 +1,8 @@
 package userconfig_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/giantswarm/user-config"
@@ -124,5 +126,41 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 
 	if b.Components["component/a"].Scale.Max != 0 {
 		t.Fatalf("max scale NOT hidden")
+	}
+}
+
+func TestValidPlacementValues(t *testing.T) {
+	list := []string{
+		"simple",
+		"one-per-machine",
+	}
+
+	for _, s := range list {
+		var pe struct {
+			Placement userconfig.Placement
+		}
+		data := fmt.Sprintf(`{"placement": "%s"}`, s)
+		if err := json.Unmarshal([]byte(data), &pe); err != nil {
+			t.Fatalf("Valid placement value '%s' considered invalid because %v", s, err)
+		}
+	}
+}
+
+func TestInvalidPlacementValues(t *testing.T) {
+	list := []string{
+		"foo",
+		"none",
+		"two-per-machine",
+		"",
+	}
+
+	for _, s := range list {
+		var pe struct {
+			Placement userconfig.Placement
+		}
+		data := fmt.Sprintf(`{"placement": "%s"}`, s)
+		if err := json.Unmarshal([]byte(data), &pe); err == nil {
+			t.Fatalf("Invalid placement value '%s' considered valid", s)
+		}
 	}
 }
