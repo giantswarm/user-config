@@ -82,7 +82,12 @@ func (sd *ScaleDefinition) setDefaults(valCtx *ValidationContext) {
 	}
 
 	if sd.Placement == "" {
-		sd.Placement = DefaultPlacement
+		// Allow for valCtx.Placement not be set.
+		if valCtx.Placement != "" {
+			sd.Placement = valCtx.Placement
+		} else {
+			sd.Placement = DefaultPlacement
+		}
 	}
 }
 

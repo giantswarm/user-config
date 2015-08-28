@@ -78,7 +78,7 @@ func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
 			// Found the start of a pod, make sure we share explicitly set values all over the pod
 			podComponents, err := nds.PodComponents(componentName)
 			if err == nil {
-				nds.shareExplicitSettingsInPod(podComponents)
+				nds.shareExplicitSettingsInPod(podComponents, valCtx)
 			}
 			// If err is not nil, we don't handle it here because we did not want to change the API of this
 			// function. Not sharing values here will cause validation errors later, so we can safely
@@ -93,39 +93,29 @@ func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
 
 // shareExplicitSettingsInPod goes over each component in a given pod and
 // shares all explicitly set values in it,
-func (nds ComponentDefinitions) shareExplicitSettingsInPod(podComponents ComponentDefinitions) {
+func (nds ComponentDefinitions) shareExplicitSettingsInPod(podComponents ComponentDefinitions, valCtx *ValidationContext) {
 	// Find explicitly set values
-	scale := ScaleDefinition{}
+	localValCtx := *valCtx
+	hasExplicitValues := false
 	for _, c := range podComponents {
 		if c.Scale != nil {
 			if c.Scale.Min != 0 {
-				scale.Min = c.Scale.Min
+				localValCtx.MinScaleSize = c.Scale.Min
+				hasExplicitValues = true
 			}
 			if c.Scale.Max != 0 {
-				scale.Max = c.Scale.Max
+				localValCtx.MaxScaleSize = c.Scale.Max
+				hasExplicitValues = true
 			}
 			if c.Scale.Placement != "" {
-				scale.Placement = c.Scale.Placement
+				localValCtx.Placement = c.Scale.Placement
+				hasExplicitValues = true
 			}
 		}
 	}
 	// Are there are any explicit values?
-	if scale.Min != 0 || scale.Max != 0 || scale.Placement != "" {
-		// Apply found defaults
-		for _, c := range podComponents {
-			if c.Scale == nil {
-				c.Scale = &ScaleDefinition{}
-			}
-			if c.Scale.Min == 0 {
-				c.Scale.Min = scale.Min
-			}
-			if c.Scale.Max == 0 {
-				c.Scale.Max = scale.Max
-			}
-			if c.Scale.Placement == "" {
-				c.Scale.Placement = scale.Placement
-			}
-		}
+	if hasExplicitValues {
+		podComponents.doSetDefaults(&localValCtx)
 	}
 }
 
