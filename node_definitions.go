@@ -80,6 +80,10 @@ func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
 			if err == nil {
 				nds.shareExplicitSettingsInPod(podComponents)
 			}
+			// If err is not nil, we don't handle it here because we did not want to change the API of this
+			// function. Not sharing values here will cause validation errors later, so we can safely
+			// leave it out here.
+			// The validation errors will be "scaling values cannot be different for components in a pod"
 		}
 	}
 
