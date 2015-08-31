@@ -53,10 +53,11 @@ var _ = Describe("v2 user config pod validator", func() {
 		return config
 	}
 
-	addScale := func(config *ComponentDefinition, min, max int) *ComponentDefinition {
+	addScale := func(config *ComponentDefinition, min, max int, placement Placement) *ComponentDefinition {
 		config.Scale = &ScaleDefinition{
-			Min: min,
-			Max: max,
+			Min:       min,
+			Max:       max,
+			Placement: placement,
 		}
 		return config
 	}
@@ -698,9 +699,9 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				components := testApp()
 				components["component/a"] = setPod(testComponent(), PodChildren)
-				components["component/a/b1"] = addScale(testComponent(), 1, maxScale)
-				components["component/a/b2"] = addScale(testComponent(), 0, maxScale)
-				components["component/a/b3"] = addScale(testComponent(), 1, 0)
+				components["component/a/b1"] = addScale(testComponent(), 1, maxScale, "")
+				components["component/a/b2"] = addScale(testComponent(), 0, maxScale, "")
+				components["component/a/b3"] = addScale(testComponent(), 1, 0, "")
 				components["component/a/b4"] = testComponent()
 
 				err = validate(components)
@@ -717,8 +718,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				components := testApp()
 				components["component/a"] = setPod(testComponent(), PodChildren)
-				components["component/a/b1"] = addScale(testComponent(), 1, 5)
-				components["component/a/b2"] = addScale(testComponent(), 2, 5)
+				components["component/a/b1"] = addScale(testComponent(), 1, 5, "")
+				components["component/a/b2"] = addScale(testComponent(), 2, 5, "")
 
 				err = validate(components)
 			})
@@ -735,8 +736,8 @@ var _ = Describe("v2 user config pod validator", func() {
 			BeforeEach(func() {
 				components := testApp()
 				components["component/a"] = setPod(testComponent(), PodChildren)
-				components["component/a/b1"] = addScale(testComponent(), 2, 5)
-				components["component/a/b2"] = addScale(testComponent(), 2, 7)
+				components["component/a/b1"] = addScale(testComponent(), 2, 5, "")
+				components["component/a/b2"] = addScale(testComponent(), 2, 7, "")
 
 				err = validate(components)
 			})
@@ -744,6 +745,58 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should throw error InvalidScalingConfigError", func() {
 				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`different maximum scaling policies in pod under 'component/a'`))
+			})
+		})
+
+		Describe("parsing invalid scaling definition in pods, scaling placement values should be the same in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addScale(testComponent(), 2, 5, DefaultPlacement)
+				components["component/a/b2"] = addScale(testComponent(), 2, 5, OnePerMachinePlacement)
+
+				err = validate(components)
+			})
+
+			It("should throw error InvalidScalingConfigError", func() {
+				Expect(IsInvalidScalingConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`different scaling placement policies in pod under 'component/a'`))
+			})
+		})
+
+		Describe("parsing valid scaling definition in pods, maximum scaling values should be the same or not set in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = testComponent()                     // Scale not set here
+				components["component/a/b2"] = addScale(testComponent(), 2, 7, "") // Scale set here
+
+				err = validate(components)
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+
+		Describe("parsing valid scaling definition in pods, scaling values should be the same or not set in all components of a pod", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component/a"] = setPod(testComponent(), PodChildren)
+				components["component/a/b1"] = addScale(testComponent(), 0, 0, OnePerMachinePlacement) // Scale placement set here
+				components["component/a/b2"] = addScale(testComponent(), 2, 7, "")                     // Scale min, max set here
+
+				err = validate(components)
+			})
+
+			It("should not throw an error", func() {
+				Expect(err).To(BeNil())
 			})
 		})
 
@@ -780,6 +833,25 @@ var _ = Describe("v2 user config pod validator", func() {
 			It("should throw error InvalidPortConfigError", func() {
 				Expect(IsInvalidPortConfig(err)).To(BeTrue())
 				Expect(err.Error()).To(Equal(`multiple components export port '80/tcp' in pod under 'component/a'`))
+			})
+		})
+
+		Describe("parsing links to the same component with different ports, should give a name conflict", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component/a"] = addLinks(testComponent(),
+					LinkDefinition{Component: "redisX", TargetPort: generictypes.MustParseDockerPort("6379")},
+					LinkDefinition{Component: "redisX", TargetPort: generictypes.MustParseDockerPort("1234")})
+				components["redisX"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+
+				err = validate(components)
+			})
+
+			It("should throw error InvalidLinkDefinitionError", func() {
+				Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`duplicate link: redisX`))
 			})
 		})
 

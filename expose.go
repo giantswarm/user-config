@@ -139,9 +139,12 @@ func (ed *ExposeDefinition) Resolve(containingComponentName ComponentName, nds C
 	}
 
 	// Check expose definitions of component
-	if implExpDef, err := component.Expose.defByPort(implPort); err == nil {
-		// Recurse into the implementation component
-		return implExpDef.Resolve(implName, nds)
+	if !implName.Equals(containingComponentName) {
+		// Implementation name differs from containing name, so we may recurse into it.
+		if implExpDef, err := component.Expose.defByPort(implPort); err == nil {
+			// Recurse into the implementation component
+			return implExpDef.Resolve(implName, nds)
+		}
 	}
 
 	// Check exported ports of component

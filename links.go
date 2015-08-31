@@ -92,8 +92,8 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 		if err != nil {
 			return mask(err)
 		}
-		if port, ok := links[linkName]; ok && link.TargetPort.String() == port {
-			return maskf(InvalidLinkDefinitionError, "duplicated link: %s", linkName)
+		if _, ok := links[linkName]; ok {
+			return maskf(InvalidLinkDefinitionError, "duplicate link: %s", linkName)
 		}
 		links[linkName] = link.TargetPort.String()
 	}
