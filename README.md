@@ -2,4 +2,4 @@
 
 The datastructures behind the swarm.json format.
 
-Used in [Giant Swarm CLI](https://github.com/giantswarm/cli)
+Used in the [Giant Swarm CLI](https://github.com/giantswarm/cli)
