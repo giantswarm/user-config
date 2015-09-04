@@ -193,9 +193,6 @@ type InstanceConfig struct {
 
 	// Service names required by a service.
 	Dependencies []DependencyConfig `json:"dependencies,omitempty" description:"List of dependencies of this component"`
-
-	// If given, user will write into a socket to notify when the user component is ready.
-	SignalReady SignalReady `json:"signal_ready,omitempty" description:"If given, user will notify when the component is ready."`
 }
 
 type PodConfig struct {
