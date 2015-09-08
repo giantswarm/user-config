@@ -10,6 +10,7 @@ import (
 
 func V2ExampleDefinition() userconfig.V2AppDefinition {
 	return userconfig.V2AppDefinition{
+    AppName: userconfig.AppName("service"),
 		Components: userconfig.ComponentDefinitions{
 			userconfig.ComponentName("component/a"): &userconfig.ComponentDefinition{
 				Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
@@ -35,7 +36,7 @@ func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefini
 	}
 	volumes := userconfig.VolumeDefinitions{}
 	for i, path := range paths {
-		volumes = append(volumes, userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(sizes[i])})
+		volumes = append(volumes, userconfig.VolumeDefinition{Path: path, Size: userconfig.VolumeSize(sizes[i])})
 	}
 	componentA.Volumes = volumes
 	appDef.Components["component/a"] = componentA

@@ -10,7 +10,7 @@ import (
 func TestVolumesInvalidMaxSize(t *testing.T) {
 	valCtx := NewValidationContext()
 
-	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("101")}
+	vd := userconfig.VolumeDefinition{Path: "/data", Size: userconfig.VolumeSize("101")}
 	err := vd.V2Validate(valCtx)
 
 	if err == nil {
@@ -24,7 +24,7 @@ func TestVolumesInvalidMaxSize(t *testing.T) {
 func TestVolumesValidMaxSize(t *testing.T) {
 	valCtx := NewValidationContext()
 
-	vd := userconfig.VolumeConfig{Path: "/data", Size: userconfig.VolumeSize("100")}
+	vd := userconfig.VolumeDefinition{Path: "/data", Size: userconfig.VolumeSize("100")}
 	err := vd.V2Validate(valCtx)
 
 	if err != nil {

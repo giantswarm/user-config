@@ -1,6 +1,6 @@
 package userconfig
 
-type VolumeConfig struct {
+type VolumeDefinition struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
 
@@ -17,12 +17,12 @@ type VolumeConfig struct {
 	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
 }
 
-// validate validates the settings of this VolumeConfig.
+// validate validates the settings of this VolumeDefinition.
 // Valid combinations:
 // - Option1: Path & Size set, everything else empty
 // - Option 2: VolumesFrom set, everything else empty
 // - Option 3: VolumeFrom, VolumePath set, Path optionally set, everything else empty
-func (vc *VolumeConfig) validate() error {
+func (vc *VolumeDefinition) validate() error {
 	// Option 1
 	if vc.Path != "" && !vc.Size.Empty() {
 		if vc.VolumesFrom != "" {
@@ -72,7 +72,7 @@ func (vc *VolumeConfig) validate() error {
 	return maskf(InvalidVolumeConfigError, "path, volume-path or volumes-path must be set in '%#v'", vc)
 }
 
-func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
+func (vc VolumeDefinition) V2Validate(valCtx *ValidationContext) error {
 	if valCtx == nil {
 		return nil
 	}
@@ -110,7 +110,7 @@ func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 	return nil
 }
 
-type VolumeDefinitions []VolumeConfig
+type VolumeDefinitions []VolumeDefinition
 
 // Contains returns true if the volumes contain a volume with the given path,
 // or false otherwise.
@@ -133,7 +133,7 @@ func (vds VolumeDefinitions) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
-// validateVolumesRefs checks for each volume in each component the existance of reference names in the given volume config.
+// validateVolumesRefs checks for each volume in each component the existance of reference names in the given volume definition.
 func (nds *ComponentDefinitions) validateVolumesRefs() error {
 	for componentName, componentDef := range *nds {
 		for _, vc := range componentDef.Volumes {
@@ -145,8 +145,8 @@ func (nds *ComponentDefinitions) validateVolumesRefs() error {
 	return nil
 }
 
-// validateVolumeRefs checks the existance of reference names in the given volume config.
-func (nds *ComponentDefinitions) validateVolumeRefs(vc VolumeConfig, containingComponentName ComponentName) error {
+// validateVolumeRefs checks the existance of reference names in the given volume deinition.
+func (nds *ComponentDefinitions) validateVolumeRefs(vc VolumeDefinition, containingComponentName ComponentName) error {
 	componentName := vc.VolumesFrom
 	if componentName == "" {
 		componentName = vc.VolumeFrom
