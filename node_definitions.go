@@ -64,6 +64,7 @@ func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+// hideDefaults goes over each component and removes default values.
 func (nds ComponentDefinitions) hideDefaults(valCtx *ValidationContext) ComponentDefinitions {
 	for componentName, component := range nds {
 		nds[componentName] = component.hideDefaults(valCtx)
@@ -72,7 +73,59 @@ func (nds ComponentDefinitions) hideDefaults(valCtx *ValidationContext) Componen
 	return nds
 }
 
+// setDefaults goes over each component and applies default values
+// if no values are set.
 func (nds ComponentDefinitions) setDefaults(valCtx *ValidationContext) {
+	// Share defaults in pods
+	for componentName, component := range nds {
+		if component.IsPodRoot() {
+			// Found the start of a pod, make sure we share explicitly set values all over the pod
+			podComponents, err := nds.PodComponents(componentName)
+			if err == nil {
+				nds.shareExplicitSettingsInPod(podComponents, valCtx)
+			}
+			// If err is not nil, we don't handle it here because we did not want to change the API of this
+			// function. Not sharing values here will cause validation errors later, so we can safely
+			// leave it out here.
+			// The validation errors will be "scaling values cannot be different for components in a pod"
+		}
+	}
+
+	// Apply all other defaults
+	nds.doSetDefaults(valCtx)
+}
+
+// shareExplicitSettingsInPod goes over each component in a given pod and
+// shares all explicitly set values in it,
+func (nds ComponentDefinitions) shareExplicitSettingsInPod(podComponents ComponentDefinitions, valCtx *ValidationContext) {
+	// Find explicitly set values
+	localValCtx := *valCtx
+	hasExplicitValues := false
+	for _, c := range podComponents {
+		if c.Scale != nil {
+			if c.Scale.Min != 0 {
+				localValCtx.MinScaleSize = c.Scale.Min
+				hasExplicitValues = true
+			}
+			if c.Scale.Max != 0 {
+				localValCtx.MaxScaleSize = c.Scale.Max
+				hasExplicitValues = true
+			}
+			if c.Scale.Placement != "" {
+				localValCtx.Placement = c.Scale.Placement
+				hasExplicitValues = true
+			}
+		}
+	}
+	// Are there are any explicit values?
+	if hasExplicitValues {
+		podComponents.doSetDefaults(&localValCtx)
+	}
+}
+
+// doSetDefaults goes over each component and applies default values
+// if no values are set.
+func (nds ComponentDefinitions) doSetDefaults(valCtx *ValidationContext) {
 	for componentName, _ := range nds {
 		nds[componentName].setDefaults(valCtx)
 	}

@@ -1,11 +1,51 @@
 package userconfig
 
+import (
+	"encoding/json"
+)
+
+type Placement string
+
+const (
+	DefaultPlacement       Placement = "simple"
+	OnePerMachinePlacement Placement = "one-per-machine"
+)
+
+// UnmarshalJSON performs a validation during unmarshaling.
+func (pl *Placement) UnmarshalJSON(data []byte) error {
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return mask(err)
+	}
+
+	pv := Placement(s)
+	if err := pv.Validate(); err != nil {
+		return mask(err)
+	}
+
+	*pl = pv
+	return nil
+}
+
+// Validate checks that the given enum is a valid value.
+func (pl Placement) Validate() error {
+	switch pl {
+	case DefaultPlacement, OnePerMachinePlacement:
+	default:
+		return maskf(InvalidScalingConfigError, "unknown value for scale placement: '%s'", pl)
+	}
+	return nil
+}
+
 type ScaleDefinition struct {
 	// Minimum instances to launch.
 	Min int `json:"min,omitempty" description:"Minimum number of instances to launch"`
 
 	// Maximum instances to launch.
 	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
+
+	Placement Placement `json:"placement,omitempty" description:"Placement strategy when scaling a component. Can be empty or one-per-machine"`
 }
 
 func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
@@ -25,6 +65,10 @@ func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
 		return maskf(InvalidScalingConfigError, "scale min '%d' cannot be greater than scale max '%d'", sd.Min, sd.Max)
 	}
 
+	if err := sd.Placement.Validate(); err != nil {
+		return mask(err)
+	}
+
 	return nil
 }
 
@@ -35,6 +79,15 @@ func (sd *ScaleDefinition) setDefaults(valCtx *ValidationContext) {
 
 	if sd.Max == 0 {
 		sd.Max = valCtx.MaxScaleSize
+	}
+
+	if sd.Placement == "" {
+		// Allow for valCtx.Placement not be set.
+		if valCtx.Placement != "" {
+			sd.Placement = valCtx.Placement
+		} else {
+			sd.Placement = DefaultPlacement
+		}
 	}
 }
 
@@ -49,6 +102,10 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 
 	if sd.Max == valCtx.MaxScaleSize {
 		sd.Max = 0
+	}
+
+	if sd.Placement == DefaultPlacement {
+		sd.Placement = ""
 	}
 
 	return sd
@@ -89,6 +146,12 @@ func (nds *ComponentDefinitions) validateScalingPolicyInPods() error {
 					// Both maximums specified, must be the same
 					if p1.Max != p2.Max {
 						return maskf(InvalidScalingConfigError, "different maximum scaling policies in pod under '%s'", componentName.String())
+					}
+				}
+
+				if p1.Placement != "" && p2.Placement != "" {
+					if p1.Placement != p2.Placement {
+						return maskf(InvalidScalingConfigError, "different scaling placement policies in pod under '%s'", componentName.String())
 					}
 				}
 			}

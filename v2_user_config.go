@@ -53,6 +53,7 @@ type ValidationContext struct {
 
 	MinScaleSize int
 	MaxScaleSize int
+	Placement    Placement
 
 	MinVolumeSize VolumeSize
 	MaxVolumeSize VolumeSize
