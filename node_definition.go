@@ -33,6 +33,9 @@ type ComponentDefinition struct {
 	Scale *ScaleDefinition `json:"scale,omitempty" description:"Scaling settings of the component."`
 
 	Pod PodEnum `json:"pod,omitempty" description:"Pod behavior of this component and its children."`
+
+	// If true, user needs to send a signal to indicate that the container is ready is should be considered running.
+	SignalReady bool `json:"signal_ready,omitempty" description:"If true, user has to notify when the component is ready."`
 }
 
 // validate performs semantic validations of this ComponentDefinition.
