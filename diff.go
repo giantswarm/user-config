@@ -33,8 +33,8 @@ func Diff(oldDef, newDef V2AppDefinition) []DiffInfo {
 
 	diffInfos = append(diffInfos, diffServiceNameUpdated(newDef.AppName, oldDef.AppName)...)
 	diffInfos = append(diffInfos, diffComponentAdded(newDef.Components, oldDef.Components)...)
-	diffInfos = append(diffInfos, diffComponentRemoved(newDef.Components, oldDef.Components)...)
 	diffInfos = append(diffInfos, diffComponentUpdated(newDef.Components, oldDef.Components)...)
+	diffInfos = append(diffInfos, diffComponentRemoved(newDef.Components, oldDef.Components)...)
 
 	return diffInfos
 }
@@ -70,23 +70,6 @@ func diffComponentAdded(a, b ComponentDefinitions) []DiffInfo {
 	return diffInfos
 }
 
-func diffComponentRemoved(a, b ComponentDefinitions) []DiffInfo {
-	diffInfos := []DiffInfo{}
-
-	for _, orderedName := range orderedComponentKeys(b) {
-		bName := ComponentName(orderedName)
-
-		if _, ok := a[bName]; !ok {
-			diffInfos = append(diffInfos, DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  bName.String(),
-			})
-		}
-	}
-
-	return diffInfos
-}
-
 func diffComponentUpdated(a, b ComponentDefinitions) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
@@ -102,6 +85,23 @@ func diffComponentUpdated(a, b ComponentDefinitions) []DiffInfo {
 					New:  bName.String(),
 				})
 			}
+		}
+	}
+
+	return diffInfos
+}
+
+func diffComponentRemoved(a, b ComponentDefinitions) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	for _, orderedName := range orderedComponentKeys(b) {
+		bName := ComponentName(orderedName)
+
+		if _, ok := a[bName]; !ok {
+			diffInfos = append(diffInfos, DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  bName.String(),
+			})
 		}
 	}
 

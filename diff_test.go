@@ -278,14 +278,6 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 				New:  "service1",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  "redis",
-			},
-			DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  "service",
-			},
-			DiffInfo{
 				Type: DiffInfoComponentUpdated,
 				Old:  "redis2",
 				New:  "redis2",
@@ -294,6 +286,14 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 				Type: DiffInfoComponentUpdated,
 				Old:  "service2",
 				New:  "service2",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  "redis",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  "service",
 			},
 		}
 
