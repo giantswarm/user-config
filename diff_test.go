@@ -29,7 +29,7 @@ func ExampleDefinition() AppDefinition {
 	}
 }
 
-func testDiffCallWith(t *testing.T, newDef, oldDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
+func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
 	diffInfos := Diff(oldDef, newDef)
 
 	if len(diffInfos) != len(expectedDiffInfos) {
@@ -54,7 +54,7 @@ func TestDiffNoDiff(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffServiceNameUpdated(t *testing.T) {
@@ -71,7 +71,7 @@ func TestDiffServiceNameUpdated(t *testing.T) {
 		},
 	}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffComponentAdded(t *testing.T) {
@@ -89,7 +89,7 @@ func TestDiffComponentAdded(t *testing.T) {
 		},
 	}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffComponentRemoved(t *testing.T) {
@@ -107,7 +107,7 @@ func TestDiffComponentRemoved(t *testing.T) {
 		},
 	}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffComponentAddedAndRemoved(t *testing.T) {
@@ -133,7 +133,7 @@ func TestDiffComponentAddedAndRemoved(t *testing.T) {
 		},
 	}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffComponentUpdated(t *testing.T) {
@@ -156,7 +156,7 @@ func TestDiffComponentUpdated(t *testing.T) {
 		},
 	}
 
-	testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
 func TestDiffFullDefinitionUpdate(t *testing.T) {
@@ -297,6 +297,6 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 			},
 		}
 
-		testDiffCallWith(t, newDef, oldDef, expectedDiffInfos)
+		testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 	}
 }

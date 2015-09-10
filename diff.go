@@ -31,15 +31,15 @@ type DiffInfo struct {
 func Diff(oldDef, newDef V2AppDefinition) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
-	diffInfos = append(diffInfos, diffServiceNameUpdated(newDef.AppName, oldDef.AppName)...)
-	diffInfos = append(diffInfos, diffComponentAdded(newDef.Components, oldDef.Components)...)
-	diffInfos = append(diffInfos, diffComponentUpdated(newDef.Components, oldDef.Components)...)
-	diffInfos = append(diffInfos, diffComponentRemoved(newDef.Components, oldDef.Components)...)
+	diffInfos = append(diffInfos, diffServiceNameUpdated(oldDef.AppName, newDef.AppName)...)
+	diffInfos = append(diffInfos, diffComponentAdded(oldDef.Components, newDef.Components)...)
+	diffInfos = append(diffInfos, diffComponentUpdated(oldDef.Components, newDef.Components)...)
+	diffInfos = append(diffInfos, diffComponentRemoved(oldDef.Components, newDef.Components)...)
 
 	return diffInfos
 }
 
-func diffServiceNameUpdated(newDef, oldDef AppName) []DiffInfo {
+func diffServiceNameUpdated(oldDef, newDef AppName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	if !newDef.Equals(oldDef) {
@@ -53,7 +53,7 @@ func diffServiceNameUpdated(newDef, oldDef AppName) []DiffInfo {
 	return diffInfos
 }
 
-func diffComponentAdded(newDef, oldDef ComponentDefinitions) []DiffInfo {
+func diffComponentAdded(oldDef, newDef ComponentDefinitions) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	for _, orderedName := range orderedComponentKeys(newDef) {
@@ -70,7 +70,7 @@ func diffComponentAdded(newDef, oldDef ComponentDefinitions) []DiffInfo {
 	return diffInfos
 }
 
-func diffComponentUpdated(newDef, oldDef ComponentDefinitions) []DiffInfo {
+func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	for _, orderedName := range orderedComponentKeys(oldDef) {
@@ -91,7 +91,7 @@ func diffComponentUpdated(newDef, oldDef ComponentDefinitions) []DiffInfo {
 	return diffInfos
 }
 
-func diffComponentRemoved(newDef, oldDef ComponentDefinitions) []DiffInfo {
+func diffComponentRemoved(oldDef, newDef ComponentDefinitions) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	for _, orderedName := range orderedComponentKeys(oldDef) {
@@ -108,11 +108,11 @@ func diffComponentRemoved(newDef, oldDef ComponentDefinitions) []DiffInfo {
 	return diffInfos
 }
 
-func orderedComponentKeys(newDef ComponentDefinitions) []string {
+func orderedComponentKeys(oldDef ComponentDefinitions) []string {
 	keys := []string{}
 
-	for newName, _ := range newDef {
-		keys = append(keys, newName.String())
+	for oldName, _ := range oldDef {
+		keys = append(keys, oldName.String())
 	}
 	sort.Strings(keys)
 
