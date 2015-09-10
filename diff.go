@@ -1,6 +1,7 @@
 package userconfig
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 )
@@ -26,6 +27,36 @@ type DiffInfo struct {
 
 	Old string
 	New string
+}
+
+func (di DiffInfo) Action() string {
+	switch di.Type {
+	case DiffInfoServiceNameUpdated:
+		return "re-create service"
+	case DiffInfoComponentAdded:
+		return "add component"
+	case DiffInfoComponentRemoved:
+		return "remove component"
+	case DiffInfoComponentUpdated:
+		return "update component"
+	default:
+		panic("unknown diff type")
+	}
+}
+
+func (di DiffInfo) Reason() string {
+	switch di.Type {
+	case DiffInfoServiceNameUpdated:
+		return "updating service name breaks service discovery"
+	case DiffInfoComponentAdded:
+		return fmt.Sprintf("component '%s' not found in old definition", di.New)
+	case DiffInfoComponentUpdated:
+		return fmt.Sprintf("component '%s' changed in new definition", di.New)
+	case DiffInfoComponentRemoved:
+		return fmt.Sprintf("component '%s' not found in new definition", di.Old)
+	}
+
+	return ""
 }
 
 func Diff(oldDef, newDef V2AppDefinition) []DiffInfo {
@@ -70,6 +101,23 @@ func diffComponentAdded(oldDef, newDef ComponentDefinitions) []DiffInfo {
 	return diffInfos
 }
 
+func diffComponentRemoved(oldDef, newDef ComponentDefinitions) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	for _, orderedName := range orderedComponentKeys(oldDef) {
+		oldName := ComponentName(orderedName)
+
+		if _, ok := newDef[oldName]; !ok {
+			diffInfos = append(diffInfos, DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  oldName.String(),
+			})
+		}
+	}
+
+	return diffInfos
+}
+
 func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
@@ -85,23 +133,6 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 					New:  oldName.String(),
 				})
 			}
-		}
-	}
-
-	return diffInfos
-}
-
-func diffComponentRemoved(oldDef, newDef ComponentDefinitions) []DiffInfo {
-	diffInfos := []DiffInfo{}
-
-	for _, orderedName := range orderedComponentKeys(oldDef) {
-		oldName := ComponentName(orderedName)
-
-		if _, ok := newDef[oldName]; !ok {
-			diffInfos = append(diffInfos, DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  oldName.String(),
-			})
 		}
 	}
 
