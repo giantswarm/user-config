@@ -2,6 +2,7 @@ package userconfig
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/giantswarm/generic-types-go"
 )
@@ -119,11 +120,20 @@ func (dds V2DomainDefinitions) ToSimple() map[string]string {
 
 	for d, ports := range dds {
 		for _, port := range ports {
-			simpleDomains[d.String()] = port.Port
+			simpleDomains[d.String()] = port.String()
 		}
 	}
 
 	return simpleDomains
+}
+
+func (dds V2DomainDefinitions) String() string {
+	raw, err := json.Marshal(dds.ToSimple())
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 func (dds V2DomainDefinitions) validate(exportedPorts PortDefinitions) error {

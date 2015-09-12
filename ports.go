@@ -2,6 +2,8 @@ package userconfig
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
 
 	"github.com/giantswarm/generic-types-go"
 	"github.com/juju/errgo"
@@ -52,6 +54,22 @@ func (pds *PortDefinitions) UnmarshalJSON(data []byte) error {
 	*pds = PortDefinitions(local)
 
 	return nil
+}
+
+func (pds *PortDefinitions) String() string {
+	list := []string{}
+
+	for _, pd := range *pds {
+		list = append(list, pd.String())
+	}
+	sort.Strings(list)
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 func (pds PortDefinitions) contains(port generictypes.DockerPort) bool {

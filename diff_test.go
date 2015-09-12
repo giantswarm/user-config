@@ -30,7 +30,7 @@ func ExampleDefinition() AppDefinition {
 }
 
 func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
-	diffInfos := Diff(oldDef, newDef)
+	diffInfos := ServiceDiff(oldDef, newDef)
 
 	if len(diffInfos) != len(expectedDiffInfos) {
 		t.Fatalf("Expected %d item, got %d: %#v", len(expectedDiffInfos), len(diffInfos), diffInfos)
@@ -300,3 +300,84 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 		testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 	}
 }
+
+// Because of our smart data types some definitions can be represented
+// differently. The following test ensures that a diff only is created in case
+// the component really changed.
+func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
+	rawOldDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						]
+					}
+				}
+			}
+	`
+
+	var oldDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawOldDef), &oldDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	rawNewDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": 6379
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": 80,
+						"domains": { "80": "foo.com" },
+						"links": [
+							{ "component": "redis", "target_port": 6379 }
+						]
+					},
+					"redis2": {
+						"image": "redis",
+						"ports": 6379
+					}
+				}
+			}
+	`
+
+	var newDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawNewDef), &newDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentAdded,
+			New:  "redis2",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+// TODO test each definition difference inside a component definition

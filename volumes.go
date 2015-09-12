@@ -1,5 +1,11 @@
 package userconfig
 
+import (
+	"encoding/json"
+	"fmt"
+	"sort"
+)
+
 type VolumeConfig struct {
 	// Path of the volume to mount, e.g. "/opt/service/".
 	Path string `json:"path,omitempty" description:"Path of the volume to mount (inside the container)`
@@ -110,7 +116,32 @@ func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+func (vd VolumeConfig) String() string {
+	raw, err := json.Marshal(vd)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
+}
+
 type VolumeDefinitions []VolumeConfig
+
+func (vds VolumeDefinitions) String() string {
+	list := []string{}
+
+	for _, vd := range vds {
+		list = append(list, vd.String())
+	}
+	sort.Strings(list)
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
+}
 
 // Contains returns true if the volumes contain a volume with the given path,
 // or false otherwise.

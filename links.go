@@ -1,6 +1,10 @@
 package userconfig
 
 import (
+	"encoding/json"
+	"fmt"
+	"sort"
+
 	"github.com/giantswarm/generic-types-go"
 )
 
@@ -18,6 +22,22 @@ type LinkDefinition struct {
 }
 
 type LinkDefinitions []LinkDefinition
+
+func (ld LinkDefinition) String() string {
+	m := map[string]string{
+		"service":     ld.Service.String(),
+		"component":   ld.Component.String(),
+		"alias":       ld.Alias,
+		"target_port": ld.TargetPort.String(),
+	}
+
+	raw, err := json.Marshal(m)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
+}
 
 func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 	if ld.Component.Empty() && ld.Service.Empty() {
@@ -99,6 +119,22 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 	}
 
 	return nil
+}
+
+func (lds LinkDefinitions) String() string {
+	list := []string{}
+
+	for _, ld := range lds {
+		list = append(list, ld.String())
+	}
+	sort.Strings(list)
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 // Resolve resolves the implementation of the given link in the context of the given
