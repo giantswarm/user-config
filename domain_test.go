@@ -120,32 +120,78 @@ func TestUnmarshalV2DomainFullService(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		var appDef userconfig.V2AppDefinition
 
-		byteSlice := []byte(`{
-    "components": {
-        "component1": {
-        	"ports": [ "80/tcp" ],
-            "image": "busybox",
-            "domains": {
-            	"foo.com": "80/tcp",
-            	"ape.org": "80/tcp",
-            	"foobar.com": "80",
-            	"int.com": 80
-            }
-        },
-        "component2": {
-        	"ports": [ "80/tcp", "81/tcp" ],
-            "image": "busybox",
-            "domains": {
-            	"80/tcp": ["mouse.com", "ape.org", "mickey.com"],
-            	"81": "disney.com"
-            }
-        }
-    }
-}`)
+		byteSlice := []byte(`
+			{
+				"components": {
+					"component1": {
+						"domains": {
+							"ape.org": "80/tcp",
+							"foo.com": "80/tcp",
+							"foobar.com": "80",
+							"int.com": 80
+						},
+						"image": "busybox",
+						"ports": [
+							"80/tcp"
+						]
+					},
+					"component2": {
+						"domains": {
+							"80/tcp": [
+								"mouse.com",
+								"ape.org",
+								"mickey.com"
+							],
+							"81": "disney.com"
+						},
+						"image": "busybox",
+						"ports": [
+							"80/tcp",
+							"81/tcp"
+						]
+					}
+				}
+			}
+		`)
 
 		err := json.Unmarshal(byteSlice, &appDef)
 		if err != nil {
 			t.Fatalf("Unmarshal failed: %#v", err)
+		}
+	}
+}
+
+// TestDomainStringReliability ensures that V2DomainDefinitions.String always returns
+// the same string. We use this to create proper diffs between two definitions,
+// so this is quiet critical.
+func TestDomainStringReliability(t *testing.T) {
+	dds := userconfig.V2DomainDefinitions{
+		generictypes.Domain("foo.com"): userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("8080"),
+			generictypes.MustParseDockerPort("111"),
+			generictypes.MustParseDockerPort("9999"),
+		},
+		generictypes.Domain("aaa.com"): userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("111"),
+			generictypes.MustParseDockerPort("9999"),
+			generictypes.MustParseDockerPort("55"),
+		},
+		generictypes.Domain("zabe.com"): userconfig.PortDefinitions{
+			generictypes.MustParseDockerPort("3333"),
+			generictypes.MustParseDockerPort("9283"),
+			generictypes.MustParseDockerPort("55"),
+		},
+	}
+
+	expected := dds.String()
+
+	for i := 0; i < 1000; i++ {
+		generated := dds.String()
+
+		if expected != generated {
+			t.Log("expected domain definitions to be qual")
+			t.Logf("epxected: %s", expected)
+			t.Fatalf("got: %s", generated)
 		}
 	}
 }

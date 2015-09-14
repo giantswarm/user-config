@@ -436,11 +436,13 @@ func diffComponentSignalReady(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 // helper
 
-func orderedComponentKeys(oldDef ComponentDefinitions) []string {
+// orderedComponentKeys creates a ordered list of component names, based on the
+// provided component map.
+func orderedComponentKeys(defs ComponentDefinitions) []string {
 	keys := []string{}
 
-	for oldName, _ := range oldDef {
-		keys = append(keys, oldName.String())
+	for name, _ := range defs {
+		keys = append(keys, name.String())
 	}
 	sort.Strings(keys)
 

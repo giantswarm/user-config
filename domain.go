@@ -3,6 +3,7 @@ package userconfig
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/giantswarm/generic-types-go"
 )
@@ -111,24 +112,23 @@ func (dl *domainList) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ToSimple just maps the domain config with its custom types to a more simpler
-// map. This can be used for internal management once the validity of domains
-// and ports is given. That way dependencies between packages requiring hard
-// custom types can be dropped.
-func (dds V2DomainDefinitions) ToSimple() map[string]string {
-	simpleDomains := map[string]string{}
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two V2DomainDefinitions when creating a diff. See diff.go
+func (dds V2DomainDefinitions) String() string {
+	keys := []string{}
+	for domain, _ := range dds {
+		keys = append(keys, domain.String())
+	}
+	sort.Strings(keys)
 
-	for d, ports := range dds {
-		for _, port := range ports {
-			simpleDomains[d.String()] = port.String()
-		}
+	simple := map[string]string{}
+	for _, key := range keys {
+		ports := dds[generictypes.Domain(key)]
+		simple[key] = ports.String()
 	}
 
-	return simpleDomains
-}
-
-func (dds V2DomainDefinitions) String() string {
-	raw, err := json.Marshal(dds.ToSimple())
+	raw, err := json.Marshal(simple)
 	if err != nil {
 		panic(fmt.Sprintf("%#v\n", mask(err)))
 	}
