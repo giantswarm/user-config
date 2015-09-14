@@ -1,3 +1,4 @@
+// TODO this file should be called link.go
 package userconfig
 
 import (
@@ -23,7 +24,11 @@ type LinkDefinition struct {
 
 type LinkDefinitions []LinkDefinition
 
+// String returns the string represantion of the current incarnation.
 func (ld LinkDefinition) String() string {
+	// A string map is reliable enough for our case, as the JSON implementation
+	// takes care of the order of the provided fields. See
+	// http://play.golang.org/p/U8nDgdga2X
 	m := map[string]string{
 		"service":     ld.Service.String(),
 		"component":   ld.Component.String(),
@@ -121,6 +126,9 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 	return nil
 }
 
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two LinkDefinitions when creating a diff. See diff.go
 func (lds LinkDefinitions) String() string {
 	list := []string{}
 

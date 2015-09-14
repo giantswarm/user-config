@@ -127,6 +127,9 @@ func (vd VolumeConfig) String() string {
 
 type VolumeDefinitions []VolumeConfig
 
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two VolumeDefinitions when creating a diff. See diff.go
 func (vds VolumeDefinitions) String() string {
 	list := []string{}
 

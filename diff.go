@@ -22,6 +22,10 @@ const (
 	// DiffInfoComponentUpdated
 	DiffInfoComponentUpdated DiffType = "component-updated"
 
+	// NOTE: The following diff info types are currently only for internal usage.
+	// We will probably expose them to the user soon, but for now they are just
+	// to summarize for a DiffInfoComponentUpdated.
+
 	// DiffInfoComponentImageUpdated
 	DiffInfoComponentImageUpdated DiffType = "component-image-updated"
 
@@ -66,6 +70,8 @@ type DiffInfo struct {
 	New string
 }
 
+// Action returns a human readable string containing information about what kind of action a
+// certain diff type will cause.
 func (di DiffInfo) Action() string {
 	switch di.Type {
 	case DiffInfoServiceNameUpdated:
@@ -81,6 +87,8 @@ func (di DiffInfo) Action() string {
 	}
 }
 
+// Reason returns a human readable string containing information about why a
+// certain diff type will cause the related action.
 func (di DiffInfo) Reason() string {
 	switch di.Type {
 	case DiffInfoServiceNameUpdated:
@@ -91,13 +99,21 @@ func (di DiffInfo) Reason() string {
 		return fmt.Sprintf("component '%s' changed in new definition", di.New)
 	case DiffInfoComponentRemoved:
 		return fmt.Sprintf("component '%s' not found in new definition", di.Old)
+	default:
+		panic("unknown diff type")
 	}
-
-	return ""
 }
 
 // service diff
 
+// ServiceDiff checks the difference between two service definitions. The
+// returned list of diff infos can contain the following diff types. Note that
+// DiffInfoComponentUpdated is aggregated and details are hidden for the user
+// for now.
+//   - DiffInfoServiceNameUpdated
+//   - DiffInfoComponentAdded
+//   - DiffInfoComponentRemoved
+//   - DiffInfoComponentUpdated
 func ServiceDiff(oldDef, newDef V2AppDefinition) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
@@ -182,6 +198,22 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 
 // component diff
 
+// ComponentDiff checks the difference between two component definitions. The
+// returned list of diff infos can contain the following diff types. Note that
+// we aggregate all tiff types handled here to create one
+// DiffInfoComponentUpdated for the user for now.
+//   - DiffInfoComponentImageUpdated
+//   - DiffInfoComponentEntrypointUpdated
+//   - DiffInfoComponentPortsUpdated
+//   - DiffInfoComponentEnvUpdated
+//   - DiffInfoComponentVolumesUpdated
+//   - DiffInfoComponentArgsUpdated
+//   - DiffInfoComponentDomainsUpdated
+//   - DiffInfoComponentLinksUpdated
+//   - DiffInfoComponentExposeUpdated
+//   - DiffInfoComponentScaleUpdated
+//   - DiffInfoComponentPodUpdated
+//   - DiffInfoComponentSignalReadyUpdated
 func ComponentDiff(oldDef, newDef ComponentDefinition) []DiffInfo {
 	diffInfos := []DiffInfo{}
 

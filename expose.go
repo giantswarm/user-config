@@ -14,7 +14,11 @@ type ExposeDefinition struct {
 	TargetPort generictypes.DockerPort `json:"target_port,omitempty" description:"Port of the given component that implements the stable API."`
 }
 
+// String returns the string represantion of the current incarnation.
 func (ed *ExposeDefinition) String() string {
+	// A string map is reliable enough for our case, as the JSON implementation
+	// takes care of the order of the provided fields. See
+	// http://play.golang.org/p/U8nDgdga2X
 	m := map[string]string{
 		"port":        ed.Port.String(),
 		"component":   ed.Component.String(),
@@ -83,6 +87,9 @@ func (nds ComponentDefinitions) validateExpose() error {
 	return nil
 }
 
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two ExposeDefinitions when creating a diff. See diff.go
 func (eds ExposeDefinitions) String() string {
 	list := []string{}
 

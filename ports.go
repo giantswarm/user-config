@@ -56,6 +56,9 @@ func (pds *PortDefinitions) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two PortDefinitions when creating a diff. See diff.go
 func (pds *PortDefinitions) String() string {
 	list := []string{}
 

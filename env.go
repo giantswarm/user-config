@@ -8,6 +8,7 @@ import (
 	"github.com/juju/errgo"
 )
 
+// TODO this should be named EnvDefinition
 // List of environment settings like "KEY=VALUE", "KEY2=VALUE2"
 type EnvList []string
 
@@ -50,6 +51,9 @@ func (this *EnvList) UnmarshalJSON(data []byte) error {
 	return errgo.WithCausef(err, InvalidEnvListFormatError, "")
 }
 
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two EnvList when creating a diff. See diff.go
 func (eds *EnvList) String() string {
 	list := []string{}
 
