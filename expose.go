@@ -1,6 +1,10 @@
 package userconfig
 
 import (
+	"encoding/json"
+	"fmt"
+	"sort"
+
 	"github.com/giantswarm/generic-types-go"
 )
 
@@ -8,6 +12,25 @@ type ExposeDefinition struct {
 	Port       generictypes.DockerPort `json:"port" description:"Port of the stable API."`
 	Component  ComponentName           `json:"component,omitempty" description:"Name of the component that implements the stable API."`
 	TargetPort generictypes.DockerPort `json:"target_port,omitempty" description:"Port of the given component that implements the stable API."`
+}
+
+// String returns the string represantion of the current incarnation.
+func (ed *ExposeDefinition) String() string {
+	// A string map is reliable enough for our case, as the JSON implementation
+	// takes care of the order of the provided fields. See
+	// http://play.golang.org/p/U8nDgdga2X
+	m := map[string]string{
+		"port":        ed.Port.String(),
+		"component":   ed.Component.String(),
+		"target_port": ed.TargetPort.String(),
+	}
+
+	raw, err := json.Marshal(m)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 type ExposeDefinitions []ExposeDefinition
@@ -62,6 +85,25 @@ func (nds ComponentDefinitions) validateExpose() error {
 	}
 
 	return nil
+}
+
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two ExposeDefinitions when creating a diff. See diff.go
+func (eds ExposeDefinitions) String() string {
+	list := []string{}
+
+	for _, ed := range eds {
+		list = append(list, ed.String())
+	}
+	sort.Strings(list)
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 // validate checks for invalid and duplicate entries

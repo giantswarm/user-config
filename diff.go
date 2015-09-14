@@ -1,155 +1,450 @@
 package userconfig
 
 import (
-	"reflect"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 type DiffType string
 
 const (
-	// Used to indicate that the app-name in the two files was changed
-	InfoAppNameChanged DiffType = "infoAppNameChanged"
+	// DiffInfoServiceNameUpdated
+	DiffInfoServiceNameUpdated DiffType = "service-name-updated"
 
-	// Used to indicate that a node (service or component) was added. `Name` in the DiffInfo describes the node that was added.
-	InfoNodeAdded DiffType = "node-added"
+	// DiffInfoComponentAdded
+	DiffInfoComponentAdded DiffType = "component-added"
 
-	// Used to indicate that a node (service or component) was removed. `Name` in the DiffInfo describes the node that was removed.
-	InfoNodeRemoved DiffType = "node-removed"
+	// DiffInfoComponentRemoved
+	DiffInfoComponentRemoved DiffType = "component-removed"
 
-	// Used to indicate that the scaling config of a component changed.
-	InfoComponentScalingUpdated DiffType = "component-scaling-changed"
+	// DiffInfoComponentUpdated
+	DiffInfoComponentUpdated DiffType = "component-updated"
 
-	// Used to indicate that the InstanceConfig in the ComponentConfig identified by `Name` changed.
-	InfoInstanceConfigUpdated DiffType = "instance-update"
+	// NOTE: The following diff info types are currently only for internal usage.
+	// We will probably expose them to the user soon, but for now they are just
+	// to summarize for a DiffInfoComponentUpdated.
 
-	// Used to indicate that the component itself changed (but not the underlying InstanceConfig). `Name` in the DiffInfo describes the node that was changed.
-	InfoComponentUpdated DiffType = "component-update"
+	// DiffInfoComponentImageUpdated
+	DiffInfoComponentImageUpdated DiffType = "component-image-updated"
+
+	// DiffInfoComponentEntrypointUpdated
+	DiffInfoComponentEntrypointUpdated DiffType = "component-entrypoint-updated"
+
+	// DiffInfoComponentPortsUpdated
+	DiffInfoComponentPortsUpdated DiffType = "component-ports-updated"
+
+	// DiffInfoComponentEnvUpdated
+	DiffInfoComponentEnvUpdated DiffType = "component-env-updated"
+
+	// DiffInfoComponentVolumesUpdated
+	DiffInfoComponentVolumesUpdated DiffType = "component-volumes-updated"
+
+	// DiffInfoComponentArgsUpdated
+	DiffInfoComponentArgsUpdated DiffType = "component-args-updated"
+
+	// DiffInfoComponentDomainsUpdated
+	DiffInfoComponentDomainsUpdated DiffType = "component-domains-updated"
+
+	// DiffInfoComponentLinksUpdated
+	DiffInfoComponentLinksUpdated DiffType = "component-links-updated"
+
+	// DiffInfoComponentExposeUpdated
+	DiffInfoComponentExposeUpdated DiffType = "component-expose-updated"
+
+	// DiffInfoComponentScaleUpdated
+	DiffInfoComponentScaleUpdated DiffType = "component-scale-updated"
+
+	// DiffInfoComponentPodUpdated
+	DiffInfoComponentPodUpdated DiffType = "component-pod-updated"
+
+	// DiffInfoComponentSignalReadyUpdated
+	DiffInfoComponentSignalReadyUpdated DiffType = "component-signal-ready-updated"
 )
 
 type DiffInfo struct {
-	// What type changed: app, service, component
 	Type DiffType
 
-	// Path to the node that changed.
-	Name []string
+	Old string
+	New string
 }
 
-// Diff compares the two AppConfigs and returns a list of changes between the two.
-func Diff(newConfig, oldConfig AppDefinition) []DiffInfo {
-	if newConfig.AppName != oldConfig.AppName {
-		return []DiffInfo{
-			DiffInfo{Type: InfoAppNameChanged, Name: []string{oldConfig.AppName}},
+// Action returns a human readable string containing information about what kind of action a
+// certain diff type will cause.
+func (di DiffInfo) Action() string {
+	switch di.Type {
+	case DiffInfoServiceNameUpdated:
+		return "re-create service"
+	case DiffInfoComponentAdded:
+		return "add component"
+	case DiffInfoComponentRemoved:
+		return "remove component"
+	case DiffInfoComponentUpdated:
+		return "update component"
+	default:
+		panic("unknown diff type")
+	}
+}
+
+// Reason returns a human readable string containing information about why a
+// certain diff type will cause the related action.
+func (di DiffInfo) Reason() string {
+	switch di.Type {
+	case DiffInfoServiceNameUpdated:
+		return "updating service name breaks service discovery"
+	case DiffInfoComponentAdded:
+		return fmt.Sprintf("component '%s' not found in old definition", di.New)
+	case DiffInfoComponentUpdated:
+		return fmt.Sprintf("component '%s' changed in new definition", di.New)
+	case DiffInfoComponentRemoved:
+		return fmt.Sprintf("component '%s' not found in new definition", di.Old)
+	default:
+		panic("unknown diff type")
+	}
+}
+
+// service diff
+
+// ServiceDiff checks the difference between two service definitions. The
+// returned list of diff infos can contain the following diff types. Note that
+// DiffInfoComponentUpdated is aggregated and details are hidden for the user
+// for now.
+//   - DiffInfoServiceNameUpdated
+//   - DiffInfoComponentAdded
+//   - DiffInfoComponentRemoved
+//   - DiffInfoComponentUpdated
+func ServiceDiff(oldDef, newDef V2AppDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	diffInfos = append(diffInfos, diffServiceNameUpdated(oldDef.AppName, newDef.AppName)...)
+	diffInfos = append(diffInfos, diffComponentAdded(oldDef.Components, newDef.Components)...)
+	diffInfos = append(diffInfos, diffComponentUpdated(oldDef.Components, newDef.Components)...)
+	diffInfos = append(diffInfos, diffComponentRemoved(oldDef.Components, newDef.Components)...)
+
+	return diffInfos
+}
+
+func diffServiceNameUpdated(oldDef, newDef AppName) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	if !newDef.Equals(oldDef) {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoServiceNameUpdated,
+			Old:  oldDef.String(),
+			New:  newDef.String(),
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentAdded(oldDef, newDef ComponentDefinitions) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	for _, orderedName := range orderedComponentKeys(newDef) {
+		newName := ComponentName(orderedName)
+
+		if _, ok := oldDef[newName]; !ok {
+			diffInfos = append(diffInfos, DiffInfo{
+				Type: DiffInfoComponentAdded,
+				New:  newName.String(),
+			})
 		}
 	}
 
-	changes := []DiffInfo{}
-	c := make(chan DiffInfo)
-	go func() {
-		diffHierarchy([]string{newConfig.AppName}, appNode(newConfig), appNode(oldConfig), c)
-		close(c)
-	}()
-
-	for change := range c {
-		changes = append(changes, change)
-	}
-	return changes
+	return diffInfos
 }
 
-type node interface {
-	Name() string
-	Children() []node
+func diffComponentRemoved(oldDef, newDef ComponentDefinitions) []DiffInfo {
+	diffInfos := []DiffInfo{}
 
-	// Diff is called by diffHierarchy when two nodes have the same name and should be checked
-	// for internal differences. Diffs should be written to changes.
-	Diff(path []string, other node, changes chan<- DiffInfo)
-}
+	for _, orderedName := range orderedComponentKeys(oldDef) {
+		oldName := ComponentName(orderedName)
 
-type appNode AppDefinition
-
-func (n appNode) Name() string { return n.AppName }
-func (n appNode) Children() []node {
-	nodes := []node{}
-	for _, service := range n.Services {
-		nodes = append(nodes, serviceNode(service))
-	}
-	return nodes
-}
-func (n appNode) Diff(path []string, other node, changes chan<- DiffInfo) {
-	diffHierarchy(path, n, other, changes)
-}
-
-type serviceNode ServiceConfig
-
-func (s serviceNode) Name() string { return s.ServiceName }
-func (s serviceNode) Children() []node {
-	nodes := []node{}
-	for _, component := range s.Components {
-		nodes = append(nodes, componentNode(component))
-	}
-	return nodes
-}
-func (n serviceNode) Diff(path []string, other node, changes chan<- DiffInfo) {
-	diffHierarchy(path, n, other, changes)
-}
-
-type componentNode ComponentConfig
-
-func (c componentNode) Name() string { return c.ComponentName }
-func (c componentNode) Children() []node {
-	nodes := []node{}
-	return nodes
-}
-
-// Diff compares c with other. If the InstanceConfigs differ, a DiffInfo of type
-// infoInstanceConfigUpdated will be send to DiffInfo.
-// If the InstanceConfig is the equal but the nodes itself differ, an infoComponentUpdated
-// is sent.
-// This allows to differ between changes that need to be applied to existing instances
-// and infos that relates to scaling (at the moment).
-func (c componentNode) Diff(path []string, other node, changes chan<- DiffInfo) {
-	otherComponent := other.(componentNode)
-
-	instanceConfigChanged := !reflect.DeepEqual(c.InstanceConfig, otherComponent.InstanceConfig)
-	componentScalingChanged := !reflect.DeepEqual(c.ScalingPolicy, otherComponent.ScalingPolicy)
-	componentChanged := !reflect.DeepEqual(c, other)
-
-	if instanceConfigChanged {
-		changes <- DiffInfo{Type: InfoInstanceConfigUpdated, Name: path}
-	}
-	if componentScalingChanged {
-		changes <- DiffInfo{Type: InfoComponentScalingUpdated, Name: path}
-	}
-
-	// NOTE: This shouldn't trigger at the moment, a component only consist of scalingpolicy + instanceconfig
-	// This is just here if we extend the component in the future so it also gets reported
-	if !instanceConfigChanged && !componentScalingChanged && componentChanged {
-		changes <- DiffInfo{Type: InfoComponentUpdated, Name: path}
-	}
-}
-
-func diffHierarchy(path []string, newNode, oldNode node, changes chan<- DiffInfo) {
-	oldNodes := map[string]node{}
-	for _, child := range oldNode.Children() {
-		oldNodes[child.Name()] = child
-	}
-
-	// Search for nodes that were added or changed
-	for _, child := range newNode.Children() {
-		name := child.Name()
-
-		oldNode, oldNodeExists := oldNodes[name]
-		if oldNodeExists {
-			child.Diff(append(path, name), oldNode, changes)
-
-			// This helps us later to determine which nodes were removed
-			delete(oldNodes, name)
-		} else {
-			changes <- DiffInfo{Type: InfoNodeAdded, Name: append(path, name)}
+		if _, ok := newDef[oldName]; !ok {
+			diffInfos = append(diffInfos, DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  oldName.String(),
+			})
 		}
 	}
 
-	// Catch all nodes that were removed (the once left do not longer exist in the new config)
-	for name, _ := range oldNodes {
-		changes <- DiffInfo{Type: InfoNodeRemoved, Name: append(path, name)}
+	return diffInfos
+}
+
+func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	for _, orderedName := range orderedComponentKeys(oldDef) {
+		oldName := ComponentName(orderedName)
+		oldComponent := oldDef[oldName]
+
+		if newComponent, ok := newDef[oldName]; ok {
+			componentDiffInfos := ComponentDiff(*newComponent, *oldComponent)
+
+			if len(componentDiffInfos) > 0 {
+				diffInfos = append(diffInfos, DiffInfo{
+					Type: DiffInfoComponentUpdated,
+					Old:  oldName.String(),
+					New:  oldName.String(),
+				})
+			}
+		}
 	}
+
+	return diffInfos
+}
+
+// component diff
+
+// ComponentDiff checks the difference between two component definitions. The
+// returned list of diff infos can contain the following diff types. Note that
+// we aggregate all tiff types handled here to create one
+// DiffInfoComponentUpdated for the user for now.
+//   - DiffInfoComponentImageUpdated
+//   - DiffInfoComponentEntrypointUpdated
+//   - DiffInfoComponentPortsUpdated
+//   - DiffInfoComponentEnvUpdated
+//   - DiffInfoComponentVolumesUpdated
+//   - DiffInfoComponentArgsUpdated
+//   - DiffInfoComponentDomainsUpdated
+//   - DiffInfoComponentLinksUpdated
+//   - DiffInfoComponentExposeUpdated
+//   - DiffInfoComponentScaleUpdated
+//   - DiffInfoComponentPodUpdated
+//   - DiffInfoComponentSignalReadyUpdated
+func ComponentDiff(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	diffInfos = append(diffInfos, diffComponentImage(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentEntrypoint(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentPorts(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentEnv(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentVolumes(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentArgs(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentDomains(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentLinks(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentExpose(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentScale(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentPod(oldDef, newDef)...)
+	diffInfos = append(diffInfos, diffComponentSignalReady(oldDef, newDef)...)
+
+	return diffInfos
+}
+
+func diffComponentImage(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldImage := oldDef.Image.String()
+	newImage := newDef.Image.String()
+
+	if oldImage != newImage {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentImageUpdated,
+			Old:  oldImage,
+			New:  newImage,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentEntrypoint(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	if oldDef.EntryPoint != newDef.EntryPoint {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentEntrypointUpdated,
+			Old:  oldDef.EntryPoint,
+			New:  newDef.EntryPoint,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentPorts(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldPorts := oldDef.Ports.String()
+	newPorts := newDef.Ports.String()
+
+	if oldPorts != newPorts {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentPortsUpdated,
+			Old:  oldPorts,
+			New:  newPorts,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentEnv(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldEnv := oldDef.Env.String()
+	newEnv := newDef.Env.String()
+
+	if oldEnv != newEnv {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentEnvUpdated,
+			Old:  oldEnv,
+			New:  newEnv,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentVolumes(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldVolumes := oldDef.Volumes.String()
+	newVolumes := newDef.Volumes.String()
+
+	if oldVolumes != newVolumes {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentVolumesUpdated,
+			Old:  oldVolumes,
+			New:  newVolumes,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentArgs(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldArgs := strings.Join(oldDef.Args, ", ")
+	newArgs := strings.Join(newDef.Args, ", ")
+
+	if oldArgs != newArgs {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentArgsUpdated,
+			Old:  oldArgs,
+			New:  newArgs,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentDomains(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldDomains := oldDef.Domains.String()
+	newDomains := newDef.Domains.String()
+
+	if oldDomains != newDomains {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentLinksUpdated,
+			Old:  oldDomains,
+			New:  newDomains,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentLinks(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldLinks := oldDef.Links.String()
+	newLinks := newDef.Links.String()
+
+	if oldLinks != newLinks {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentLinksUpdated,
+			Old:  oldLinks,
+			New:  newLinks,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentExpose(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldExpose := oldDef.Expose.String()
+	newExpose := newDef.Expose.String()
+
+	if oldExpose != newExpose {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentExposeUpdated,
+			Old:  oldExpose,
+			New:  newExpose,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentScale(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldScale := oldDef.Scale.String()
+	newScale := newDef.Scale.String()
+
+	if oldScale != newScale {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentScaleUpdated,
+			Old:  oldScale,
+			New:  newScale,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentPod(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldPod := oldDef.Pod.String()
+	newPod := newDef.Pod.String()
+
+	if oldPod != newPod {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentPodUpdated,
+			Old:  oldPod,
+			New:  newPod,
+		})
+	}
+
+	return diffInfos
+}
+
+func diffComponentSignalReady(oldDef, newDef ComponentDefinition) []DiffInfo {
+	diffInfos := []DiffInfo{}
+
+	oldPod := strconv.FormatBool(oldDef.SignalReady)
+	newPod := strconv.FormatBool(newDef.SignalReady)
+
+	if oldPod != newPod {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type: DiffInfoComponentSignalReadyUpdated,
+			Old:  oldPod,
+			New:  newPod,
+		})
+	}
+
+	return diffInfos
+}
+
+// helper
+
+// orderedComponentKeys creates a ordered list of component names, based on the
+// provided component map.
+func orderedComponentKeys(defs ComponentDefinitions) []string {
+	keys := []string{}
+
+	for name, _ := range defs {
+		keys = append(keys, name.String())
+	}
+	sort.Strings(keys)
+
+	return keys
 }

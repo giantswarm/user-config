@@ -1,6 +1,11 @@
+// TODO this file should be called link.go
 package userconfig
 
 import (
+	"encoding/json"
+	"fmt"
+	"sort"
+
 	"github.com/giantswarm/generic-types-go"
 )
 
@@ -18,6 +23,26 @@ type LinkDefinition struct {
 }
 
 type LinkDefinitions []LinkDefinition
+
+// String returns the string represantion of the current incarnation.
+func (ld LinkDefinition) String() string {
+	// A string map is reliable enough for our case, as the JSON implementation
+	// takes care of the order of the provided fields. See
+	// http://play.golang.org/p/U8nDgdga2X
+	m := map[string]string{
+		"service":     ld.Service.String(),
+		"component":   ld.Component.String(),
+		"alias":       ld.Alias,
+		"target_port": ld.TargetPort.String(),
+	}
+
+	raw, err := json.Marshal(m)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
+}
 
 func (ld LinkDefinition) Validate(valCtx *ValidationContext) error {
 	if ld.Component.Empty() && ld.Service.Empty() {
@@ -99,6 +124,25 @@ func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
 	}
 
 	return nil
+}
+
+// String returns the marshalled and ordered string represantion of its own
+// incarnation. It is important to have the string represantion ordered, since
+// we use it to compare two LinkDefinitions when creating a diff. See diff.go
+func (lds LinkDefinitions) String() string {
+	list := []string{}
+
+	for _, ld := range lds {
+		list = append(list, ld.String())
+	}
+	sort.Strings(list)
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 // Resolve resolves the implementation of the given link in the context of the given

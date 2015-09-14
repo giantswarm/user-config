@@ -1,6 +1,7 @@
 package userconfig_test
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -28,151 +29,355 @@ func ExampleDefinition() AppDefinition {
 	}
 }
 
-func testDiffCallWith(t *testing.T, newCfg, oldCfg AppDefinition, expectedInfos []DiffInfo) {
-	infos := Diff(newCfg, oldCfg)
+func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
+	diffInfos := ServiceDiff(oldDef, newDef)
 
-	if len(infos) != len(expectedInfos) {
-		t.Fatalf("Expected %d item, got %d: %v", len(expectedInfos), len(infos), infos)
+	if len(diffInfos) != len(expectedDiffInfos) {
+		t.Fatalf("Expected %d item, got %d: %#v", len(expectedDiffInfos), len(diffInfos), diffInfos)
 	}
 
-	if !reflect.DeepEqual(infos, expectedInfos) {
-		for _, exp := range expectedInfos {
-			t.Logf("* expected diff: %v\n", exp)
+	if !reflect.DeepEqual(diffInfos, expectedDiffInfos) {
+		for _, exp := range expectedDiffInfos {
+			t.Logf("* expected diff: %#v\n", exp)
 		}
 
-		for _, got := range infos {
-			t.Logf("* found diff: %v\n", got)
+		for _, got := range diffInfos {
+			t.Logf("* found diff: %#v\n", got)
 		}
 		t.Fatalf("Found diffs do not match expected diffs!")
 	}
 }
 
-func TestDiffAppRename(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.AppName = "app#changed"
+func TestDiffNoDiff(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	newDef := V2ExampleDefinition()
 
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoAppNameChanged, Name: []string{"app"}},
-	}
+	expectedDiffInfos := []DiffInfo{}
 
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
-func TestDiffServiceRename(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.Services[0].ServiceName = "service1#changed"
+func TestDiffServiceNameUpdated(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.AppName = "service"
+	newDef := V2ExampleDefinition()
+	newDef.AppName = "my-new-service-name"
 
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
-	}
-
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
-}
-
-func TestDiffComponentRename(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
-	}
-
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
-}
-
-func TestDiffComponentUpdateImage(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.Services[0].Components[0].Image = generictypes.MustParseDockerImage("landingpage2")
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
-	}
-
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
-}
-func TestDiffComponentUpdateArgs(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.Services[0].Components[0].Args = []string{"--env=test"}
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
-	}
-
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
-}
-
-func TestDiffComponentScalingChanged(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-	newCfg.Services[0].Components[0].ScalingPolicy = &ScaleDefinition{Min: 0, Max: 1000}
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoComponentScalingUpdated, Name: []string{"app", "service1", "service1component1"}},
-	}
-
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
-}
-
-// Changes in the service should not be alert if the e.g. the service was renamed (yeah, illogical, I know)
-func TestDiffLowerLevelChangesShouldBeIgnored(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
-
-	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
-		ComponentName: "service1component1",
-		InstanceConfig: InstanceConfig{
-			Image: generictypes.MustParseDockerImage("foobar"),
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoServiceNameUpdated,
+			Old:  "service",
+			New:  "my-new-service-name",
 		},
-	})
-	newCfg.Services[0].ServiceName = "service1#changed"
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1#changed"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1"}},
 	}
 
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
-func TestDiffMultipleChanges(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
+func TestDiffComponentAdded(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-new-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
 
-	newCfg.Services[0].Components[0].ComponentName = "service1component1#changed"
-	newCfg.Services[0].Components = append(newCfg.Services[0].Components, ComponentConfig{
-		ComponentName: "service1component2",
-		InstanceConfig: InstanceConfig{
-			Image: generictypes.MustParseDockerImage("foobar"),
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentAdded,
+			New:  "my-new-component",
 		},
-	})
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component1#changed"}},
-		DiffInfo{Type: InfoNodeAdded, Name: []string{"app", "service1", "service1component2"}},
-		DiffInfo{Type: InfoNodeRemoved, Name: []string{"app", "service1", "service1component1"}},
 	}
 
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
-func TestDiffComponentMultipleChanges(t *testing.T) {
-	oldCfg := ExampleDefinition()
-	newCfg := ExampleDefinition()
+func TestDiffComponentRemoved(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+	newDef := V2ExampleDefinition()
 
-	newCfg.Services[0].Components[0].ScalingPolicy = &ScaleDefinition{Min: 10}
-	newCfg.Services[0].Components[0].InstanceConfig.Image = generictypes.MustParseDockerImage("new-site")
-
-	expectedDiffItems := []DiffInfo{
-		DiffInfo{Type: InfoInstanceConfigUpdated, Name: []string{"app", "service1", "service1component1"}},
-		DiffInfo{Type: InfoComponentScalingUpdated, Name: []string{"app", "service1", "service1component1"}},
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentRemoved,
+			Old:  "my-old-component",
+		},
 	}
 
-	testDiffCallWith(t, newCfg, oldCfg, expectedDiffItems)
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
+
+func TestDiffComponentAddedAndRemoved(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-new-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentAdded,
+			New:  "my-new-component",
+		},
+		DiffInfo{
+			Type: DiffInfoComponentRemoved,
+			Old:  "my-old-component",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiffComponentUpdated(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("8080/tcp")}, // port updated
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentUpdated,
+			Old:  "my-old-component",
+			New:  "my-old-component",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiffFullDefinitionUpdate(t *testing.T) {
+	// The original implementation (of "diff" creation) has an issue with the go
+	// implementation of map, not being consistent with respect to ordering of
+	// elements while iterating through the map. With this loop we prevent that
+	// it works "by mistake" the first time (but not the second or third time)
+	for i := 0; i < 1000; i++ {
+		rawOldDef := `
+		{
+			"name": "redis-example",
+			"components": {
+				"redis": {
+					"image": "redis",
+					"ports": 6379
+				},
+				"service": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "foo.com" },
+					"links": [
+						{ "component": "redis", "target_port": 6379 }
+					]
+				},
+				"redis2": {
+					"image": "redis",
+					"ports": 6379
+				},
+				"service2": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "foo.com" },
+					"links": [
+						{ "component": "redis2", "target_port": 6379 }
+					]
+				},
+				"redis3": {
+					"image": "redis",
+					"ports": 6379
+				},
+				"service3": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "foo.com" },
+					"links": [
+						{ "component": "redis3", "target_port": 6379 }
+					]
+				}
+			}
+		}
+	`
+
+		var oldDef V2AppDefinition
+		if err := json.Unmarshal([]byte(rawOldDef), &oldDef); err != nil {
+			t.Fatalf("failed to unmarshal service definition: %#v", err)
+		}
+
+		rawNewDef := `
+		{
+			"name": "redis-example-2",
+			"components": {
+				"redis1": {
+					"image": "redis",
+					"ports": 6000
+				},
+				"service1": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "bar.com" },
+					"links": [
+						{ "component": "redis1", "target_port": 6000 }
+					]
+				},
+				"redis2": {
+					"image": "redis",
+					"ports": 6000
+				},
+				"service2": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "foo.com" },
+					"links": [
+						{ "component": "redis2", "target_port": 6000 }
+					]
+				},
+				"redis3": {
+					"image": "redis",
+					"ports": 6379
+				},
+				"service3": {
+					"image": "giantswarm/redis-example:0.3.0",
+					"ports": 80,
+					"domains": { "80": "foo.com" },
+					"links": [
+						{ "component": "redis3", "target_port": 6379 }
+					]
+				}
+			}
+		}
+	`
+
+		var newDef V2AppDefinition
+		if err := json.Unmarshal([]byte(rawNewDef), &newDef); err != nil {
+			t.Fatalf("failed to unmarshal service definition: %#v", err)
+		}
+
+		expectedDiffInfos := []DiffInfo{
+			DiffInfo{
+				Type: DiffInfoServiceNameUpdated,
+				Old:  "redis-example",
+				New:  "redis-example-2",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentAdded,
+				New:  "redis1",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentAdded,
+				New:  "service1",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentUpdated,
+				Old:  "redis2",
+				New:  "redis2",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentUpdated,
+				Old:  "service2",
+				New:  "service2",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  "redis",
+			},
+			DiffInfo{
+				Type: DiffInfoComponentRemoved,
+				Old:  "service",
+			},
+		}
+
+		testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+	}
+}
+
+// Because of our smart data types some definitions can be represented
+// differently. The following test ensures that a diff only is created in case
+// the component really changed.
+func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
+	rawOldDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						]
+					}
+				}
+			}
+	`
+
+	var oldDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawOldDef), &oldDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	rawNewDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": 6379
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": 80,
+						"domains": { "80": "foo.com" },
+						"links": [
+							{ "component": "redis", "target_port": 6379 }
+						]
+					},
+					"redis2": {
+						"image": "redis",
+						"ports": 6379
+					}
+				}
+			}
+	`
+
+	var newDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawNewDef), &newDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type: DiffInfoComponentAdded,
+			New:  "redis2",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+// TODO test each definition difference inside a component definition

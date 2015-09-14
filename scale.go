@@ -2,6 +2,7 @@ package userconfig
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type Placement string
@@ -46,6 +47,15 @@ type ScaleDefinition struct {
 	Max int `json:"max,omitempty" description:"Maximum number of instances to launch"`
 
 	Placement Placement `json:"placement,omitempty" description:"Placement strategy when scaling a component. Can be empty or one-per-machine"`
+}
+
+func (sd *ScaleDefinition) String() string {
+	raw, err := json.Marshal(sd)
+	if err != nil {
+		panic(fmt.Sprintf("%#v\n", mask(err)))
+	}
+
+	return string(raw)
 }
 
 func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {

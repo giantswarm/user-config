@@ -36,6 +36,9 @@ type ComponentDefinition struct {
 
 	// If true, user needs to send a signal to indicate that the container is ready is should be considered running.
 	SignalReady bool `json:"signal-ready,omitempty" description:"If true, user has to notify when the component is ready."`
+
+	// NOTE: In case we add new fields to the component definition, we need to
+	// implement proper diff functionality for those new fields as well.
 }
 
 // validate performs semantic validations of this ComponentDefinition.
