@@ -55,20 +55,19 @@ func TestVolumeSizeUnmarshal(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var compConfig userConfigPkg.ComponentConfig
+		var componentDefinition userConfigPkg.ComponentDefinition
 		byteSlice := []byte(fmt.Sprintf(`{
-        "component_name": "x",
         "image": "x",
         "volumes": [ { "path": "/tmp", "size": "%s" } ]
     }`, test.Input))
 
-		err := json.Unmarshal(byteSlice, &compConfig)
+		err := json.Unmarshal(byteSlice, &componentDefinition)
 		if err != nil {
 			if errgo.Cause(err) != test.ExpectedErr {
 				t.Fatalf("Unmarshal failed: %v", err)
 			}
 		} else {
-			got := string(compConfig.Volumes[0].Size)
+			got := string(componentDefinition.Volumes[0].Size)
 			expected := test.Result
 			if got != expected {
 				t.Fatalf("Invalid result: got %s, expected %s", got, expected)

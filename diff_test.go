@@ -9,26 +9,6 @@ import (
 	. "github.com/giantswarm/user-config"
 )
 
-func ExampleDefinition() AppDefinition {
-	return AppDefinition{
-		AppName: "app",
-		Services: []ServiceConfig{
-			ServiceConfig{
-				ServiceName: "service1",
-				Components: []ComponentConfig{
-					ComponentConfig{
-						ComponentName: "service1component1",
-						InstanceConfig: InstanceConfig{
-							Image: generictypes.MustParseDockerImage("registry.giantswarm.io/landingpage:0.10.0"),
-							Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
 	diffInfos := ServiceDiff(oldDef, newDef)
 
