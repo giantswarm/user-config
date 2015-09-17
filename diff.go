@@ -236,8 +236,14 @@ func ComponentDiff(oldDef, newDef ComponentDefinition) []DiffInfo {
 func diffComponentImage(oldDef, newDef ComponentDefinition) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
-	oldImage := oldDef.Image.String()
-	newImage := newDef.Image.String()
+	// NOTE: Components don't need to have an Image.
+	var oldImage, newImage string
+	if oldDef.Image != nil {
+		oldImage = oldDef.Image.String()
+	}
+	if newDef.Image != nil {
+		newImage = newDef.Image.String()
+	}
 
 	if oldImage != newImage {
 		diffInfos = append(diffInfos, DiffInfo{
