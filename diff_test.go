@@ -139,6 +139,41 @@ func TestDiffComponentUpdated(t *testing.T) {
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
+func TestDiffComponentNoImageExposeRemoved(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	newDef := V2ExampleDefinition()
+
+	newComponentName := ComponentName("test-no-image")
+	component := &ComponentDefinition{
+		Expose: ExposeDefinitions([]ExposeDefinition{
+			ExposeDefinition{
+				Port:       generictypes.MustParseDockerPort("8080/tcp"),
+				Component:  ComponentName("foo-bar"),
+				TargetPort: generictypes.MustParseDockerPort("8080/tcp"),
+			},
+		}),
+	}
+	oldDef.Components[newComponentName] = component
+
+	// Create a copy of the component which has a second expose
+	newDefComponent := *component
+	newDefComponent.Expose = append(newDefComponent.Expose, ExposeDefinition{
+		Port:       generictypes.MustParseDockerPort("8081/tcp"),
+		Component:  ComponentName("foo-bar2"),
+		TargetPort: generictypes.MustParseDockerPort("8081/tcp"),
+	})
+	newDef.Components[newComponentName] = &newDefComponent
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type: DiffInfoComponentUpdated,
+			Old:  "test-no-image",
+			New:  "test-no-image",
+		},
+	}
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
 func TestDiffFullDefinitionUpdate(t *testing.T) {
 	// The original implementation (of "diff" creation) has an issue with the go
 	// implementation of map, not being consistent with respect to ordering of
