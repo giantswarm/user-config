@@ -78,12 +78,14 @@ func (di DiffInfo) Action() string {
 		return "re-create service"
 	case DiffInfoComponentAdded:
 		return "add component"
-	case DiffInfoComponentRemoved:
-		return "remove component"
 	case DiffInfoComponentUpdated:
 		return "update component"
+	case DiffInfoComponentRemoved:
+		return "remove component"
+	case DiffInfoComponentScaleUpdated:
+		return "scale component"
 	default:
-		panic("unknown diff type")
+		panic(fmt.Sprintf("no action available for unsupported diff type '%s'", di.Type))
 	}
 }
 
@@ -99,8 +101,10 @@ func (di DiffInfo) Reason() string {
 		return fmt.Sprintf("component '%s' changed in new definition", di.New)
 	case DiffInfoComponentRemoved:
 		return fmt.Sprintf("component '%s' not found in new definition", di.Old)
+	case DiffInfoComponentScaleUpdated:
+		return fmt.Sprintf("scale of component '%s' changed in new definition", di.Old)
 	default:
-		panic("unknown diff type")
+		panic(fmt.Sprintf("no reason available for unsupported diff type '%s'", di.Type))
 	}
 }
 
@@ -183,6 +187,26 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 		if newComponent, ok := newDef[oldName]; ok {
 			componentDiffInfos := ComponentDiff(*newComponent, *oldComponent)
 
+			// In case there are changes, and those changes were only related to the
+			// sclaing definition, add scaling diff type to diffInfos, to handle
+			// scaling more efficiently in a separate update step.
+			lenBeforeFilter := len(componentDiffInfos)
+			componentDiffInfos = filterDiffType(componentDiffInfos, DiffInfoComponentScaleUpdated)
+			lenAfterFilter := len(componentDiffInfos)
+
+			if lenBeforeFilter > 0 && lenAfterFilter == 0 {
+				diffInfos = append(diffInfos, DiffInfo{
+					Type: DiffInfoComponentScaleUpdated,
+					Old:  oldName.String(),
+					New:  oldName.String(),
+				})
+				continue
+			}
+
+			// NOTE add more exceptions here as already done above
+
+			// In case there are still changes applied to the component after
+			// filtering the scaling changes, we need to update it anyway.
 			if len(componentDiffInfos) > 0 {
 				diffInfos = append(diffInfos, DiffInfo{
 					Type: DiffInfoComponentUpdated,
@@ -453,4 +477,18 @@ func orderedComponentKeys(defs ComponentDefinitions) []string {
 	sort.Strings(keys)
 
 	return keys
+}
+
+func filterDiffType(diffInfos []DiffInfo, diffType DiffType) []DiffInfo {
+	newDiffInfos := []DiffInfo{}
+
+	for _, di := range diffInfos {
+		if di.Type == diffType {
+			continue
+		}
+
+		newDiffInfos = append(newDiffInfos, di)
+	}
+
+	return newDiffInfos
 }
