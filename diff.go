@@ -10,139 +10,94 @@ import (
 type DiffType string
 
 const (
-	// DiffInfoServiceNameUpdated
-	DiffInfoServiceNameUpdated DiffType = "service-name-updated"
+	// DiffTypeServiceNameUpdated
+	DiffTypeServiceNameUpdated DiffType = "service-name-updated"
 
-	// DiffInfoComponentAdded
-	DiffInfoComponentAdded DiffType = "component-added"
+	// DiffTypeComponentAdded
+	DiffTypeComponentAdded DiffType = "component-added"
 
-	// DiffInfoComponentRemoved
-	DiffInfoComponentRemoved DiffType = "component-removed"
+	// DiffTypeComponentRemoved
+	DiffTypeComponentRemoved DiffType = "component-removed"
 
-	// DiffInfoComponentUpdated
-	DiffInfoComponentUpdated DiffType = "component-updated"
+	// DiffTypeComponentUpdated
+	DiffTypeComponentUpdated DiffType = "component-updated"
 
 	// NOTE: The following diff info types are currently only for internal usage.
 	// We will probably expose them to the user soon, but for now they are just
-	// to summarize for a DiffInfoComponentUpdated.
+	// to summarize for a DiffTypeComponentUpdated.
 
-	// DiffInfoComponentImageUpdated
-	DiffInfoComponentImageUpdated DiffType = "component-image-updated"
+	// DiffTypeComponentImageUpdated
+	DiffTypeComponentImageUpdated DiffType = "component-image-updated"
 
-	// DiffInfoComponentEntrypointUpdated
-	DiffInfoComponentEntrypointUpdated DiffType = "component-entrypoint-updated"
+	// DiffTypeComponentEntrypointUpdated
+	DiffTypeComponentEntrypointUpdated DiffType = "component-entrypoint-updated"
 
-	// DiffInfoComponentPortsUpdated
-	DiffInfoComponentPortsUpdated DiffType = "component-ports-updated"
+	// DiffTypeComponentPortsUpdated
+	DiffTypeComponentPortsUpdated DiffType = "component-ports-updated"
 
-	// DiffInfoComponentEnvUpdated
-	DiffInfoComponentEnvUpdated DiffType = "component-env-updated"
+	// DiffTypeComponentEnvUpdated
+	DiffTypeComponentEnvUpdated DiffType = "component-env-updated"
 
-	// DiffInfoComponentVolumesUpdated
-	DiffInfoComponentVolumesUpdated DiffType = "component-volumes-updated"
+	// DiffTypeComponentVolumesUpdated
+	DiffTypeComponentVolumesUpdated DiffType = "component-volumes-updated"
 
-	// DiffInfoComponentArgsUpdated
-	DiffInfoComponentArgsUpdated DiffType = "component-args-updated"
+	// DiffTypeComponentArgsUpdated
+	DiffTypeComponentArgsUpdated DiffType = "component-args-updated"
 
-	// DiffInfoComponentDomainsUpdated
-	DiffInfoComponentDomainsUpdated DiffType = "component-domains-updated"
+	// DiffTypeComponentDomainsUpdated
+	DiffTypeComponentDomainsUpdated DiffType = "component-domains-updated"
 
-	// DiffInfoComponentLinksUpdated
-	DiffInfoComponentLinksUpdated DiffType = "component-links-updated"
+	// DiffTypeComponentLinksUpdated
+	DiffTypeComponentLinksUpdated DiffType = "component-links-updated"
 
-	// DiffInfoComponentExposeUpdated
-	DiffInfoComponentExposeUpdated DiffType = "component-expose-updated"
+	// DiffTypeComponentExposeUpdated
+	DiffTypeComponentExposeUpdated DiffType = "component-expose-updated"
 
 	// scale
 
-	// DiffInfoComponentScalePlacementUpdated
-	DiffInfoComponentScalePlacementUpdated DiffType = "component-scale-placement-updated"
+	// DiffTypeComponentScalePlacementUpdated
+	DiffTypeComponentScalePlacementUpdated DiffType = "component-scale-placement-updated"
 
-	// DiffInfoComponentScaleUp
-	DiffInfoComponentScaleUp DiffType = "component-scale-up"
+	// DiffTypeComponentScaleUp
+	DiffTypeComponentScaleUp DiffType = "component-scale-up"
 
-	// DiffInfoComponentScaleDown
-	DiffInfoComponentScaleDown DiffType = "component-scale-down"
+	// DiffTypeComponentScaleDown
+	DiffTypeComponentScaleDown DiffType = "component-scale-down"
 
-	// DiffInfoComponentScaleMaxUpdated
-	DiffInfoComponentScaleMaxUpdated DiffType = "component-max-updated"
-
-	// DiffInfoComponentPodUpdated
-	DiffInfoComponentPodUpdated DiffType = "component-pod-updated"
+	// DiffTypeComponentScaleMaxUpdated
+	DiffTypeComponentScaleMaxUpdated DiffType = "component-scale-max-updated"
 
 	//
 
-	// DiffInfoComponentSignalReadyUpdated
-	DiffInfoComponentSignalReadyUpdated DiffType = "component-signal-ready-updated"
+	// DiffTypeComponentPodUpdated
+	DiffTypeComponentPodUpdated DiffType = "component-pod-updated"
+
+	// DiffTypeComponentSignalReadyUpdated
+	DiffTypeComponentSignalReadyUpdated DiffType = "component-signal-ready-updated"
 )
 
 type DiffInfo struct {
 	Type DiffType
 
+	Component ComponentName
+
+	Action string
+	Reason string
+
 	Old string
 	New string
-}
-
-// Action returns a human readable string containing information about what kind of action a
-// certain diff type will cause.
-func (di DiffInfo) Action() string {
-	switch di.Type {
-	case DiffInfoServiceNameUpdated:
-		return "re-create service"
-	case DiffInfoComponentAdded:
-		return "add component"
-	case DiffInfoComponentUpdated:
-		return "update component"
-	case DiffInfoComponentRemoved:
-		return "remove component"
-	case DiffInfoComponentScalePlacementUpdated:
-		return "update component"
-	case DiffInfoComponentScaleUp:
-		return "scale up"
-	case DiffInfoComponentScaleDown:
-		return "scale down"
-	case DiffInfoComponentScaleMaxUpdated:
-		return "store component definition"
-	default:
-		panic(fmt.Sprintf("no action available for unsupported diff type '%s'", di.Type))
-	}
-}
-
-// Reason returns a human readable string containing information about why a
-// certain diff type will cause the related action.
-func (di DiffInfo) Reason() string {
-	switch di.Type {
-	case DiffInfoServiceNameUpdated:
-		return "updating service name breaks service discovery"
-	case DiffInfoComponentAdded:
-		return fmt.Sprintf("component '%s' not found in old definition", di.New)
-	case DiffInfoComponentUpdated:
-		return fmt.Sprintf("component '%s' changed in new definition", di.New)
-	case DiffInfoComponentRemoved:
-		return fmt.Sprintf("component '%s' not found in new definition", di.Old)
-	case DiffInfoComponentScalePlacementUpdated:
-		return fmt.Sprintf("scaling strategy of component '%s' changed in new definition", di.Old)
-	case DiffInfoComponentScaleUp:
-		return fmt.Sprintf("min scale of component '%s' increased in new definition", di.Old)
-	case DiffInfoComponentScaleDown:
-		return fmt.Sprintf("min scale of component '%s' decreased in new definition", di.Old)
-	case DiffInfoComponentScaleMaxUpdated:
-		return fmt.Sprintf("max scale of component '%s' changed in new definition", di.Old)
-	default:
-		panic(fmt.Sprintf("no reason available for unsupported diff type '%s'", di.Type))
-	}
 }
 
 // service diff
 
 // ServiceDiff checks the difference between two service definitions. The
 // returned list of diff infos can contain the following diff types. Note that
-// DiffInfoComponentUpdated is aggregated and details are hidden for the user
+// DiffTypeComponentUpdated is aggregated and details are hidden for the user
 // for now.
-//   - DiffInfoServiceNameUpdated
-//   - DiffInfoComponentAdded
-//   - DiffInfoComponentRemoved
-//   - DiffInfoComponentUpdated
+//   - DiffTypeServiceNameUpdated
+//   - DiffTypeComponentAdded
+//   - DiffTypeComponentRemoved
+//   - DiffTypeComponentUpdated
 func ServiceDiff(oldDef, newDef V2AppDefinition) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
@@ -154,14 +109,16 @@ func ServiceDiff(oldDef, newDef V2AppDefinition) []DiffInfo {
 	return diffInfos
 }
 
-func diffServiceNameUpdated(oldDef, newDef AppName) []DiffInfo {
+func diffServiceNameUpdated(oldName, newName AppName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
-	if !newDef.Equals(oldDef) {
+	if !newName.Equals(oldName) {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoServiceNameUpdated,
-			Old:  oldDef.String(),
-			New:  newDef.String(),
+			Type:   DiffTypeServiceNameUpdated,
+			Action: "re-create service",
+			Reason: "updating service name breaks service discovery",
+			Old:    oldName.String(),
+			New:    newName.String(),
 		})
 	}
 
@@ -176,8 +133,11 @@ func diffComponentAdded(oldDef, newDef ComponentDefinitions) []DiffInfo {
 
 		if _, ok := oldDef[newName]; !ok {
 			diffInfos = append(diffInfos, DiffInfo{
-				Type: DiffInfoComponentAdded,
-				New:  newName.String(),
+				Type:      DiffTypeComponentAdded,
+				Component: newName,
+				Action:    "add component",
+				Reason:    fmt.Sprintf("component '%s' not found in old definition", newName),
+				New:       newName.String(),
 			})
 		}
 	}
@@ -193,8 +153,11 @@ func diffComponentRemoved(oldDef, newDef ComponentDefinitions) []DiffInfo {
 
 		if _, ok := newDef[oldName]; !ok {
 			diffInfos = append(diffInfos, DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  oldName.String(),
+				Type:      DiffTypeComponentRemoved,
+				Component: oldName,
+				Action:    "remove component",
+				Reason:    fmt.Sprintf("component '%s' not found in new definition", oldName),
+				Old:       oldName.String(),
 			})
 		}
 	}
@@ -210,7 +173,7 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 		oldComponent := oldDef[oldName]
 
 		if newComponent, ok := newDef[oldName]; ok {
-			diffInfos = append(diffInfos, ComponentDiff(*oldComponent, *newComponent, oldName.String())...)
+			diffInfos = append(diffInfos, ComponentDiff(*oldComponent, *newComponent, oldName)...)
 		}
 	}
 
@@ -222,43 +185,44 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) []DiffInfo {
 // ComponentDiff checks the difference between two component definitions. The
 // returned list of diff infos can contain the following diff types. Note that
 // we aggregate all tiff types handled here to create one
-// DiffInfoComponentUpdated for the user for now.
-//   - DiffInfoComponentImageUpdated
-//   - DiffInfoComponentEntrypointUpdated
-//   - DiffInfoComponentPortsUpdated
-//   - DiffInfoComponentEnvUpdated
-//   - DiffInfoComponentVolumesUpdated
-//   - DiffInfoComponentArgsUpdated
-//   - DiffInfoComponentDomainsUpdated
-//   - DiffInfoComponentLinksUpdated
-//   - DiffInfoComponentExposeUpdated
-//   - DiffInfoComponentScalePlacementUpdated
-//   - DiffInfoComponentScaleDown
-//   - DiffInfoComponentScaleUp
-//   - DiffInfoComponentScaleMaxUpdated
-//   - DiffInfoComponentPodUpdated
-//   - DiffInfoComponentSignalReadyUpdated
-func ComponentDiff(oldDef, newDef ComponentDefinition, componentName string) []DiffInfo {
+// DiffTypeComponentUpdated for the user for now.
+//   - DiffTypeComponentImageUpdated
+//   - DiffTypeComponentEntrypointUpdated
+//   - DiffTypeComponentPortsUpdated
+//   - DiffTypeComponentEnvUpdated
+//   - DiffTypeComponentVolumesUpdated
+//   - DiffTypeComponentArgsUpdated
+//   - DiffTypeComponentDomainsUpdated
+//   - DiffTypeComponentLinksUpdated
+//   - DiffTypeComponentExposeUpdated
+//   - DiffTypeComponentScalePlacementUpdated
+//   - DiffTypeComponentScaleDown
+//   - DiffTypeComponentScaleUp
+//   - DiffTypeComponentScaleMaxUpdated
+//   - DiffTypeComponentPodUpdated
+//   - DiffTypeComponentSignalReadyUpdated
+func ComponentDiff(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	publicDiffInfos := []DiffInfo{}  // diff info tracked in detail
-	privateDiffInfos := []DiffInfo{} // diff info aggregated to DiffInfoComponentUpdated
+	privateDiffInfos := []DiffInfo{} // diff info aggregated to DiffTypeComponentUpdated
 
-	privateDiffInfos = append(privateDiffInfos, diffComponentImage(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentEntrypoint(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentPorts(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentEnv(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentVolumes(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentArgs(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentDomains(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentLinks(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentExpose(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentPod(oldDef, newDef)...)
-	privateDiffInfos = append(privateDiffInfos, diffComponentSignalReady(oldDef, newDef)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentImage(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentEntrypoint(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentPorts(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentEnv(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentVolumes(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentArgs(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentDomains(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentLinks(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentExpose(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentPod(oldDef, newDef, componentName)...)
+	privateDiffInfos = append(privateDiffInfos, diffComponentSignalReady(oldDef, newDef, componentName)...)
 
 	if len(privateDiffInfos) > 0 {
 		publicDiffInfos = append(publicDiffInfos, DiffInfo{
-			Type: DiffInfoComponentUpdated,
-			Old:  componentName,
-			New:  componentName,
+			Type:      DiffTypeComponentUpdated,
+			Component: componentName,
+			Action:    "update component",
+			Reason:    fmt.Sprintf("component '%s' changed in new definition", componentName),
 		})
 	}
 
@@ -267,7 +231,7 @@ func ComponentDiff(oldDef, newDef ComponentDefinition, componentName string) []D
 	return publicDiffInfos
 }
 
-func diffComponentImage(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentImage(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	// NOTE: Components don't need to have an Image.
@@ -281,30 +245,32 @@ func diffComponentImage(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldImage != newImage {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentImageUpdated,
-			Old:  oldImage,
-			New:  newImage,
+			Type:      DiffTypeComponentImageUpdated,
+			Component: componentName,
+			Old:       oldImage,
+			New:       newImage,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentEntrypoint(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentEntrypoint(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	if oldDef.EntryPoint != newDef.EntryPoint {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentEntrypointUpdated,
-			Old:  oldDef.EntryPoint,
-			New:  newDef.EntryPoint,
+			Type:      DiffTypeComponentEntrypointUpdated,
+			Component: componentName,
+			Old:       oldDef.EntryPoint,
+			New:       newDef.EntryPoint,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentPorts(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentPorts(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldPorts := oldDef.Ports.String()
@@ -312,16 +278,17 @@ func diffComponentPorts(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldPorts != newPorts {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentPortsUpdated,
-			Old:  oldPorts,
-			New:  newPorts,
+			Type:      DiffTypeComponentPortsUpdated,
+			Component: componentName,
+			Old:       oldPorts,
+			New:       newPorts,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentEnv(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentEnv(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldEnv := oldDef.Env.String()
@@ -329,16 +296,17 @@ func diffComponentEnv(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldEnv != newEnv {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentEnvUpdated,
-			Old:  oldEnv,
-			New:  newEnv,
+			Type:      DiffTypeComponentEnvUpdated,
+			Component: componentName,
+			Old:       oldEnv,
+			New:       newEnv,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentVolumes(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentVolumes(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldVolumes := oldDef.Volumes.String()
@@ -346,16 +314,17 @@ func diffComponentVolumes(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldVolumes != newVolumes {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentVolumesUpdated,
-			Old:  oldVolumes,
-			New:  newVolumes,
+			Type:      DiffTypeComponentVolumesUpdated,
+			Component: componentName,
+			Old:       oldVolumes,
+			New:       newVolumes,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentArgs(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentArgs(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldArgs := strings.Join(oldDef.Args, ", ")
@@ -363,16 +332,17 @@ func diffComponentArgs(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldArgs != newArgs {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentArgsUpdated,
-			Old:  oldArgs,
-			New:  newArgs,
+			Type:      DiffTypeComponentArgsUpdated,
+			Component: componentName,
+			Old:       oldArgs,
+			New:       newArgs,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentDomains(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentDomains(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldDomains := oldDef.Domains.String()
@@ -380,16 +350,17 @@ func diffComponentDomains(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldDomains != newDomains {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentLinksUpdated,
-			Old:  oldDomains,
-			New:  newDomains,
+			Type:      DiffTypeComponentLinksUpdated,
+			Component: componentName,
+			Old:       oldDomains,
+			New:       newDomains,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentLinks(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentLinks(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldLinks := oldDef.Links.String()
@@ -397,16 +368,17 @@ func diffComponentLinks(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldLinks != newLinks {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentLinksUpdated,
-			Old:  oldLinks,
-			New:  newLinks,
+			Type:      DiffTypeComponentLinksUpdated,
+			Component: componentName,
+			Old:       oldLinks,
+			New:       newLinks,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentExpose(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentExpose(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldExpose := oldDef.Expose.String()
@@ -414,9 +386,10 @@ func diffComponentExpose(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldExpose != newExpose {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentExposeUpdated,
-			Old:  oldExpose,
-			New:  newExpose,
+			Type:      DiffTypeComponentExposeUpdated,
+			Component: componentName,
+			Old:       oldExpose,
+			New:       newExpose,
 		})
 	}
 
@@ -425,53 +398,78 @@ func diffComponentExpose(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 // diffComponentScale checks in detail what diff type should be applied between
 // oldDef and newDef. The following can be applied.
-//   placement changed -> DiffInfoComponentScalePlacementUpdated
-//   min decreased     -> DiffInfoComponentScaleDown
-//   min increased     -> DiffInfoComponentScaleUp
-//   max updated       -> DiffInfoComponentScaleMaxUpdated
-func diffComponentScale(oldDef, newDef ComponentDefinition, componentName string) []DiffInfo {
+//   placement changed -> DiffTypeComponentScalePlacementUpdated
+//   min decreased     -> DiffTypeComponentScaleDown
+//   min increased     -> DiffTypeComponentScaleUp
+//   max updated       -> DiffTypeComponentScaleMaxUpdated
+func diffComponentScale(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	if oldDef.Scale == nil || newDef.Scale == nil {
 		return nil
-	}
-
-	diffInfos := []DiffInfo{
-		DiffInfo{
-			Old: componentName,
-			New: componentName,
-		},
 	}
 
 	// When "placement" changed, we need to update the whole component. This also
 	// applies all other definition changes below.
 	if !isDefaultPlacement(oldDef.Scale.Placement, newDef.Scale.Placement) && oldDef.Scale.Placement != newDef.Scale.Placement {
-		diffInfos[0].Type = DiffInfoComponentScalePlacementUpdated
-		return diffInfos
+		return []DiffInfo{
+			DiffInfo{
+				Type:      DiffTypeComponentScalePlacementUpdated,
+				Component: componentName,
+				Action:    "update component",
+				Reason:    fmt.Sprintf("scaling strategy of component '%s' changed in new definition", componentName),
+				Old:       oldDef.Scale.String(),
+				New:       newDef.Scale.String(),
+			},
+		}
 	}
 
 	// When "min" changed, we want to scale a component. This also applies all
 	// other definition changes below.
 	if oldDef.Scale.Min < newDef.Scale.Min {
-		diffInfos[0].Type = DiffInfoComponentScaleUp
-		return diffInfos
+		return []DiffInfo{
+			DiffInfo{
+				Type:      DiffTypeComponentScaleUp,
+				Component: componentName,
+				Action:    "scale up",
+				Reason:    fmt.Sprintf("min scale of component '%s' increased in new definition", componentName),
+				Old:       oldDef.Scale.String(),
+				New:       newDef.Scale.String(),
+			},
+		}
 	}
 
 	// When "min" changed, we want to scale a component. This also applies all
 	// other definition changes below.
 	if oldDef.Scale.Min > newDef.Scale.Min {
-		diffInfos[0].Type = DiffInfoComponentScaleDown
-		return diffInfos
+		return []DiffInfo{
+			DiffInfo{
+				Type:      DiffTypeComponentScaleDown,
+				Component: componentName,
+				Action:    "scale down",
+				Reason:    fmt.Sprintf("min scale of component '%s' decreased in new definition", componentName),
+				Old:       oldDef.Scale.String(),
+				New:       newDef.Scale.String(),
+			},
+		}
 	}
 
 	// When "max" changed, we want to update the stored service definition.
 	if oldDef.Scale.Max != newDef.Scale.Max {
-		diffInfos[0].Type = DiffInfoComponentScaleMaxUpdated
-		return diffInfos
+		return []DiffInfo{
+			DiffInfo{
+				Type:      DiffTypeComponentScaleMaxUpdated,
+				Component: componentName,
+				Action:    "store component definition",
+				Reason:    fmt.Sprintf("max scale of component '%s' changed in new definition", componentName),
+				Old:       oldDef.Scale.String(),
+				New:       newDef.Scale.String(),
+			},
+		}
 	}
 
 	return nil
 }
 
-func diffComponentPod(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentPod(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldPod := oldDef.Pod.String()
@@ -479,16 +477,17 @@ func diffComponentPod(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldPod != newPod {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentPodUpdated,
-			Old:  oldPod,
-			New:  newPod,
+			Type:      DiffTypeComponentPodUpdated,
+			Component: componentName,
+			Old:       oldPod,
+			New:       newPod,
 		})
 	}
 
 	return diffInfos
 }
 
-func diffComponentSignalReady(oldDef, newDef ComponentDefinition) []DiffInfo {
+func diffComponentSignalReady(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
 	oldPod := strconv.FormatBool(oldDef.SignalReady)
@@ -496,9 +495,10 @@ func diffComponentSignalReady(oldDef, newDef ComponentDefinition) []DiffInfo {
 
 	if oldPod != newPod {
 		diffInfos = append(diffInfos, DiffInfo{
-			Type: DiffInfoComponentSignalReadyUpdated,
-			Old:  oldPod,
-			New:  newPod,
+			Type:      DiffTypeComponentSignalReadyUpdated,
+			Component: componentName,
+			Old:       oldPod,
+			New:       newPod,
 		})
 	}
 
