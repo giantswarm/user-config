@@ -75,7 +75,7 @@ func (vc *VolumeConfig) validate() error {
 	}
 
 	// No valid option detected.
-	return maskf(InvalidVolumeConfigError, "path, volume-path or volumes-path must be set in '%#v'", vc)
+	return maskf(InvalidVolumeConfigError, "path & size, volume-path or volumes-path must be set in '%#v'", vc)
 }
 
 func (vc VolumeConfig) V2Validate(valCtx *ValidationContext) error {
