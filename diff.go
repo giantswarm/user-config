@@ -58,14 +58,17 @@ const (
 	// DiffTypeComponentScalePlacementUpdated
 	DiffTypeComponentScalePlacementUpdated DiffType = "component-scale-placement-updated"
 
-	// DiffTypeComponentScaleUp
-	DiffTypeComponentScaleUp DiffType = "component-scale-up"
+	// DiffTypeComponentScaleMinDecreased
+	DiffTypeComponentScaleMinDecreased DiffType = "component-scale-min-decreased"
 
-	// DiffTypeComponentScaleDown
-	DiffTypeComponentScaleDown DiffType = "component-scale-down"
+	// DiffTypeComponentScaleMinIncreased
+	DiffTypeComponentScaleMinIncreased DiffType = "component-scale-min-increased"
 
-	// DiffTypeComponentScaleMaxUpdated
-	DiffTypeComponentScaleMaxUpdated DiffType = "component-scale-max-updated"
+	// DiffTypeComponentScaleMaxDecreased
+	DiffTypeComponentScaleMaxDecreased DiffType = "component-scale-max-decreased"
+
+	// DiffTypeComponentScaleMaxIncreased
+	DiffTypeComponentScaleMaxIncreased DiffType = "component-scale-max-increased"
 
 	//
 
@@ -81,6 +84,8 @@ type DiffInfo struct {
 
 	Component ComponentName
 
+	// TODO in case we don't use the DiffInfo structure for displaying a plan to
+	// the user, we need to move Action and Reason out of this.
 	Action string
 	Reason string
 
@@ -399,74 +404,73 @@ func diffComponentExpose(oldDef, newDef ComponentDefinition, componentName Compo
 // diffComponentScale checks in detail what diff type should be applied between
 // oldDef and newDef. The following can be applied.
 //   placement changed -> DiffTypeComponentScalePlacementUpdated
-//   min decreased     -> DiffTypeComponentScaleDown
-//   min increased     -> DiffTypeComponentScaleUp
-//   max updated       -> DiffTypeComponentScaleMaxUpdated
+//   min decreased     -> DiffTypeComponentScaleMinDecreased
+//   min increased     -> DiffTypeComponentScaleMinIncreased
+//   max decreased     -> DiffTypeComponentScaleMaxDecreased
+//   max increased     -> DiffTypeComponentScaleMaxIncreased
 func diffComponentScale(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	if oldDef.Scale == nil || newDef.Scale == nil {
 		return nil
 	}
 
-	// When "placement" changed, we need to update the whole component. This also
-	// applies all other definition changes below.
+	diffInfos := []DiffInfo{}
+
 	if !isDefaultPlacement(oldDef.Scale.Placement, newDef.Scale.Placement) && oldDef.Scale.Placement != newDef.Scale.Placement {
-		return []DiffInfo{
-			DiffInfo{
-				Type:      DiffTypeComponentScalePlacementUpdated,
-				Component: componentName,
-				Action:    "update component",
-				Reason:    fmt.Sprintf("scaling strategy of component '%s' changed in new definition", componentName),
-				Old:       oldDef.Scale.String(),
-				New:       newDef.Scale.String(),
-			},
-		}
+		diffInfos = append(diffInfos, DiffInfo{
+			Type:      DiffTypeComponentScalePlacementUpdated,
+			Component: componentName,
+			Action:    "update component",
+			Reason:    fmt.Sprintf("scaling strategy of component '%s' changed in new definition", componentName),
+			Old:       oldDef.Scale.String(),
+			New:       newDef.Scale.String(),
+		})
 	}
 
-	// When "min" changed, we want to scale a component. This also applies all
-	// other definition changes below.
-	if oldDef.Scale.Min < newDef.Scale.Min {
-		return []DiffInfo{
-			DiffInfo{
-				Type:      DiffTypeComponentScaleUp,
-				Component: componentName,
-				Action:    "scale up",
-				Reason:    fmt.Sprintf("min scale of component '%s' increased in new definition", componentName),
-				Old:       oldDef.Scale.String(),
-				New:       newDef.Scale.String(),
-			},
-		}
-	}
-
-	// When "min" changed, we want to scale a component. This also applies all
-	// other definition changes below.
 	if oldDef.Scale.Min > newDef.Scale.Min {
-		return []DiffInfo{
-			DiffInfo{
-				Type:      DiffTypeComponentScaleDown,
-				Component: componentName,
-				Action:    "scale down",
-				Reason:    fmt.Sprintf("min scale of component '%s' decreased in new definition", componentName),
-				Old:       oldDef.Scale.String(),
-				New:       newDef.Scale.String(),
-			},
-		}
+		diffInfos = append(diffInfos, DiffInfo{
+			Type:      DiffTypeComponentScaleMinDecreased,
+			Component: componentName,
+			Action:    "store component definition",
+			Reason:    fmt.Sprintf("min scale of component '%s' decreased in new definition", componentName),
+			Old:       oldDef.Scale.String(),
+			New:       newDef.Scale.String(),
+		})
 	}
 
-	// When "max" changed, we want to update the stored service definition.
-	if oldDef.Scale.Max != newDef.Scale.Max {
-		return []DiffInfo{
-			DiffInfo{
-				Type:      DiffTypeComponentScaleMaxUpdated,
-				Component: componentName,
-				Action:    "store component definition",
-				Reason:    fmt.Sprintf("max scale of component '%s' changed in new definition", componentName),
-				Old:       oldDef.Scale.String(),
-				New:       newDef.Scale.String(),
-			},
-		}
+	if oldDef.Scale.Min < newDef.Scale.Min {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type:      DiffTypeComponentScaleMinIncreased,
+			Component: componentName,
+			Action:    "", // we need to decide server side what action to apply
+			Reason:    "", // we need to decide server side what action to apply
+			Old:       oldDef.Scale.String(),
+			New:       newDef.Scale.String(),
+		})
 	}
 
-	return nil
+	if oldDef.Scale.Max > newDef.Scale.Max {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type:      DiffTypeComponentScaleMaxDecreased,
+			Component: componentName,
+			Action:    "", // we need to decide server side what action to apply
+			Reason:    "", // we need to decide server side what action to apply
+			Old:       oldDef.Scale.String(),
+			New:       newDef.Scale.String(),
+		})
+	}
+
+	if oldDef.Scale.Max < newDef.Scale.Max {
+		diffInfos = append(diffInfos, DiffInfo{
+			Type:      DiffTypeComponentScaleMaxIncreased,
+			Component: componentName,
+			Action:    "store component definition",
+			Reason:    fmt.Sprintf("max scale of component '%s' increased in new definition", componentName),
+			Old:       oldDef.Scale.String(),
+			New:       newDef.Scale.String(),
+		})
+	}
+
+	return diffInfos
 }
 
 func diffComponentPod(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
