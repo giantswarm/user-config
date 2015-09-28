@@ -443,9 +443,6 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 		})
 	}
 
-	fmt.Printf("%#v\n", oldScaleDef.Min)
-	fmt.Printf("%#v\n", newScaleDef.Min)
-
 	if oldScaleDef.Min < newScaleDef.Min {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMinIncreased,
