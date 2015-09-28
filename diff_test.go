@@ -514,6 +514,8 @@ func TestDiff_ScaleChanged_MinIncreased(t *testing.T) {
 		{
 			Type:      DiffTypeComponentScaleMinIncreased,
 			Component: "my-old-component",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
 			Old:       "{\"min\":2,\"max\":6}",
 			New:       "{\"min\":3,\"max\":6}",
 		},
@@ -540,6 +542,8 @@ func TestDiff_ScaleChanged_MaxDecreased(t *testing.T) {
 		{
 			Type:      DiffTypeComponentScaleMaxDecreased,
 			Component: "my-old-component",
+			Action:    "eventually scale down",
+			Reason:    "scaling action will be applied depending on current instance count",
 			Old:       "{\"min\":2,\"max\":6}",
 			New:       "{\"min\":2,\"max\":5}",
 		},
@@ -729,6 +733,8 @@ func TestDiff_ScaleChanged_PortChanged_InOtherComponent(t *testing.T) {
 		{
 			Type:      DiffTypeComponentScaleMinIncreased,
 			Component: "my-old-component",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
 			Old:       "{\"min\":2,\"max\":6}",
 			New:       "{\"min\":3,\"max\":6}",
 		},
