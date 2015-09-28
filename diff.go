@@ -441,8 +441,8 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMinIncreased,
 			Component: componentName,
-			Action:    "", // we need to decide server side what action to apply
-			Reason:    "", // we need to decide server side what action to apply
+			Action:    "eventually scale up",                                                // we need to decide server side what action to apply
+			Reason:    "scaling action will be applied depending on current instance count", // we need to decide server side what action to apply
 			Old:       oldDef.Scale.String(),
 			New:       newDef.Scale.String(),
 		})
@@ -452,8 +452,8 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMaxDecreased,
 			Component: componentName,
-			Action:    "", // we need to decide server side what action to apply
-			Reason:    "", // we need to decide server side what action to apply
+			Action:    "eventually scale down",                                              // we need to decide server side what action to apply
+			Reason:    "scaling action will be applied depending on current instance count", // we need to decide server side what action to apply
 			Old:       oldDef.Scale.String(),
 			New:       newDef.Scale.String(),
 		})
