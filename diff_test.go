@@ -432,6 +432,94 @@ func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
 
 // scale
 
+func TestDiff_AddScale(t *testing.T) {
+	rawOldDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						]
+					}
+				}
+			}
+	`
+
+	var oldDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawOldDef), &oldDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	rawNewDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						],
+						"scale": { "min": 3 }
+					}
+				}
+			}
+	`
+
+	var newDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawNewDef), &newDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type:      DiffTypeComponentScaleMinIncreased,
+			Component: "service",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
+			Old:       "",
+			New:       "{\"min\":3}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
 func TestDiff_NoScale(t *testing.T) {
 	oldDef := V2ExampleDefinition()
 	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{

@@ -409,64 +409,73 @@ func diffComponentExpose(oldDef, newDef ComponentDefinition, componentName Compo
 //   max decreased     -> DiffTypeComponentScaleMaxDecreased
 //   max increased     -> DiffTypeComponentScaleMaxIncreased
 func diffComponentScale(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
-	if oldDef.Scale == nil || newDef.Scale == nil {
-		return nil
+	oldScaleDef := &ScaleDefinition{}
+	if oldDef.Scale != nil {
+		oldScaleDef = oldDef.Scale
+	}
+
+	newScaleDef := &ScaleDefinition{}
+	if newDef.Scale != nil {
+		newScaleDef = newDef.Scale
 	}
 
 	diffInfos := []DiffInfo{}
 
-	if !isDefaultPlacement(oldDef.Scale.Placement, newDef.Scale.Placement) && oldDef.Scale.Placement != newDef.Scale.Placement {
+	if !isDefaultPlacement(oldScaleDef.Placement, newScaleDef.Placement) && oldScaleDef.Placement != newScaleDef.Placement {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScalePlacementUpdated,
 			Component: componentName,
 			Action:    "update component",
 			Reason:    fmt.Sprintf("scaling strategy of component '%s' changed in new definition", componentName),
-			Old:       oldDef.Scale.String(),
-			New:       newDef.Scale.String(),
+			Old:       oldScaleDef.String(),
+			New:       newScaleDef.String(),
 		})
 	}
 
-	if oldDef.Scale.Min > newDef.Scale.Min {
+	if oldScaleDef.Min > newScaleDef.Min {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMinDecreased,
 			Component: componentName,
 			Action:    "store component definition",
 			Reason:    fmt.Sprintf("min scale of component '%s' decreased in new definition", componentName),
-			Old:       oldDef.Scale.String(),
-			New:       newDef.Scale.String(),
+			Old:       oldScaleDef.String(),
+			New:       newScaleDef.String(),
 		})
 	}
 
-	if oldDef.Scale.Min < newDef.Scale.Min {
+	fmt.Printf("%#v\n", oldScaleDef.Min)
+	fmt.Printf("%#v\n", newScaleDef.Min)
+
+	if oldScaleDef.Min < newScaleDef.Min {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMinIncreased,
 			Component: componentName,
 			Action:    "eventually scale up",                                                // we need to decide server side what action to apply
 			Reason:    "scaling action will be applied depending on current instance count", // we need to decide server side what action to apply
-			Old:       oldDef.Scale.String(),
-			New:       newDef.Scale.String(),
+			Old:       oldScaleDef.String(),
+			New:       newScaleDef.String(),
 		})
 	}
 
-	if oldDef.Scale.Max > newDef.Scale.Max {
+	if oldScaleDef.Max > newScaleDef.Max {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMaxDecreased,
 			Component: componentName,
 			Action:    "eventually scale down",                                              // we need to decide server side what action to apply
 			Reason:    "scaling action will be applied depending on current instance count", // we need to decide server side what action to apply
-			Old:       oldDef.Scale.String(),
-			New:       newDef.Scale.String(),
+			Old:       oldScaleDef.String(),
+			New:       newScaleDef.String(),
 		})
 	}
 
-	if oldDef.Scale.Max < newDef.Scale.Max {
+	if oldScaleDef.Max < newScaleDef.Max {
 		diffInfos = append(diffInfos, DiffInfo{
 			Type:      DiffTypeComponentScaleMaxIncreased,
 			Component: componentName,
 			Action:    "store component definition",
 			Reason:    fmt.Sprintf("max scale of component '%s' increased in new definition", componentName),
-			Old:       oldDef.Scale.String(),
-			New:       newDef.Scale.String(),
+			Old:       oldScaleDef.String(),
+			New:       newScaleDef.String(),
 		})
 	}
 
