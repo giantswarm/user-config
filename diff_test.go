@@ -45,9 +45,11 @@ func TestDiffServiceNameUpdated(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoServiceNameUpdated,
-			Old:  "service",
-			New:  "my-new-service-name",
+			Type:   DiffTypeServiceNameUpdated,
+			Action: "re-create service",
+			Reason: "updating service name breaks service discovery",
+			Old:    "service",
+			New:    "my-new-service-name",
 		},
 	}
 
@@ -64,8 +66,11 @@ func TestDiffComponentAdded(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoComponentAdded,
-			New:  "my-new-component",
+			Type:      DiffTypeComponentAdded,
+			Component: "my-new-component",
+			Action:    "add component",
+			Reason:    "component 'my-new-component' not found in old definition",
+			New:       "my-new-component",
 		},
 	}
 
@@ -82,8 +87,11 @@ func TestDiffComponentRemoved(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoComponentRemoved,
-			Old:  "my-old-component",
+			Type:      DiffTypeComponentRemoved,
+			Component: "my-old-component",
+			Action:    "remove component",
+			Reason:    "component 'my-old-component' not found in new definition",
+			Old:       "my-old-component",
 		},
 	}
 
@@ -104,12 +112,18 @@ func TestDiffComponentAddedAndRemoved(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoComponentAdded,
-			New:  "my-new-component",
+			Type:      DiffTypeComponentAdded,
+			Component: "my-new-component",
+			Action:    "add component",
+			Reason:    "component 'my-new-component' not found in old definition",
+			New:       "my-new-component",
 		},
 		DiffInfo{
-			Type: DiffInfoComponentRemoved,
-			Old:  "my-old-component",
+			Type:      DiffTypeComponentRemoved,
+			Component: "my-old-component",
+			Action:    "remove component",
+			Reason:    "component 'my-old-component' not found in new definition",
+			Old:       "my-old-component",
 		},
 	}
 
@@ -130,9 +144,10 @@ func TestDiffComponentUpdated(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoComponentUpdated,
-			Old:  "my-old-component",
-			New:  "my-old-component",
+			Type:      DiffTypeComponentUpdated,
+			Component: "my-old-component",
+			Action:    "update component",
+			Reason:    "component 'my-old-component' changed in new definition",
 		},
 	}
 
@@ -166,9 +181,10 @@ func TestDiffComponentNoImageExposeRemoved(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		{
-			Type: DiffInfoComponentUpdated,
-			Old:  "test-no-image",
-			New:  "test-no-image",
+			Type:      DiffTypeComponentUpdated,
+			Component: "test-no-image",
+			Action:    "update component",
+			Reason:    "component 'test-no-image' changed in new definition",
 		},
 	}
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
@@ -280,35 +296,51 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 
 		expectedDiffInfos := []DiffInfo{
 			DiffInfo{
-				Type: DiffInfoServiceNameUpdated,
-				Old:  "redis-example",
-				New:  "redis-example-2",
+				Type:   DiffTypeServiceNameUpdated,
+				Action: "re-create service",
+				Reason: "updating service name breaks service discovery",
+				Old:    "redis-example",
+				New:    "redis-example-2",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentAdded,
-				New:  "redis1",
+				Type:      DiffTypeComponentAdded,
+				Component: "redis1",
+				Action:    "add component",
+				Reason:    "component 'redis1' not found in old definition",
+				New:       "redis1",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentAdded,
-				New:  "service1",
+				Type:      DiffTypeComponentAdded,
+				Component: "service1",
+				Action:    "add component",
+				Reason:    "component 'service1' not found in old definition",
+				New:       "service1",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentUpdated,
-				Old:  "redis2",
-				New:  "redis2",
+				Type:      DiffTypeComponentUpdated,
+				Component: "redis2",
+				Action:    "update component",
+				Reason:    "component 'redis2' changed in new definition",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentUpdated,
-				Old:  "service2",
-				New:  "service2",
+				Type:      DiffTypeComponentUpdated,
+				Component: "service2",
+				Action:    "update component",
+				Reason:    "component 'service2' changed in new definition",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  "redis",
+				Type:      DiffTypeComponentRemoved,
+				Component: "redis",
+				Action:    "remove component",
+				Reason:    "component 'redis' not found in new definition",
+				Old:       "redis",
 			},
 			DiffInfo{
-				Type: DiffInfoComponentRemoved,
-				Old:  "service",
+				Type:      DiffTypeComponentRemoved,
+				Component: "service",
+				Action:    "remove component",
+				Reason:    "component 'service' not found in new definition",
+				Old:       "service",
 			},
 		}
 
@@ -387,8 +419,418 @@ func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
 
 	expectedDiffInfos := []DiffInfo{
 		DiffInfo{
-			Type: DiffInfoComponentAdded,
-			New:  "redis2",
+			Type:      DiffTypeComponentAdded,
+			Component: "redis2",
+			Action:    "add component",
+			Reason:    "component 'redis2' not found in old definition",
+			New:       "redis2",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+// scale
+
+func TestDiff_AddScale(t *testing.T) {
+	rawOldDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						]
+					}
+				}
+			}
+	`
+
+	var oldDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawOldDef), &oldDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	rawNewDef := `
+			{
+				"name": "redis-example",
+				"components": {
+					"redis": {
+						"image": "redis",
+						"ports": [
+							6379
+						]
+					},
+					"service": {
+						"image": "giantswarm/redis-example:0.3.0",
+						"ports": [
+							80
+						],
+						"domains": {
+							"80/tcp": [
+								"foo.com"
+							]
+						},
+						"links": [
+							{
+								"component": "redis",
+								"target_port": 6379
+							}
+						],
+						"scale": { "min": 3 }
+					}
+				}
+			}
+	`
+
+	var newDef V2AppDefinition
+	if err := json.Unmarshal([]byte(rawNewDef), &newDef); err != nil {
+		t.Fatalf("failed to unmarshal service definition: %#v", err)
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		DiffInfo{
+			Type:      DiffTypeComponentScaleMinIncreased,
+			Component: "service",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
+			Old:       "",
+			New:       "{\"min\":3}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_NoScale(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+
+	expectedDiffInfos := []DiffInfo{}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleNotChanged(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+
+	expectedDiffInfos := []DiffInfo{}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_MinDecreased(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 1, Max: 6}, // scale min decreased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScaleMinDecreased,
+			Component: "my-old-component",
+			Action:    "store component definition",
+			Reason:    "min scale of component 'my-old-component' decreased in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":1,\"max\":6}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_MinIncreased(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 3, Max: 6}, // scale min increased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScaleMinIncreased,
+			Component: "my-old-component",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":3,\"max\":6}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_MaxDecreased(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 5}, // scale max decreased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScaleMaxDecreased,
+			Component: "my-old-component",
+			Action:    "eventually scale down",
+			Reason:    "scaling action will be applied depending on current instance count",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":2,\"max\":5}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_MaxIncreased(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 7}, // scale min increased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScaleMaxIncreased,
+			Component: "my-old-component",
+			Action:    "store component definition",
+			Reason:    "max scale of component 'my-old-component' increased in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":2,\"max\":7}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_Full(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 1, Max: 7, Placement: OnePerMachinePlacement}, // scale min increased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScalePlacementUpdated,
+			Component: "my-old-component",
+			Action:    "update component",
+			Reason:    "scaling strategy of component 'my-old-component' changed in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+		},
+		{
+			Type:      DiffTypeComponentScaleMinDecreased,
+			Component: "my-old-component",
+			Action:    "store component definition",
+			Reason:    "min scale of component 'my-old-component' decreased in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+		},
+		{
+			Type:      DiffTypeComponentScaleMaxIncreased,
+			Component: "my-old-component",
+			Action:    "store component definition",
+			Reason:    "max scale of component 'my-old-component' increased in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_DefaultPlacement(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6, Placement: DefaultPlacement}, // placement "changed", but stays the same because of the default
+	}
+
+	expectedDiffInfos := []DiffInfo{}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_Placement(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6, Placement: OnePerMachinePlacement}, // placement "changed", but stays the same because of the default
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScalePlacementUpdated,
+			Component: "my-old-component",
+			Action:    "update component",
+			Reason:    "scaling strategy of component 'my-old-component' changed in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":2,\"max\":6,\"placement\":\"one-per-machine\"}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_PortChanged(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("88/tcp")}, // port changed
+		Scale: &ScaleDefinition{Min: 2, Max: 7},                                      // scale max increased
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentUpdated,
+			Component: "my-old-component",
+			Action:    "update component",
+			Reason:    "component 'my-old-component' changed in new definition",
+		},
+		{
+			Type:      DiffTypeComponentScaleMaxIncreased,
+			Component: "my-old-component",
+			Action:    "store component definition",
+			Reason:    "max scale of component 'my-old-component' increased in new definition",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":2,\"max\":7}",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_ScaleChanged_PortChanged_InOtherComponent(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 2, Max: 6},
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+		Scale: &ScaleDefinition{Min: 3, Max: 6}, // scale min increased
+	}
+
+	// other component
+	oldDef.Components[ComponentName("my-other-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
+	}
+	newDef.Components[ComponentName("my-other-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("88/tcp")}, // port changed
+	}
+
+	expectedDiffInfos := []DiffInfo{
+		{
+			Type:      DiffTypeComponentScaleMinIncreased,
+			Component: "my-old-component",
+			Action:    "eventually scale up",
+			Reason:    "scaling action will be applied depending on current instance count",
+			Old:       "{\"min\":2,\"max\":6}",
+			New:       "{\"min\":3,\"max\":6}",
+		},
+		{
+			Type:      DiffTypeComponentUpdated,
+			Component: "my-other-component",
+			Action:    "update component",
+			Reason:    "component 'my-other-component' changed in new definition",
 		},
 	}
 

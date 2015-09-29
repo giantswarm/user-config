@@ -55,7 +55,12 @@ func (sd *ScaleDefinition) String() string {
 		panic(fmt.Sprintf("%#v\n", mask(err)))
 	}
 
-	return string(raw)
+	result := string(raw)
+	if result == "{}" {
+		return ""
+	}
+
+	return result
 }
 
 func (sd *ScaleDefinition) validate(valCtx *ValidationContext) error {
