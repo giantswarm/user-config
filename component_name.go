@@ -13,28 +13,28 @@ var (
 type ComponentName string
 
 // String returns a string version of the given ComponentName.
-func (nn ComponentName) String() string {
-	return string(nn)
+func (cn ComponentName) String() string {
+	return string(cn)
 }
 
 // Empty returns true if the given ComponentName is empty, false otherwise.
-func (nn ComponentName) Empty() bool {
-	return nn == ""
+func (cn ComponentName) Empty() bool {
+	return cn == ""
 }
 
 // Equals returns true if the given ComponentName is equal to the other
 // given component name, false otherwise.
-func (nn ComponentName) Equals(other ComponentName) bool {
-	return nn == other
+func (cn ComponentName) Equals(other ComponentName) bool {
+	return cn == other
 }
 
 // Validate checks that the given ComponentName is a valid ComponentName.
-func (nn ComponentName) Validate() error {
-	if nn.Empty() {
+func (cn ComponentName) Validate() error {
+	if cn.Empty() {
 		return maskf(InvalidComponentNameError, "component name must not be empty")
 	}
 
-	nnStr := nn.String()
+	nnStr := cn.String()
 	if !componentNameRegExp.MatchString(nnStr) {
 		return maskf(InvalidComponentNameError, "component name '%s' must match regexp: %s", nnStr, componentNameRegExp)
 	}
@@ -57,19 +57,19 @@ func (nn ComponentName) Validate() error {
 }
 
 // ParentName returns the parent name of the given name, or InvalidArgumentError if the name has no parent.
-func (nn ComponentName) ParentName() (ComponentName, error) {
-	parts := strings.Split(nn.String(), "/")
+func (cn ComponentName) ParentName() (ComponentName, error) {
+	parts := strings.Split(cn.String(), "/")
 	if len(parts) > 1 {
 		parts = parts[:len(parts)-1]
 		parentName := strings.Join(parts, "/")
 		return ComponentName(parentName), nil
 	}
-	return ComponentName(""), maskf(InvalidArgumentError, "'%s' has no parent", nn.String())
+	return ComponentName(""), maskf(InvalidArgumentError, "'%s' has no parent", cn.String())
 }
 
 // LocalName returns the last part of the given name.
-func (nn ComponentName) LocalName() ComponentName {
-	parts := strings.Split(nn.String(), "/")
+func (cn ComponentName) LocalName() ComponentName {
+	parts := strings.Split(cn.String(), "/")
 	return ComponentName(parts[len(parts)-1])
 }
 
