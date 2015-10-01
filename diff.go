@@ -93,6 +93,18 @@ type DiffInfo struct {
 	New string
 }
 
+type DiffInfos []DiffInfo
+
+func (dis DiffInfos) ComponentNames() ComponentNames {
+	componentNames := ComponentNames{}
+
+	for _, di := range dis {
+		componentNames = append(componentNames, di.Component)
+	}
+
+	return componentNames
+}
+
 // service diff
 
 // ServiceDiff checks the difference between two service definitions. The
