@@ -114,6 +114,18 @@ func ServiceDiff(oldDef, newDef V2AppDefinition) []DiffInfo {
 	return diffInfos
 }
 
+func DiffInfosByType(diffInfos []DiffInfo, t DiffType) []DiffInfo {
+	newDiffInfos := []DiffInfo{}
+
+	for _, diffInfo := range diffInfos {
+		if diffInfo.Type == t {
+			newDiffInfos = append(newDiffInfos, diffInfo)
+		}
+	}
+
+	return newDiffInfos
+}
+
 func diffServiceNameUpdated(oldName, newName AppName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
