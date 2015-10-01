@@ -138,6 +138,20 @@ func DiffInfosByType(diffInfos []DiffInfo, t DiffType) []DiffInfo {
 	return newDiffInfos
 }
 
+func FilterDiffType(diffInfos []DiffInfo, diffType DiffType) []DiffInfo {
+	newDiffInfos := []DiffInfo{}
+
+	for _, di := range diffInfos {
+		if di.Type == diffType {
+			continue
+		}
+
+		newDiffInfos = append(newDiffInfos, di)
+	}
+
+	return newDiffInfos
+}
+
 func diffServiceNameUpdated(oldName, newName AppName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
@@ -552,20 +566,6 @@ func orderedComponentKeys(defs ComponentDefinitions) []string {
 	sort.Strings(keys)
 
 	return keys
-}
-
-func filterDiffType(diffInfos []DiffInfo, diffType DiffType) []DiffInfo {
-	newDiffInfos := []DiffInfo{}
-
-	for _, di := range diffInfos {
-		if di.Type == diffType {
-			continue
-		}
-
-		newDiffInfos = append(newDiffInfos, di)
-	}
-
-	return newDiffInfos
 }
 
 func isDefaultPlacement(oldPlacement, newPlacement Placement) bool {
