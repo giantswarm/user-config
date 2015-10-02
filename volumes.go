@@ -146,6 +146,10 @@ func (vds VolumeDefinitions) String() string {
 	return string(raw)
 }
 
+func (vds VolumeDefinitions) Empty() bool {
+	return len(vds) == 0
+}
+
 // Contains returns true if the volumes contain a volume with the given path,
 // or false otherwise.
 func (vds VolumeDefinitions) Contains(path string) bool {
