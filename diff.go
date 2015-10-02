@@ -435,8 +435,8 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 			Type:      DiffTypeComponentScalePlacementUpdated,
 			Key:       "scale.placement",
 			Component: componentName,
-			Old:       oldScaleDef.String(),
-			New:       newScaleDef.String(),
+			Old:       string(oldScaleDef.Placement),
+			New:       string(newScaleDef.Placement),
 		})
 	}
 
@@ -445,8 +445,8 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 			Type:      DiffTypeComponentScaleMinUpdated,
 			Key:       "scale.min",
 			Component: componentName,
-			Old:       oldScaleDef.String(),
-			New:       newScaleDef.String(),
+			Old:       strconv.Itoa(oldScaleDef.Min),
+			New:       strconv.Itoa(newScaleDef.Min),
 		})
 	}
 
@@ -455,8 +455,8 @@ func diffComponentScale(oldDef, newDef ComponentDefinition, componentName Compon
 			Type:      DiffTypeComponentScaleMaxUpdated,
 			Key:       "scale.max",
 			Component: componentName,
-			Old:       oldScaleDef.String(),
-			New:       newScaleDef.String(),
+			Old:       strconv.Itoa(oldScaleDef.Max),
+			New:       strconv.Itoa(newScaleDef.Max),
 		})
 	}
 
