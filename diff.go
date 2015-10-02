@@ -276,6 +276,7 @@ func diffComponentEntrypoint(oldDef, newDef ComponentDefinition, componentName C
 func diffComponentPorts(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldPorts := oldDef.Ports.String()
 	newPorts := newDef.Ports.String()
 
@@ -295,6 +296,7 @@ func diffComponentPorts(oldDef, newDef ComponentDefinition, componentName Compon
 func diffComponentEnv(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldEnv := oldDef.Env.String()
 	newEnv := newDef.Env.String()
 
@@ -314,6 +316,7 @@ func diffComponentEnv(oldDef, newDef ComponentDefinition, componentName Componen
 func diffComponentVolumes(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldVolumes := oldDef.Volumes.String()
 	newVolumes := newDef.Volumes.String()
 
@@ -333,6 +336,7 @@ func diffComponentVolumes(oldDef, newDef ComponentDefinition, componentName Comp
 func diffComponentArgs(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldArgs := strings.Join(oldDef.Args, ", ")
 	newArgs := strings.Join(newDef.Args, ", ")
 
@@ -352,6 +356,7 @@ func diffComponentArgs(oldDef, newDef ComponentDefinition, componentName Compone
 func diffComponentDomains(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldDomains := oldDef.Domains.String()
 	newDomains := newDef.Domains.String()
 
@@ -371,6 +376,7 @@ func diffComponentDomains(oldDef, newDef ComponentDefinition, componentName Comp
 func diffComponentLinks(oldDef, newDef ComponentDefinition, componentName ComponentName) []DiffInfo {
 	diffInfos := []DiffInfo{}
 
+	// TODO this needs to be more fine grained
 	oldLinks := oldDef.Links.String()
 	newLinks := newDef.Links.String()
 
