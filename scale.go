@@ -107,7 +107,12 @@ func (sd *ScaleDefinition) setDefaults(valCtx *ValidationContext) {
 }
 
 func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinition {
-	if sd.Min == valCtx.MinScaleSize && sd.Max == valCtx.MaxScaleSize {
+	defaultPlacement := DefaultPlacement
+	// Allow for valCtx.Placement not be set.
+	if valCtx.Placement != "" {
+		defaultPlacement = valCtx.Placement
+	}
+	if sd.Min == valCtx.MinScaleSize && sd.Max == valCtx.MaxScaleSize && sd.Placement == defaultPlacement {
 		return nil
 	}
 
@@ -119,7 +124,7 @@ func (sd *ScaleDefinition) hideDefaults(valCtx *ValidationContext) *ScaleDefinit
 		sd.Max = 0
 	}
 
-	if sd.Placement == DefaultPlacement {
+	if sd.Placement == defaultPlacement {
 		sd.Placement = ""
 	}
 
