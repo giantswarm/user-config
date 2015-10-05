@@ -129,6 +129,65 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 	}
 }
 
+func TestV2ScaleAppHidePlacement(t *testing.T) {
+	a := V2ExampleDefinition()
+	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
+		Placement: "simple",
+	}
+
+	valCtx := NewValidationContext()
+	valCtx.Placement = "simple"
+
+	err := a.SetDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("setting defaults failed: %s", err.Error())
+	}
+	if a.Components["component/a"].Scale.Placement != valCtx.Placement {
+		t.Fatalf("expected placement scale to be '%s'", valCtx.Placement)
+	}
+
+	b, err := a.HideDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("hiding defaults failed: %s", err.Error())
+	}
+
+	if b.Components["component/a"].Scale != nil {
+		t.Fatalf("scale should be hidden")
+	}
+}
+
+func TestV2ScaleAppDontHideCustomPlacement(t *testing.T) {
+	customPlacement := userconfig.Placement("one-per-machine")
+	a := V2ExampleDefinition()
+	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
+		Placement: customPlacement,
+	}
+
+	valCtx := NewValidationContext()
+	valCtx.Placement = "simple"
+
+	err := a.SetDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("setting defaults failed: %s", err.Error())
+	}
+	if a.Components["component/a"].Scale.Placement != customPlacement {
+		t.Fatalf("expected placement scale to be '%s'", customPlacement)
+	}
+
+	b, err := a.HideDefaults(valCtx)
+	if err != nil {
+		t.Fatalf("hiding defaults failed: %s", err.Error())
+	}
+
+	if b.Components["component/a"].Scale == nil {
+		t.Fatalf("scale should not be hidden")
+	}
+
+	if b.Components["component/a"].Scale.Placement != customPlacement {
+		t.Fatalf("expected placement scale to be '%s'", customPlacement)
+	}
+}
+
 func TestValidPlacementValues(t *testing.T) {
 	list := []string{
 		"simple",
