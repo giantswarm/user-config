@@ -76,6 +76,9 @@ type DiffInfo struct {
 
 type DiffInfos []DiffInfo
 
+// ComponentNames returns a list of unique component names. Each diff type is
+// expected to have a component name assigned. In case this is not true, this
+// method panics.
 func (dis DiffInfos) ComponentNames() ComponentNames {
 	componentNames := ComponentNames{}
 
@@ -116,6 +119,8 @@ func ServiceDiff(oldDef, newDef V2AppDefinition) DiffInfos {
 	return diffInfos
 }
 
+// DiffInfosByType returns a copied list of diff infos, only containing the
+// given diff type.
 func DiffInfosByType(diffInfos DiffInfos, t DiffType) DiffInfos {
 	newDiffInfos := DiffInfos{}
 
@@ -128,6 +133,8 @@ func DiffInfosByType(diffInfos DiffInfos, t DiffType) DiffInfos {
 	return newDiffInfos
 }
 
+// FilterDiffType returns a copied list of diff infos, having the given diff
+// type removed.
 func FilterDiffType(diffInfos DiffInfos, diffType DiffType) DiffInfos {
 	newDiffInfos := DiffInfos{}
 
