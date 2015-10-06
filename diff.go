@@ -1,6 +1,7 @@
 package userconfig
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,6 +80,18 @@ func (dis DiffInfos) ComponentNames() ComponentNames {
 	componentNames := ComponentNames{}
 
 	for _, di := range dis {
+		if di.Type == DiffTypeServiceNameUpdated {
+			continue
+		}
+
+		if di.Component == "" {
+			panic(fmt.Sprintf("expect diff type '%s' to have component name, but it is empty", di.Type))
+		}
+
+		if componentNames.Contain(di.Component) {
+			continue
+		}
+
 		componentNames = append(componentNames, di.Component)
 	}
 
