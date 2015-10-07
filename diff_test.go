@@ -9,7 +9,7 @@ import (
 	. "github.com/giantswarm/user-config"
 )
 
-func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos []DiffInfo) {
+func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiffInfos DiffInfos) {
 	diffInfos := ServiceDiff(oldDef, newDef)
 
 	if len(diffInfos) != len(expectedDiffInfos) {
@@ -22,7 +22,7 @@ func testDiffCallWith(t *testing.T, oldDef, newDef V2AppDefinition, expectedDiff
 		}
 
 		for _, got := range diffInfos {
-			t.Logf("* found diff: %#v\n", got)
+			t.Logf("* found diff:    %#v\n", got)
 		}
 		t.Fatalf("Found diffs do not match expected diffs!")
 	}
@@ -32,7 +32,7 @@ func TestDiffNoDiff(t *testing.T) {
 	oldDef := V2ExampleDefinition()
 	newDef := V2ExampleDefinition()
 
-	expectedDiffInfos := []DiffInfo{}
+	expectedDiffInfos := DiffInfos{}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
@@ -43,13 +43,12 @@ func TestDiffServiceNameUpdated(t *testing.T) {
 	newDef := V2ExampleDefinition()
 	newDef.AppName = "my-new-service-name"
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
-			Type:   DiffTypeServiceNameUpdated,
-			Action: "re-create service",
-			Reason: "updating service name breaks service discovery",
-			Old:    "service",
-			New:    "my-new-service-name",
+			Type: DiffTypeServiceNameUpdated,
+			Key:  "name",
+			Old:  "service",
+			New:  "my-new-service-name",
 		},
 	}
 
@@ -64,12 +63,10 @@ func TestDiffComponentAdded(t *testing.T) {
 		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
 			Type:      DiffTypeComponentAdded,
 			Component: "my-new-component",
-			Action:    "add component",
-			Reason:    "component 'my-new-component' not found in old definition",
 			New:       "my-new-component",
 		},
 	}
@@ -85,12 +82,10 @@ func TestDiffComponentRemoved(t *testing.T) {
 	}
 	newDef := V2ExampleDefinition()
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
 			Type:      DiffTypeComponentRemoved,
 			Component: "my-old-component",
-			Action:    "remove component",
-			Reason:    "component 'my-old-component' not found in new definition",
 			Old:       "my-old-component",
 		},
 	}
@@ -110,19 +105,15 @@ func TestDiffComponentAddedAndRemoved(t *testing.T) {
 		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
 			Type:      DiffTypeComponentAdded,
 			Component: "my-new-component",
-			Action:    "add component",
-			Reason:    "component 'my-new-component' not found in old definition",
 			New:       "my-new-component",
 		},
 		DiffInfo{
 			Type:      DiffTypeComponentRemoved,
 			Component: "my-old-component",
-			Action:    "remove component",
-			Reason:    "component 'my-old-component' not found in new definition",
 			Old:       "my-old-component",
 		},
 	}
@@ -142,19 +133,20 @@ func TestDiffComponentUpdated(t *testing.T) {
 		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("8080/tcp")}, // port updated
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
-			Type:      DiffTypeComponentUpdated,
+			Type:      DiffTypeComponentPortsUpdated,
+			Key:       "ports",
 			Component: "my-old-component",
-			Action:    "update component",
-			Reason:    "component 'my-old-component' changed in new definition",
+			Old:       "[\"80/tcp\"]",
+			New:       "[\"8080/tcp\"]",
 		},
 	}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
-func TestDiffComponentNoImageExposeRemoved(t *testing.T) {
+func TestDiffComponentNoImageExposeAdded(t *testing.T) {
 	oldDef := V2ExampleDefinition()
 	newDef := V2ExampleDefinition()
 
@@ -179,12 +171,13 @@ func TestDiffComponentNoImageExposeRemoved(t *testing.T) {
 	})
 	newDef.Components[newComponentName] = &newDefComponent
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentUpdated,
+			Type:      DiffTypeComponentExposeUpdated,
+			Key:       "expose",
 			Component: "test-no-image",
-			Action:    "update component",
-			Reason:    "component 'test-no-image' changed in new definition",
+			Old:       "[\"{\\\"component\\\":\\\"foo-bar\\\",\\\"port\\\":\\\"8080/tcp\\\",\\\"target_port\\\":\\\"8080/tcp\\\"}\"]",
+			New:       "[\"{\\\"component\\\":\\\"foo-bar\\\",\\\"port\\\":\\\"8080/tcp\\\",\\\"target_port\\\":\\\"8080/tcp\\\"}\",\"{\\\"component\\\":\\\"foo-bar2\\\",\\\"port\\\":\\\"8081/tcp\\\",\\\"target_port\\\":\\\"8081/tcp\\\"}\"]",
 		},
 	}
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
@@ -294,52 +287,45 @@ func TestDiffFullDefinitionUpdate(t *testing.T) {
 			t.Fatalf("failed to unmarshal service definition: %#v", err)
 		}
 
-		expectedDiffInfos := []DiffInfo{
+		expectedDiffInfos := DiffInfos{
 			DiffInfo{
-				Type:   DiffTypeServiceNameUpdated,
-				Action: "re-create service",
-				Reason: "updating service name breaks service discovery",
-				Old:    "redis-example",
-				New:    "redis-example-2",
+				Type: DiffTypeServiceNameUpdated,
+				Key:  "name",
+				Old:  "redis-example",
+				New:  "redis-example-2",
 			},
 			DiffInfo{
 				Type:      DiffTypeComponentAdded,
 				Component: "redis1",
-				Action:    "add component",
-				Reason:    "component 'redis1' not found in old definition",
 				New:       "redis1",
 			},
 			DiffInfo{
 				Type:      DiffTypeComponentAdded,
 				Component: "service1",
-				Action:    "add component",
-				Reason:    "component 'service1' not found in old definition",
 				New:       "service1",
 			},
 			DiffInfo{
-				Type:      DiffTypeComponentUpdated,
+				Type:      DiffTypeComponentPortsUpdated,
+				Key:       "ports",
 				Component: "redis2",
-				Action:    "update component",
-				Reason:    "component 'redis2' changed in new definition",
+				Old:       "[\"6379/tcp\"]",
+				New:       "[\"6000/tcp\"]",
 			},
 			DiffInfo{
-				Type:      DiffTypeComponentUpdated,
+				Type:      DiffTypeComponentLinksUpdated,
+				Key:       "links",
 				Component: "service2",
-				Action:    "update component",
-				Reason:    "component 'service2' changed in new definition",
+				Old:       "[\"{\\\"alias\\\":\\\"\\\",\\\"component\\\":\\\"redis2\\\",\\\"service\\\":\\\"\\\",\\\"target_port\\\":\\\"6379/tcp\\\"}\"]",
+				New:       "[\"{\\\"alias\\\":\\\"\\\",\\\"component\\\":\\\"redis2\\\",\\\"service\\\":\\\"\\\",\\\"target_port\\\":\\\"6000/tcp\\\"}\"]",
 			},
 			DiffInfo{
 				Type:      DiffTypeComponentRemoved,
 				Component: "redis",
-				Action:    "remove component",
-				Reason:    "component 'redis' not found in new definition",
 				Old:       "redis",
 			},
 			DiffInfo{
 				Type:      DiffTypeComponentRemoved,
 				Component: "service",
-				Action:    "remove component",
-				Reason:    "component 'service' not found in new definition",
 				Old:       "service",
 			},
 		}
@@ -417,12 +403,10 @@ func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
 		t.Fatalf("failed to unmarshal service definition: %#v", err)
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
 			Type:      DiffTypeComponentAdded,
 			Component: "redis2",
-			Action:    "add component",
-			Reason:    "component 'redis2' not found in old definition",
 			New:       "redis2",
 		},
 	}
@@ -506,14 +490,13 @@ func TestDiff_AddScale(t *testing.T) {
 		t.Fatalf("failed to unmarshal service definition: %#v", err)
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		DiffInfo{
-			Type:      DiffTypeComponentScaleMinIncreased,
+			Type:      DiffTypeComponentScaleMinUpdated,
+			Key:       "scale.min",
 			Component: "service",
-			Action:    "eventually scale up",
-			Reason:    "scaling action will be applied depending on current instance count",
-			Old:       "",
-			New:       "{\"min\":3}",
+			Old:       "0",
+			New:       "3",
 		},
 	}
 
@@ -532,7 +515,7 @@ func TestDiff_NoScale(t *testing.T) {
 		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("80/tcp")},
 	}
 
-	expectedDiffInfos := []DiffInfo{}
+	expectedDiffInfos := DiffInfos{}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
@@ -551,7 +534,7 @@ func TestDiff_ScaleNotChanged(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 6},
 	}
 
-	expectedDiffInfos := []DiffInfo{}
+	expectedDiffInfos := DiffInfos{}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
@@ -570,14 +553,13 @@ func TestDiff_ScaleChanged_MinDecreased(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 1, Max: 6}, // scale min decreased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentScaleMinDecreased,
+			Type:      DiffTypeComponentScaleMinUpdated,
+			Key:       "scale.min",
 			Component: "my-old-component",
-			Action:    "store component definition",
-			Reason:    "min scale of component 'my-old-component' decreased in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":1,\"max\":6}",
+			Old:       "2",
+			New:       "1",
 		},
 	}
 
@@ -598,14 +580,13 @@ func TestDiff_ScaleChanged_MinIncreased(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 3, Max: 6}, // scale min increased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentScaleMinIncreased,
+			Type:      DiffTypeComponentScaleMinUpdated,
+			Key:       "scale.min",
 			Component: "my-old-component",
-			Action:    "eventually scale up",
-			Reason:    "scaling action will be applied depending on current instance count",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":3,\"max\":6}",
+			Old:       "2",
+			New:       "3",
 		},
 	}
 
@@ -626,14 +607,13 @@ func TestDiff_ScaleChanged_MaxDecreased(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 5}, // scale max decreased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentScaleMaxDecreased,
+			Type:      DiffTypeComponentScaleMaxUpdated,
+			Key:       "scale.max",
 			Component: "my-old-component",
-			Action:    "eventually scale down",
-			Reason:    "scaling action will be applied depending on current instance count",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":2,\"max\":5}",
+			Old:       "6",
+			New:       "5",
 		},
 	}
 
@@ -654,14 +634,13 @@ func TestDiff_ScaleChanged_MaxIncreased(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 7}, // scale min increased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentScaleMaxIncreased,
+			Type:      DiffTypeComponentScaleMaxUpdated,
+			Key:       "scale.max",
 			Component: "my-old-component",
-			Action:    "store component definition",
-			Reason:    "max scale of component 'my-old-component' increased in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":2,\"max\":7}",
+			Old:       "6",
+			New:       "7",
 		},
 	}
 
@@ -682,30 +661,27 @@ func TestDiff_ScaleChanged_Full(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 1, Max: 7, Placement: OnePerMachinePlacement}, // scale min increased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
 			Type:      DiffTypeComponentScalePlacementUpdated,
+			Key:       "scale.placement",
 			Component: "my-old-component",
-			Action:    "update component",
-			Reason:    "scaling strategy of component 'my-old-component' changed in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+			Old:       "",
+			New:       "one-per-machine",
 		},
 		{
-			Type:      DiffTypeComponentScaleMinDecreased,
+			Type:      DiffTypeComponentScaleMinUpdated,
+			Key:       "scale.min",
 			Component: "my-old-component",
-			Action:    "store component definition",
-			Reason:    "min scale of component 'my-old-component' decreased in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+			Old:       "2",
+			New:       "1",
 		},
 		{
-			Type:      DiffTypeComponentScaleMaxIncreased,
+			Type:      DiffTypeComponentScaleMaxUpdated,
+			Key:       "scale.max",
 			Component: "my-old-component",
-			Action:    "store component definition",
-			Reason:    "max scale of component 'my-old-component' increased in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":1,\"max\":7,\"placement\":\"one-per-machine\"}",
+			Old:       "6",
+			New:       "7",
 		},
 	}
 
@@ -726,7 +702,7 @@ func TestDiff_ScaleChanged_DefaultPlacement(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 6, Placement: DefaultPlacement}, // placement "changed", but stays the same because of the default
 	}
 
-	expectedDiffInfos := []DiffInfo{}
+	expectedDiffInfos := DiffInfos{}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
@@ -745,14 +721,13 @@ func TestDiff_ScaleChanged_Placement(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 6, Placement: OnePerMachinePlacement}, // placement "changed", but stays the same because of the default
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
 			Type:      DiffTypeComponentScalePlacementUpdated,
+			Key:       "scale.placement",
 			Component: "my-old-component",
-			Action:    "update component",
-			Reason:    "scaling strategy of component 'my-old-component' changed in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":2,\"max\":6,\"placement\":\"one-per-machine\"}",
+			Old:       "",
+			New:       "one-per-machine",
 		},
 	}
 
@@ -773,20 +748,20 @@ func TestDiff_ScaleChanged_PortChanged(t *testing.T) {
 		Scale: &ScaleDefinition{Min: 2, Max: 7},                                      // scale max increased
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentUpdated,
+			Type:      DiffTypeComponentPortsUpdated,
+			Key:       "ports",
 			Component: "my-old-component",
-			Action:    "update component",
-			Reason:    "component 'my-old-component' changed in new definition",
+			Old:       "[\"80/tcp\"]",
+			New:       "[\"88/tcp\"]",
 		},
 		{
-			Type:      DiffTypeComponentScaleMaxIncreased,
+			Type:      DiffTypeComponentScaleMaxUpdated,
+			Key:       "scale.max",
 			Component: "my-old-component",
-			Action:    "store component definition",
-			Reason:    "max scale of component 'my-old-component' increased in new definition",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":2,\"max\":7}",
+			Old:       "6",
+			New:       "7",
 		},
 	}
 
@@ -817,24 +792,61 @@ func TestDiff_ScaleChanged_PortChanged_InOtherComponent(t *testing.T) {
 		Ports: []generictypes.DockerPort{generictypes.MustParseDockerPort("88/tcp")}, // port changed
 	}
 
-	expectedDiffInfos := []DiffInfo{
+	expectedDiffInfos := DiffInfos{
 		{
-			Type:      DiffTypeComponentScaleMinIncreased,
+			Type:      DiffTypeComponentScaleMinUpdated,
 			Component: "my-old-component",
-			Action:    "eventually scale up",
-			Reason:    "scaling action will be applied depending on current instance count",
-			Old:       "{\"min\":2,\"max\":6}",
-			New:       "{\"min\":3,\"max\":6}",
+			Key:       "scale.min",
+			Old:       "2",
+			New:       "3",
 		},
 		{
-			Type:      DiffTypeComponentUpdated,
+			Type:      DiffTypeComponentPortsUpdated,
+			Key:       "ports",
 			Component: "my-other-component",
-			Action:    "update component",
-			Reason:    "component 'my-other-component' changed in new definition",
+			Old:       "[\"80/tcp\"]",
+			New:       "[\"88/tcp\"]",
 		},
 	}
 
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiff_DiffInfo_ComponentNames_Unique(t *testing.T) {
+	diffInfos := DiffInfos{
+		{
+			Type: DiffTypeServiceNameUpdated, // should be ignored
+		},
+		{
+			Type:      DiffTypeComponentArgsUpdated,
+			Component: ComponentName("a"), // duplicated but should be only listed once in the result
+		},
+		{
+			Type:      DiffTypeComponentScaleMinUpdated,
+			Component: ComponentName("a"), // duplicated but should be only listed once in the result
+		},
+		{
+			Type:      DiffTypeComponentRemoved,
+			Component: ComponentName("b"),
+		},
+		{
+			Type:      DiffTypeComponentAdded,
+			Component: ComponentName("e"),
+		},
+	}
+	list := diffInfos.ComponentNames()
+
+	expectedNames := ComponentNames{
+		ComponentName("a"),
+		ComponentName("b"),
+		ComponentName("e"),
+	}
+
+	if !reflect.DeepEqual(list, expectedNames) {
+		t.Logf("got:      %#v", list)
+		t.Logf("expected: %#v", expectedNames)
+		t.Fatalf("component names are not equal")
+	}
 }
 
 // TODO test each definition difference inside a component definition
