@@ -59,7 +59,7 @@ run-tests:
 	    -e GOPATH=/usr/code/.gobuild \
 	    -w /usr/code \
 	    golang:$(GOVERSION) \
-		go test ./...
+	    go test ./...
 
 run-test:
 	if test "$(test)" = "" ; then \
@@ -72,7 +72,7 @@ run-test:
 	    -e GOPATH=/usr/code/.gobuild \
 	    -w /usr/code \
 	    golang:$(GOVERSION) \
-		go test -v $(test)
+	    go test -v $(test)
 
 fmt:
 	gofmt -l -w .
