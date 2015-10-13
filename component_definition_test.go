@@ -105,7 +105,7 @@ func Test_CyclicDeps_LinkToSelf(t *testing.T) {
 		Components: userconfig.ComponentDefinitions{},
 	}
 
-	// Component "one" links to component "two"
+	// Component "one" links to itself
 	def.Components[userconfig.ComponentName("one")] = &userconfig.ComponentDefinition{
 		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
 		Ports: []generictypes.DockerPort{
@@ -129,24 +129,6 @@ func Test_CyclicDeps_LinkToSelf(t *testing.T) {
 func Test_CyclicDeps_OnlyCircle(t *testing.T) {
 	def := userconfig.V2AppDefinition{
 		Components: userconfig.ComponentDefinitions{},
-	}
-
-	// Component "one" links to itself
-	def.Components[userconfig.ComponentName("one")] = &userconfig.ComponentDefinition{
-		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
-		Ports: []generictypes.DockerPort{
-			generictypes.MustParseDockerPort("80/tcp"),
-		},
-		Links: userconfig.LinkDefinitions{
-			userconfig.LinkDefinition{
-				Component:  userconfig.ComponentName("one"),
-				TargetPort: generictypes.MustParseDockerPort("80/tcp"),
-			},
-		},
-	}
-
-	if err := def.Validate(nil); err == nil {
-		t.Fatalf("expected cyclic dependencies to be detected and throw error")
 	}
 
 	// Component "one" links to component "two"
