@@ -85,7 +85,7 @@ func Test_CyclicDeps_OnlyCircle(t *testing.T) {
 		Components: userconfig.ComponentDefinitions{},
 	}
 
-	// Component "one" links to component "two"
+	// Component "one" links to itself
 	def.Components[userconfig.ComponentName("one")] = &userconfig.ComponentDefinition{
 		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
 		Ports: []generictypes.DockerPort{

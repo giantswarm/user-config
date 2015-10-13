@@ -212,8 +212,8 @@ func (nds ComponentDefinitions) validateLinks() error {
 
 // detectLinkCycle walks the links of the given component, looks up the target
 // components of each link, and follows this components links, until it finds a
-// loop. In case there is no loop, it does not throw an error. In case it
-// detects a loop, it throws an error.
+// loop. In case it detects a loop, it returns an error, otherwise to returns
+// nil.
 func (nds ComponentDefinitions) detectLinkCycle(linkDefinition LinkDefinition) error {
 	linkedComponents := ComponentNames{}
 
