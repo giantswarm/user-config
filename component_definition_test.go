@@ -8,7 +8,7 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func Test_CyclicDeps_Valid(t *testing.T) {
+func Test_CyclicDeps_Valid_ComponentLinks(t *testing.T) {
 	def := userconfig.V2AppDefinition{
 		Components: userconfig.ComponentDefinitions{},
 	}
@@ -22,6 +22,52 @@ func Test_CyclicDeps_Valid(t *testing.T) {
 		Links: userconfig.LinkDefinitions{
 			userconfig.LinkDefinition{
 				Component:  userconfig.ComponentName("two"),
+				TargetPort: generictypes.MustParseDockerPort("80/tcp"),
+			},
+		},
+	}
+
+	// Component "two" links to component "three"
+	def.Components[userconfig.ComponentName("two")] = &userconfig.ComponentDefinition{
+		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{
+			generictypes.MustParseDockerPort("80/tcp"),
+		},
+		Links: userconfig.LinkDefinitions{
+			userconfig.LinkDefinition{
+				Component:  userconfig.ComponentName("three"),
+				TargetPort: generictypes.MustParseDockerPort("80/tcp"),
+			},
+		},
+	}
+
+	// Component "three" links NOT to component "one"
+	def.Components[userconfig.ComponentName("three")] = &userconfig.ComponentDefinition{
+		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{
+			generictypes.MustParseDockerPort("80/tcp"),
+		},
+	}
+
+	if err := def.Validate(nil); err != nil {
+		t.Fatalf("expected definition to be valid, got error: %#v", err)
+	}
+}
+
+func Test_CyclicDeps_Valid_ServiceLinks(t *testing.T) {
+	def := userconfig.V2AppDefinition{
+		Components: userconfig.ComponentDefinitions{},
+	}
+
+	// Component "one" links to service "service"
+	def.Components[userconfig.ComponentName("one")] = &userconfig.ComponentDefinition{
+		Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		Ports: []generictypes.DockerPort{
+			generictypes.MustParseDockerPort("80/tcp"),
+		},
+		Links: userconfig.LinkDefinitions{
+			userconfig.LinkDefinition{
+				Service:    userconfig.AppName("service"),
 				TargetPort: generictypes.MustParseDockerPort("80/tcp"),
 			},
 		},
