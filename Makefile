@@ -9,6 +9,7 @@ BIN=$(PROJECT)
 .PHONY=clean run-test get-deps update-deps fmt run-tests upload-docker-image
 
 GOPATH := $(BUILD_PATH)
+GOVERSION = 1.4.2-cross
 
 SOURCE=$(shell find . -name '*.go')
 
@@ -43,17 +44,35 @@ get-deps: .gobuild
 	GOPATH=$(GOPATH) builder go get github.com/onsi/ginkgo
 
 $(BIN): $(SOURCE)
-	GOPATH=$(GOPATH) go build -o $(BIN)
+	docker run \
+	    --rm \
+	    -v $(shell pwd):/usr/code \
+	    -e GOPATH=/usr/code/.gobuild \
+	    -w /usr/code \
+	    golang:$(GOVERSION) \
+	    go build -o $(BIN)
 
 run-tests:
-	GOPATH=$(GOPATH) go test ./...
+	docker run \
+	    --rm \
+	    -v $(shell pwd):/usr/code \
+	    -e GOPATH=/usr/code/.gobuild \
+	    -w /usr/code \
+	    golang:$(GOVERSION) \
+		go test ./...
 
 run-test:
 	if test "$(test)" = "" ; then \
 		echo "missing test parameter, that is, path to test folder e.g. './middleware/v1/'."; \
 		exit 1; \
 	fi
-	GOPATH=$(GOPATH) go test -v $(test)
+	docker run \
+	    --rm \
+	    -v $(shell pwd):/usr/code \
+	    -e GOPATH=/usr/code/.gobuild \
+	    -w /usr/code \
+	    golang:$(GOVERSION) \
+		go test -v $(test)
 
 fmt:
 	gofmt -l -w .
