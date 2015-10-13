@@ -185,8 +185,10 @@ func (nds ComponentDefinitions) validateLinks() error {
 			// Try to find the target component
 			targetName := ComponentName(link.Component)
 			targetComponent, err := nds.ComponentByName(targetName)
-			if err != nil {
+			if IsComponentNotFound(err) {
 				return maskf(InvalidComponentDefinitionError, "invalid link to component '%s': does not exists", link.Component)
+			} else if err != nil {
+				return maskf(InvalidComponentDefinitionError, "unexpected error: %#v", err)
 			}
 
 			// Does the target component expose the linked to port?
@@ -198,8 +200,52 @@ func (nds ComponentDefinitions) validateLinks() error {
 			if !isLinkAllowed(componentName, targetName) {
 				return maskf(InvalidLinkDefinitionError, "invalid link to component '%s': component '%s' is not allowed to link to it", link.Component, componentName)
 			}
+
+			if err := nds.detectLinkCycle(link); err != nil {
+				return maskf(InvalidComponentDefinitionError, "invalid link to component '%s': %s", link.Component, err.Error())
+			}
 		}
 	}
+
+	return nil
+}
+
+// detectLinkCycle walks the links of the given component, looks up the target
+// components of each link, and follows this components links, until it finds a
+// loop. In case it detects a loop, it returns an error, otherwise to returns
+// nil.
+func (nds ComponentDefinitions) detectLinkCycle(linkDefinition LinkDefinition) error {
+	linkedComponents := ComponentNames{}
+
+	var recursive func(ld LinkDefinition) error
+	recursive = func(ld LinkDefinition) error {
+		targetName := ComponentName(ld.Component)
+
+		if linkedComponents.Contain(targetName) {
+			// We found a loop.
+			return maskAny(LinkCycleError)
+		}
+		linkedComponents = append(linkedComponents, targetName)
+
+		targetComponent, err := nds.ComponentByName(targetName)
+		if err != nil {
+			return maskAny(err)
+		}
+
+		// Go deeper into the dependency graph
+		for _, tcl := range targetComponent.Links {
+			if err := recursive(tcl); err != nil {
+				return maskAny(err)
+			}
+		}
+
+		return nil
+	}
+
+	if err := recursive(linkDefinition); err != nil {
+		return maskAny(err)
+	}
+
 	return nil
 }
 
