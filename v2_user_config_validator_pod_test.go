@@ -836,7 +836,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 		})
 
-		Describe("parsing links to the same component with different ports, should give a name conflict", func() {
+		Describe("parsing links to the same component with different ports", func() {
 			var err error
 
 			BeforeEach(func() {
@@ -849,11 +849,48 @@ var _ = Describe("v2 user config pod validator", func() {
 				err = validate(components)
 			})
 
-			It("should throw error InvalidLinkDefinitionError", func() {
-				Expect(IsInvalidLinkDefinition(err)).To(BeTrue())
-				Expect(err.Error()).To(Equal(`duplicate link: redisX`))
+			It("should NOT throw error", func() {
+				Expect(err).To(BeNil())
 			})
 		})
 
+		Describe("parsing links to a component within the same pod having duplicated names", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component"] = setPod(testComponent(), PodChildren)
+				components["component/a"] = addLinks(testComponent(),
+					LinkDefinition{Component: "component/b", TargetPort: generictypes.MustParseDockerPort("6379")},
+					LinkDefinition{Component: "component/b", TargetPort: generictypes.MustParseDockerPort("1234")})
+				components["component/b"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+
+				err = validate(components)
+			})
+
+			It("should throw error InvalidLinkDefinitionError", func() {
+				Expect(IsInvalidDependencyConfig(err)).To(BeTrue())
+				Expect(err.Error()).To(Equal(`duplicate (with different ports) dependency 'b' in pod under 'component'`))
+			})
+		})
+
+		Describe("parsing links to a component within the same pod having duplicated names, but alias set", func() {
+			var err error
+
+			BeforeEach(func() {
+				components := testApp()
+				components["component"] = setPod(testComponent(), PodChildren)
+				components["component/a"] = addLinks(testComponent(),
+					LinkDefinition{Component: "component/b", TargetPort: generictypes.MustParseDockerPort("6379")},
+					LinkDefinition{Component: "component/b", TargetPort: generictypes.MustParseDockerPort("1234"), Alias: "foo"}) // has alias that prevents conflict
+				components["component/b"] = addPorts(testComponent(), generictypes.MustParseDockerPort("6379"), generictypes.MustParseDockerPort("1234"))
+
+				err = validate(components)
+			})
+
+			It("should NOT throw error", func() {
+				Expect(err).To(BeNil())
+			})
+		})
 	})
 })

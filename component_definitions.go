@@ -246,6 +246,19 @@ func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *Co
 	}
 }
 
+func (nds *ComponentDefinitions) IsPod(name ComponentName) bool {
+	compDefs, err := nds.PodComponents(name)
+	if err != nil {
+		return false
+	}
+
+	if len(compDefs) > 0 {
+		return true
+	}
+
+	return false
+}
+
 // IsLeaf returns true if the component with the given name has no children,
 // false otherwise.
 func (nds *ComponentDefinitions) IsLeaf(name ComponentName) bool {

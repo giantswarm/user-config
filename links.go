@@ -105,22 +105,10 @@ func (ld LinkDefinition) LinksToSameService() bool {
 }
 
 func (lds LinkDefinitions) Validate(valCtx *ValidationContext) error {
-	links := map[string]string{}
-
 	for _, link := range lds {
 		if err := link.Validate(valCtx); err != nil {
 			return mask(err)
 		}
-
-		// detect duplicated link name
-		linkName, err := link.LinkName()
-		if err != nil {
-			return mask(err)
-		}
-		if _, ok := links[linkName]; ok {
-			return maskf(InvalidLinkDefinitionError, "duplicate link: %s", linkName)
-		}
-		links[linkName] = link.TargetPort.String()
 	}
 
 	return nil
@@ -175,12 +163,28 @@ func (link LinkDefinition) Resolve(nds ComponentDefinitions) (ComponentName, gen
 // validateLinks
 func (nds ComponentDefinitions) validateLinks() error {
 	for componentName, component := range nds {
+		links := map[string]string{}
+
 		// detect invalid links
 		for _, link := range component.Links {
 			// If the link is inter-service, we cannot validate it here.
 			if link.LinksToOtherService() {
 				continue
 			}
+
+			// detect duplicated link name
+			linkName, err := link.LinkName()
+			if err != nil {
+				return mask(err)
+			}
+
+			targetPort := link.TargetPort.String()
+			if port, ok := links[linkName]; ok {
+				if nds.IsPod(componentName) || (port == targetPort) {
+					return maskf(InvalidLinkDefinitionError, "duplicate link: %s", linkName)
+				}
+			}
+			links[linkName] = targetPort
 
 			// Try to find the target component
 			targetName := ComponentName(link.Component)

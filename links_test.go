@@ -10,7 +10,7 @@ import (
 // TestLinkStringReliability ensures that LinkDefinitions.String always returns
 // the same string. We use this to create proper diffs between two definitions,
 // so this is quiet critical.
-func TestLinkStringReliability(t *testing.T) {
+func TestLinksStringReliability(t *testing.T) {
 	lds := LinkDefinitions{
 		LinkDefinition{
 			Service:    AppName("service1"),
@@ -42,5 +42,22 @@ func TestLinkStringReliability(t *testing.T) {
 			t.Logf("epxected: %s", expected)
 			t.Fatalf("got: %s", generated)
 		}
+	}
+}
+
+func TestLinksDuplicateLink_Valid(t *testing.T) {
+	lds := LinkDefinitions{
+		LinkDefinition{
+			Component:  ComponentName("component1"),
+			TargetPort: generictypes.MustParseDockerPort("1111/tcp"),
+		},
+		LinkDefinition{
+			Component:  ComponentName("component1"),
+			TargetPort: generictypes.MustParseDockerPort("2222/tcp"), // the port is different and thus valid
+		},
+	}
+
+	if err := lds.Validate(nil); err != nil {
+		t.Fatalf("expected links to be valid, got error: %#v", err)
 	}
 }
