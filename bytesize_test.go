@@ -25,6 +25,7 @@ func TestByteSizeParse(t *testing.T) {
 		{" 1 kib", true, 1024},
 		{"kb", false, 0},
 		{"1e10 gb", false, 0},
+		{"1 egg", false, 0},
 	}
 
 	for idx, test := range tests {
@@ -42,6 +43,27 @@ func TestByteSizeParse(t *testing.T) {
 		}
 		if v != test.value {
 			t.Errorf("Test %d, Bytes(%s): Expected %v, got %v\n", idx, test.input, test.value, v)
+		}
+	}
+}
+
+func TestByteSize__UnknownByteSizeUnitError(t *testing.T) {
+	tests := []struct {
+		input   string
+		checker func(err error) bool
+	}{
+		{"1 egg", IsUnknownByteSizeUnit},
+		{"dog", IsInvalidByteSizeFormatNoDigits},
+		{"dog 2", IsInvalidByteSizeFormatNoDigits},
+		{"100 little elefants", IsInvalidByteSizeFormatUnexpectedToken},
+	}
+
+	for idx, test := range tests {
+		_, err := ByteSize(test.input).Bytes()
+		if err == nil {
+			t.Errorf("Test %d: Expected error for input '%s'", idx, test.input)
+		} else if !test.checker(err) {
+			t.Errorf("Test %d: Expected checker to return true, for input '%s'. Error is '%v'", idx, test.input, err)
 		}
 	}
 }

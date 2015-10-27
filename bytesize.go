@@ -2,7 +2,6 @@ package userconfig
 
 import (
 	"bufio"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -33,15 +32,35 @@ var (
 		"tb":  1000 * 1000 * 1000 * 1000,
 		"tib": 1024 * 1024 * 1024 * 1024,
 	}
+
+	UnknownByteSizeUnitError                  = errgo.Newf("Unknown unit provided")
+	InvalidByteSizeFormatNoDigitsError        = errgo.Newf("No digits found at beginning of input")
+	InvalidByteSizeFormatUnexpectedTokenError = errgo.Newf("Unexpected token")
 )
+
+func IsUnknownByteSizeUnit(err error) bool {
+	return errgo.Cause(err) == UnknownByteSizeUnitError
+}
+
+func IsInvalidByteSizeFormatNoDigits(err error) bool {
+	return errgo.Cause(err) == InvalidByteSizeFormatNoDigitsError
+}
+
+func IsInvalidByteSizeFormatUnexpectedToken(err error) bool {
+	return errgo.Cause(err) == InvalidByteSizeFormatUnexpectedTokenError
+}
 
 type ByteSize string
 
+// Valid returns a bool indicating whether this ByteSize value can successfully be parsed.
 func (b ByteSize) Valid() bool {
 	_, err := b.Bytes()
 	return err == nil
 }
 
+// Bytes parses the number of bytes describes by this ByteSize.
+// If the value of b is unparsable, an error is returned. On success, the value in bytes is returend.
+// Example: if the value contains "3 kb", 3000 will be returned.
 func (b ByteSize) Bytes() (uint64, error) {
 	value, unit, err := b.parse()
 	if err != nil {
@@ -51,7 +70,7 @@ func (b ByteSize) Bytes() (uint64, error) {
 	if factor, ok := ByteSizeUnits[unit]; ok {
 		return factor * value, nil
 	} else {
-		return 0, errgo.Newf("Unknown unit: '%s'", unit)
+		return 0, errgo.WithCausef(err, UnknownByteSizeUnitError, unit)
 	}
 }
 
@@ -64,12 +83,17 @@ func (b ByteSize) parse() (uint64, string, error) {
 		if err := scanner.Err(); err != nil {
 			return 0, "", errgo.Mask(err, errgo.Any)
 		}
-		return 0, "", errgo.Newf("No digits found at begin of input")
+		return 0, "", errgo.WithCausef(nil, InvalidByteSizeFormatNoDigitsError, "Input: %s", string(b))
 	}
 	digits := scanner.Text()
 
+	if digits == "" {
+		return 0, "", errgo.WithCausef(nil, InvalidByteSizeFormatNoDigitsError, "Input: %s", string(b))
+	}
+
 	value, err := strconv.ParseUint(digits, 10, 64)
 	if err != nil {
+		// This should never happen, as the ScanDigits() function shouldn't have returned that token
 		return 0, "", errgo.Mask(err, errgo.Any)
 	}
 
@@ -86,7 +110,7 @@ func (b ByteSize) parse() (uint64, string, error) {
 
 	// Scan one more time to check for data garbage
 	if scanner.Scan() {
-		return 0, "", errgo.Newf("Unexpected token: %s", scanner.Text())
+		return 0, "", errgo.WithCausef(nil, InvalidByteSizeFormatUnexpectedTokenError, scanner.Text())
 	} else {
 		if err := scanner.Err(); err != nil {
 			return 0, "", errgo.Mask(err, errgo.Any)
@@ -96,13 +120,14 @@ func (b ByteSize) parse() (uint64, string, error) {
 	return value, unit, nil
 }
 
+// String returns the string value of this ByteSize as initially provided.
 func (b ByteSize) String() string {
 	return string(b)
 }
 
-// ScanDigits implements bufio.SplitFunc for digits (0-9)
+// ScanDigits implements bufio.SplitFunc for digits (0-9). Leading whitespaces (unicode.IsSpace) are ignored.
+// May return an empty token, if no digits are found at the beginning.
 func ScanDigits(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	fmt.Printf("data=%v\n", data)
 	// Skip whitespaces
 	start := 0
 	for width := 0; start < len(data); start += width {
@@ -113,15 +138,12 @@ func ScanDigits(data []byte, atEOF bool) (advance int, token []byte, err error) 
 		}
 	}
 
-	fmt.Printf("1) Start=%v\n", start)
-
 	// Scan digits
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
 		r, width = utf8.DecodeRune(data[i:])
 
 		if !unicode.IsDigit(r) {
-			fmt.Printf("2) End=%v\n", start+i)
 			return i, data[start:i], nil
 		}
 	}
@@ -131,5 +153,4 @@ func ScanDigits(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	}
 	// Request more data.
 	return start, nil, nil
-
 }

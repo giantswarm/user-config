@@ -37,7 +37,8 @@ type ComponentDefinition struct {
 	// If true, user needs to send a signal to indicate that the container is ready is should be considered running.
 	SignalReady bool `json:"signal-ready,omitempty" description:"If true, user has to notify when the component is ready."`
 
-	MemoryLimit ByteSize `json:"memory-limit,omitempty" description:"How much memory to give the container."`
+	// How much memory to give the container. If empty, the server may decide on a default limit.
+	MemoryLimit ByteSize `json:"memory-limit,omitempty" description:"How much memory to give the container. If empty, the server may decide on a default limit."`
 
 	// NOTE: In case we add new fields to the component definition, we need to
 	// implement proper diff functionality for those new fields as well.
