@@ -1,0 +1,47 @@
+package userconfig
+
+import (
+	"testing"
+)
+
+func TestByteSizeParse(t *testing.T) {
+	tests := []struct {
+		input string
+		valid bool
+		value uint64
+	}{
+		{" 1 ", true, 1},
+		{"3", true, 3},
+		{"1", true, 1},
+		{"1000", true, 1000},
+		{"1024", true, 1024},
+		{"1 kb", true, 1000},
+		{"1 kib", true, 1024},
+		{"2kb", true, 2000},
+		{"1kb man", false, 0},
+		{"1k", true, 1000},
+		{"1kb ", true, 1000},
+		{"1kb man", false, 0},
+		{" 1 kib", true, 1024},
+		{"kb", false, 0},
+		{"1e10 gb", false, 0},
+	}
+
+	for idx, test := range tests {
+		b := ByteSize(test.input)
+
+		v, err := b.Bytes()
+		if test.valid {
+			if err != nil {
+				t.Errorf("Test %d, Bytes(%s) returned unexpected error: %v", idx, test.input, err)
+			}
+		} else {
+			if err == nil {
+				t.Errorf("Test %d, Bytes(%s) expected error, but received nil.", idx, test.input)
+			}
+		}
+		if v != test.value {
+			t.Errorf("Test %d, Bytes(%s): Expected %v, got %v\n", idx, test.input, test.value, v)
+		}
+	}
+}

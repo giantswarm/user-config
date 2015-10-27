@@ -62,6 +62,9 @@ const (
 
 	// DiffTypeComponentSignalReadyUpdated
 	DiffTypeComponentSignalReadyUpdated DiffType = "component-signal-ready-updated"
+
+	// DiffTypeComponentMemoryLimitUpdated
+	DiffTypeComponentMemoryLimitUpdated DiffType = "component-memory-limit-updated"
 )
 
 type DiffInfo struct {
@@ -248,8 +251,22 @@ func ComponentDiff(oldDef, newDef ComponentDefinition, componentName ComponentNa
 	diffInfos = append(diffInfos, diffComponentPod(oldDef, newDef, componentName)...)
 	diffInfos = append(diffInfos, diffComponentSignalReady(oldDef, newDef, componentName)...)
 	diffInfos = append(diffInfos, diffComponentScale(oldDef, newDef, componentName)...)
+	diffInfos = append(diffInfos, diffComponentMemoryLimit(oldDef, newDef, componentName)...)
 
 	return diffInfos
+}
+
+func diffComponentMemoryLimit(oldDef, newDef ComponentDefinition, componentName ComponentName) DiffInfos {
+	if oldDef.MemoryLimit != newDef.MemoryLimit {
+		return DiffInfos{DiffInfo{
+			Type:      DiffTypeComponentMemoryLimitUpdated,
+			Key:       "memory-limit",
+			Component: componentName,
+			Old:       oldDef.MemoryLimit.String(),
+			New:       newDef.MemoryLimit.String(),
+		}}
+	}
+	return DiffInfos{}
 }
 
 func diffComponentImage(oldDef, newDef ComponentDefinition, componentName ComponentName) DiffInfos {
