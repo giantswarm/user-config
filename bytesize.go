@@ -52,6 +52,20 @@ func IsInvalidByteSizeFormatUnexpectedToken(err error) bool {
 
 type ByteSize string
 
+func (b ByteSize) Equals(other ByteSize) bool {
+	myBytes, err := b.Bytes()
+	if err != nil {
+		return false
+	}
+
+	otherBytes, err := other.Bytes()
+	if err != nil {
+		return false
+	}
+
+	return myBytes == otherBytes
+}
+
 // Valid returns a bool indicating whether this ByteSize value can successfully be parsed.
 func (b ByteSize) Valid() bool {
 	_, err := b.Bytes()

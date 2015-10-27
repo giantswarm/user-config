@@ -67,3 +67,12 @@ func TestByteSize__UnknownByteSizeUnitError(t *testing.T) {
 		}
 	}
 }
+
+func TestByteSize__Equals(t *testing.T) {
+	b1 := ByteSize("1 mb")
+	b2 := ByteSize("1m")
+
+	if !b1.Equals(b2) {
+		t.Fatalf("Expected '%s' and '%s' to be equal.", b1, b2)
+	}
+}
