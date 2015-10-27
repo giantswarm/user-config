@@ -76,7 +76,7 @@ func (b ByteSize) Valid() bool {
 // If the value of b is unparsable, an error is returned. On success, the value in bytes is returend.
 // Example: if the value contains "3 kb", 3000 will be returned.
 func (b ByteSize) Bytes() (uint64, error) {
-	value, unit, err := b.parse()
+	value, unit, err := b.Parse()
 	if err != nil {
 		return 0, errgo.Mask(err, errgo.Any)
 	}
@@ -89,7 +89,7 @@ func (b ByteSize) Bytes() (uint64, error) {
 }
 
 // parse splits b into (uint, unit, error)
-func (b ByteSize) parse() (uint64, string, error) {
+func (b ByteSize) Parse() (uint64, string, error) {
 	r := strings.NewReader(string(b))
 	scanner := bufio.NewScanner(r)
 	scanner.Split(ScanDigits)
