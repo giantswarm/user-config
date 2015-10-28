@@ -54,29 +54,9 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 	}
 
 	if !nd.MemoryLimit.IsEmpty() {
-		value, err := nd.MemoryLimit.Bytes()
-		if err != nil {
-			return mask(InvalidMemoryLimitError)
+		if err := nd.validateMemoryLimit(valCtx); err != nil {
+			return mask(err)
 		}
-
-		if valCtx != nil {
-			min, err := valCtx.MinMemoryLimit.Bytes()
-			if err != nil {
-				panic("Provided minimum memory-limit is invalid: " + err.Error())
-			}
-			max, err := valCtx.MaxMemoryLimit.Bytes()
-			if err != nil {
-				panic("Provided maximum memory-limit is invalid: " + err.Error())
-			}
-
-			if value < min {
-				return maskf(InvalidMemoryLimitError, "memory-limit must be above %s", valCtx.MinMemoryLimit.String())
-			}
-			if value > max {
-				return maskf(InvalidMemoryLimitError, "memory-limit must be below %s", valCtx.MaxMemoryLimit.String())
-			}
-		}
-
 	}
 
 	if err := nd.Ports.Validate(valCtx); err != nil {
@@ -105,6 +85,35 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	return nil
+}
+
+func (nd *ComponentDefinition) validateMemoryLimit(valCtx *ValidationContext) error {
+	// Is the value itself valid?
+	value, err := nd.MemoryLimit.Bytes()
+	if err != nil {
+		return mask(InvalidMemoryLimitError)
+	}
+
+	// If we have a validationContext, compare against boundaries
+	if valCtx == nil {
+		return nil
+	}
+	min, err := valCtx.MinMemoryLimit.Bytes()
+	if err != nil {
+		panic("Provided minimum memory-limit is invalid: " + err.Error())
+	}
+	max, err := valCtx.MaxMemoryLimit.Bytes()
+	if err != nil {
+		panic("Provided maximum memory-limit is invalid: " + err.Error())
+	}
+
+	if value < min {
+		return maskf(InvalidMemoryLimitError, "memory-limit must be above %s", valCtx.MinMemoryLimit.String())
+	}
+	if value > max {
+		return maskf(InvalidMemoryLimitError, "memory-limit must be below %s", valCtx.MaxMemoryLimit.String())
+	}
 	return nil
 }
 
