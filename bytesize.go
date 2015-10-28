@@ -12,6 +12,7 @@ import (
 
 var (
 	// ByteSizeUnits maps sthg like "kb" to 1000 or "kib" to 1024.
+	// Lookup & Keys should be lowercase.
 	// See https://en.wikipedia.org/wiki/Kibibyte
 	ByteSizeUnits = map[string]uint64{
 		"": 1, // Allow empty unit
@@ -66,8 +67,16 @@ func (b ByteSize) Equals(other ByteSize) bool {
 	return myBytes == otherBytes
 }
 
+// IsEmpty returns true if the underlying string is empty
+func (b ByteSize) IsEmpty() bool {
+	return b.String() == ""
+}
+
 // Valid returns a bool indicating whether this ByteSize value can successfully be parsed.
 func (b ByteSize) Valid() bool {
+	if b.IsEmpty() {
+		return false
+	}
 	_, err := b.Bytes()
 	return err == nil
 }
@@ -81,6 +90,7 @@ func (b ByteSize) Bytes() (uint64, error) {
 		return 0, errgo.Mask(err, errgo.Any)
 	}
 
+	unit = strings.ToLower(unit)
 	if factor, ok := ByteSizeUnits[unit]; ok {
 		return factor * value, nil
 	} else {

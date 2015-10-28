@@ -118,6 +118,31 @@ func TestDiffComponentMemoryLimitUpdated(t *testing.T) {
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
+func TestDiffComponentMemoryLimitUpdated__Added(t *testing.T) {
+	oldDef := V2ExampleDefinition()
+	oldDef.Components[ComponentName("my-component")] = &ComponentDefinition{
+		Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		// NOTE: No ByteSize
+	}
+	newDef := V2ExampleDefinition()
+	newDef.Components[ComponentName("my-component")] = &ComponentDefinition{
+		Image:       MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+		MemoryLimit: ByteSize("12 gb"),
+	}
+
+	expectedDiffInfos := DiffInfos{
+		DiffInfo{
+			Type:      DiffTypeComponentMemoryLimitUpdated,
+			Component: "my-component",
+			Key:       "memory-limit",
+			Old:       "",
+			New:       "12 gb",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
 func TestDiffComponentAddedAndRemoved(t *testing.T) {
 	oldDef := V2ExampleDefinition()
 	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{

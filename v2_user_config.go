@@ -58,6 +58,9 @@ type ValidationContext struct {
 	MinVolumeSize VolumeSize
 	MaxVolumeSize VolumeSize
 
+	MinMemoryLimit ByteSize
+	MaxMemoryLimit ByteSize
+
 	PublicDockerRegistry  string
 	PrivateDockerRegistry string
 }
