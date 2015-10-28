@@ -26,6 +26,8 @@ func TestByteSizeParse(t *testing.T) {
 		{"kb", false, 0},
 		{"1e10 gb", false, 0},
 		{"1 egg", false, 0},
+		{"10 KiB", true, 10240},
+		{"1 GB", true, 1000 * 1000 * 1000},
 	}
 
 	for idx, test := range tests {
