@@ -58,8 +58,9 @@ type ValidationContext struct {
 	MinVolumeSize VolumeSize
 	MaxVolumeSize VolumeSize
 
-	MinMemoryLimit ByteSize
-	MaxMemoryLimit ByteSize
+	EnableUserMemoryLimit bool // If false, the component definition MUST NOT have a memory-limit configured
+	MinMemoryLimit        ByteSize
+	MaxMemoryLimit        ByteSize
 
 	PublicDockerRegistry  string
 	PrivateDockerRegistry string

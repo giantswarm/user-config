@@ -53,10 +53,8 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 		}
 	}
 
-	if !nd.MemoryLimit.IsEmpty() {
-		if err := nd.validateMemoryLimit(valCtx); err != nil {
-			return mask(err)
-		}
+	if err := nd.validateMemoryLimit(valCtx); err != nil {
+		return mask(err)
 	}
 
 	if err := nd.Ports.Validate(valCtx); err != nil {
@@ -89,6 +87,11 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 }
 
 func (nd *ComponentDefinition) validateMemoryLimit(valCtx *ValidationContext) error {
+	// An empty memory-limit is okay
+	if nd.MemoryLimit.IsEmpty() {
+		return nil
+	}
+
 	// Is the value itself valid?
 	value, err := nd.MemoryLimit.Bytes()
 	if err != nil {
@@ -99,6 +102,14 @@ func (nd *ComponentDefinition) validateMemoryLimit(valCtx *ValidationContext) er
 	if valCtx == nil {
 		return nil
 	}
+
+	if !valCtx.EnableUserMemoryLimit {
+		if !nd.MemoryLimit.IsEmpty() {
+			return maskf(InvalidMemoryLimitError, "Providing a 'memory-limit' is not enabled.")
+		}
+		return nil
+	}
+
 	min, err := valCtx.MinMemoryLimit.Bytes()
 	if err != nil {
 		panic("Provided minimum memory-limit is invalid: " + err.Error())
