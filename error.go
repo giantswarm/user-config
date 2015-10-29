@@ -33,6 +33,7 @@ var (
 	VolumeCycleError                = errgo.New("cycle detected in volume configuration")
 	WrongDiffOrderError             = errgo.New("wrong diff order")
 	LinkCycleError                  = errgo.New("cycle detected in link definition")
+	InvalidMemoryLimitError         = errgo.New("Invalid 'memory-limit' field")
 
 	mask = errgo.MaskFunc(IsInvalidEnvListFormat,
 		IsUnknownJsonField,
@@ -61,6 +62,7 @@ var (
 		IsInvalidArgument,
 		IsSyntax,
 		IsLinkCycle,
+		IsInvalidMemoryLimitError,
 	)
 
 	maskAny = errgo.MaskFunc(errgo.Any)
@@ -75,6 +77,10 @@ func maskf(cause error, f string, a ...interface{}) error {
 		e.SetLocation(1)
 	}
 	return err
+}
+
+func IsInvalidMemoryLimitError(err error) bool {
+	return errgo.Cause(err) == InvalidMemoryLimitError
 }
 
 func IsUnknownJsonField(err error) bool {

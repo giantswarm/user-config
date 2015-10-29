@@ -37,6 +37,9 @@ type ComponentDefinition struct {
 	// If true, user needs to send a signal to indicate that the container is ready is should be considered running.
 	SignalReady bool `json:"signal-ready,omitempty" description:"If true, user has to notify when the component is ready."`
 
+	// How much memory to give the container. If empty, the server may decide on a default limit.
+	MemoryLimit ByteSize `json:"memory-limit,omitempty" description:"How much memory to give the container. If empty, the server may decide on a default limit."`
+
 	// NOTE: In case we add new fields to the component definition, we need to
 	// implement proper diff functionality for those new fields as well.
 }
@@ -48,6 +51,10 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 		if err := nd.Image.Validate(valCtx); err != nil {
 			return mask(err)
 		}
+	}
+
+	if err := nd.validateMemoryLimit(valCtx); err != nil {
+		return mask(err)
 	}
 
 	if err := nd.Ports.Validate(valCtx); err != nil {
@@ -76,6 +83,48 @@ func (nd *ComponentDefinition) validate(valCtx *ValidationContext) error {
 		return mask(err)
 	}
 
+	return nil
+}
+
+func (nd *ComponentDefinition) validateMemoryLimit(valCtx *ValidationContext) error {
+	// An empty memory-limit is okay
+	if nd.MemoryLimit.IsEmpty() {
+		return nil
+	}
+
+	// Is the value itself valid?
+	value, err := nd.MemoryLimit.Bytes()
+	if err != nil {
+		return mask(InvalidMemoryLimitError)
+	}
+
+	// If we have a validationContext, compare against boundaries
+	if valCtx == nil {
+		return nil
+	}
+
+	if !valCtx.EnableUserMemoryLimit {
+		if !nd.MemoryLimit.IsEmpty() {
+			return maskf(InvalidMemoryLimitError, "Providing a 'memory-limit' is not enabled.")
+		}
+		return nil
+	}
+
+	min, err := valCtx.MinMemoryLimit.Bytes()
+	if err != nil {
+		panic("Provided minimum memory-limit is invalid: " + err.Error())
+	}
+	max, err := valCtx.MaxMemoryLimit.Bytes()
+	if err != nil {
+		panic("Provided maximum memory-limit is invalid: " + err.Error())
+	}
+
+	if value < min {
+		return maskf(InvalidMemoryLimitError, "memory-limit must be above %s", valCtx.MinMemoryLimit.String())
+	}
+	if value > max {
+		return maskf(InvalidMemoryLimitError, "memory-limit must be below %s", valCtx.MaxMemoryLimit.String())
+	}
 	return nil
 }
 
