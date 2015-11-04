@@ -74,6 +74,27 @@ func TestDiffComponentAdded(t *testing.T) {
 	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
 }
 
+func TestDiffComponentAddedToPod(t *testing.T) {
+	oldDef := testService()
+	oldDef.Components["root/a"] = setPod(testComponent(), PodChildren)
+	oldDef.Components["root/a/b"] = testComponent()
+
+	newDef := testService()
+	newDef.Components["root/a"] = setPod(testComponent(), PodChildren)
+	newDef.Components["root/a/b"] = testComponent()
+	newDef.Components["root/a/c"] = testComponent() // added
+
+	expectedDiffInfos := DiffInfos{
+		DiffInfo{
+			Type:      DiffTypeComponentAddedToPod,
+			Component: "root/a/c",
+			New:       "root/a/c",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
 func TestDiffComponentRemoved(t *testing.T) {
 	oldDef := V2ExampleDefinition()
 	oldDef.Components[ComponentName("my-old-component")] = &ComponentDefinition{
@@ -87,6 +108,27 @@ func TestDiffComponentRemoved(t *testing.T) {
 			Type:      DiffTypeComponentRemoved,
 			Component: "my-old-component",
 			Old:       "my-old-component",
+		},
+	}
+
+	testDiffCallWith(t, oldDef, newDef, expectedDiffInfos)
+}
+
+func TestDiffComponentRemovedFromPod(t *testing.T) {
+	oldDef := testService()
+	oldDef.Components["root/a"] = setPod(testComponent(), PodChildren)
+	oldDef.Components["root/a/b"] = testComponent()
+	oldDef.Components["root/a/c"] = testComponent() // removed
+
+	newDef := testService()
+	newDef.Components["root/a"] = setPod(testComponent(), PodChildren)
+	newDef.Components["root/a/b"] = testComponent()
+
+	expectedDiffInfos := DiffInfos{
+		DiffInfo{
+			Type:      DiffTypeComponentRemovedFromPod,
+			Component: "root/a/c",
+			Old:       "root/a/c",
 		},
 	}
 
@@ -409,10 +451,7 @@ func TestDiffComponentDefinitionNoUpdate(t *testing.T) {
 							]
 						},
 						"links": [
-							{
-								"component": "redis",
-								"target_port": 6379
-							}
+							{ "component": "redis", "target_port": 6379 }
 						]
 					}
 				}

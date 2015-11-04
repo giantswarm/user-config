@@ -46,8 +46,6 @@ const (
 	// DiffTypeComponentExposeUpdated
 	DiffTypeComponentExposeUpdated DiffType = "component-expose-updated"
 
-	// scale
-
 	// DiffTypeComponentScalePlacementUpdated
 	DiffTypeComponentScalePlacementUpdated DiffType = "component-scale-placement-updated"
 
@@ -65,6 +63,12 @@ const (
 
 	// DiffTypeComponentMemoryLimitUpdated
 	DiffTypeComponentMemoryLimitUpdated DiffType = "component-memory-limit-updated"
+
+	// DiffTypeComponentAddedToPod
+	DiffTypeComponentAddedToPod DiffType = "component-added-to-pod"
+
+	// DiffTypeComponentRemovedFromPod
+	DiffTypeComponentRemovedFromPod DiffType = "component-removed-from-pod"
 )
 
 type DiffInfo struct {
@@ -107,10 +111,13 @@ func (dis DiffInfos) ComponentNames() ComponentNames {
 // service diff
 
 // ServiceDiff checks the difference between two service definitions. The
-// returned list of diff infos can contain the following diff types.
+// returned list of diff infos can contain the following diff types. For more
+// details check documentation of ComponentDiff.
 //   - DiffTypeServiceNameUpdated
 //   - DiffTypeComponentAdded
 //   - DiffTypeComponentRemoved
+//   - DiffTypeComponentAddedToPod
+//   - DiffTypeComponentRemovedFromPod
 func ServiceDiff(oldDef, newDef V2AppDefinition) DiffInfos {
 	diffInfos := DiffInfos{}
 
@@ -167,50 +174,78 @@ func diffServiceNameUpdated(oldName, newName AppName) DiffInfos {
 	return diffInfos
 }
 
-func diffComponentAdded(oldDef, newDef ComponentDefinitions) DiffInfos {
+func diffComponentAdded(oldDefs, newDefs ComponentDefinitions) DiffInfos {
 	diffInfos := DiffInfos{}
 
-	for _, orderedName := range orderedComponentKeys(newDef) {
+	for _, orderedName := range orderedComponentKeys(newDefs) {
 		newName := ComponentName(orderedName)
 
-		if _, ok := oldDef[newName]; !ok {
-			diffInfos = append(diffInfos, DiffInfo{
-				Type:      DiffTypeComponentAdded,
-				Component: newName,
-				New:       newName.String(),
-			})
+		if _, ok := oldDefs[newName]; !ok {
+			if newDefs.IsPod(newName) {
+				// The component definition of the given name does define a pod. This
+				// means we need to create a diff type for the component definition
+				// that reflects the component is updated. This should result in
+				// updating the whole pod at once.
+				diffInfos = append(diffInfos, DiffInfo{
+					Type:      DiffTypeComponentAddedToPod,
+					Component: newName,
+					New:       newName.String(),
+				})
+			} else {
+				// The component definition of the given name does NOT define a pod. Just
+				// create a diff type that reflects the component is added.
+				diffInfos = append(diffInfos, DiffInfo{
+					Type:      DiffTypeComponentAdded,
+					Component: newName,
+					New:       newName.String(),
+				})
+			}
 		}
 	}
 
 	return diffInfos
 }
 
-func diffComponentRemoved(oldDef, newDef ComponentDefinitions) DiffInfos {
+func diffComponentRemoved(oldDefs, newDefs ComponentDefinitions) DiffInfos {
 	diffInfos := DiffInfos{}
 
-	for _, orderedName := range orderedComponentKeys(oldDef) {
+	for _, orderedName := range orderedComponentKeys(oldDefs) {
 		oldName := ComponentName(orderedName)
 
-		if _, ok := newDef[oldName]; !ok {
-			diffInfos = append(diffInfos, DiffInfo{
-				Type:      DiffTypeComponentRemoved,
-				Component: oldName,
-				Old:       oldName.String(),
-			})
+		if _, ok := newDefs[oldName]; !ok {
+			if oldDefs.IsPod(oldName) {
+				// The component definition of the given name does define a pod. This
+				// means we need to create a diff type for the component definition
+				// that reflects the component is updated. This should result in
+				// updating the whole pod at once.
+				diffInfos = append(diffInfos, DiffInfo{
+					Type:      DiffTypeComponentRemovedFromPod,
+					Component: oldName,
+					Old:       oldName.String(),
+				})
+			} else {
+				// The component definition of the given name does NOT define a pod. Just
+				// create a diff type that reflects the component is removed.
+				diffInfos = append(diffInfos, DiffInfo{
+					Type:      DiffTypeComponentRemoved,
+					Component: oldName,
+					Old:       oldName.String(),
+				})
+			}
 		}
 	}
 
 	return diffInfos
 }
 
-func diffComponentUpdated(oldDef, newDef ComponentDefinitions) DiffInfos {
+func diffComponentUpdated(oldDefs, newDefs ComponentDefinitions) DiffInfos {
 	diffInfos := DiffInfos{}
 
-	for _, orderedName := range orderedComponentKeys(oldDef) {
+	for _, orderedName := range orderedComponentKeys(oldDefs) {
 		oldName := ComponentName(orderedName)
-		oldComponent := oldDef[oldName]
+		oldComponent := oldDefs[oldName]
 
-		if newComponent, ok := newDef[oldName]; ok {
+		if newComponent, ok := newDefs[oldName]; ok {
 			diffInfos = append(diffInfos, ComponentDiff(*oldComponent, *newComponent, oldName)...)
 		}
 	}
@@ -236,6 +271,7 @@ func diffComponentUpdated(oldDef, newDef ComponentDefinitions) DiffInfos {
 //   - DiffTypeComponentScaleMaxUpdated
 //   - DiffTypeComponentPodUpdated
 //   - DiffTypeComponentSignalReadyUpdated
+//   - DiffTypeComponentMemoryLimitUpdated
 func ComponentDiff(oldDef, newDef ComponentDefinition, componentName ComponentName) DiffInfos {
 	diffInfos := DiffInfos{} // diff info tracked in detail
 

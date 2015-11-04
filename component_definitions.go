@@ -228,6 +228,33 @@ func (nds *ComponentDefinitions) PodComponents(name ComponentName) (ComponentDef
 	}
 }
 
+// PodComponentsRecursive returns a map of all components that are part of the
+// pod specified by a component with the given name. Other than
+// ComponentDefinitions.PodComponents, this method does at first reverse lookup
+// the pod root.
+func (nds *ComponentDefinitions) PodComponentsRecursive(name ComponentName) (ComponentDefinitions, error) {
+	rootName, _, err := nds.PodRoot(name)
+	if err != nil {
+		return nil, maskAny(err)
+	}
+	podComps, err := nds.PodComponents(rootName)
+	if err != nil {
+		return nil, maskAny(err)
+	}
+	return podComps, nil
+}
+
+// IsPod returns true in case the given component is part of a pod, otherwise
+// false.
+func (nds *ComponentDefinitions) IsPod(name ComponentName) bool {
+	_, _, err := nds.PodRoot(name)
+	if IsComponentNotFound(err) {
+		return false
+	}
+
+	return true
+}
+
 // PodRoot returns the component that defines the pod the component with given name is a part of.
 // If there is no such component, ComponentNotFoundError is returned.
 func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *ComponentDefinition, error) {
@@ -235,7 +262,7 @@ func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *Co
 		// Find first parent
 		parentName, parent, err := nds.ParentOf(name)
 		if err != nil {
-			return "", nil, err
+			return "", nil, maskAny(err)
 		}
 		if parent.IsPodRoot() {
 			// We found our pod root

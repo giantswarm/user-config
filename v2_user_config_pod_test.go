@@ -1,8 +1,9 @@
-package userconfig
+package userconfig_test
 
 import (
 	"testing"
 
+	. "github.com/giantswarm/user-config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -13,22 +14,6 @@ func TestV2UserConfigPodFunctions(t *testing.T) {
 }
 
 var _ = Describe("v2 user config pod functions", func() {
-
-	testComponent := func() *ComponentDefinition {
-		return &ComponentDefinition{
-			Image: MustParseImageDefinition("registry/namespace/repository:version"),
-		}
-	}
-
-	setPod := func(config *ComponentDefinition, pod PodEnum) *ComponentDefinition {
-		config.Pod = pod
-		return config
-	}
-
-	testApp := func() ComponentDefinitions {
-		return make(ComponentDefinitions)
-	}
-
 	Describe("pod function tests ", func() {
 		Describe("PodComponents with pod=children should return only direct child components with pod!=none", func() {
 			var err error
