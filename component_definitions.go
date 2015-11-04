@@ -294,3 +294,13 @@ func (nds *ComponentDefinitions) mountPointsRecursive(name ComponentName, visite
 	}
 	return mountPoints, nil
 }
+
+func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
+	compNames := ComponentNames{}
+
+	for name, _ := range *nds {
+		compNames = append(compNames, name)
+	}
+
+	return compNames
+}

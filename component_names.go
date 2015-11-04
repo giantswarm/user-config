@@ -1,5 +1,10 @@
 package userconfig
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type ComponentNames []ComponentName
 
 func (cns ComponentNames) Contain(name ComponentName) bool {
@@ -10,4 +15,14 @@ func (cns ComponentNames) Contain(name ComponentName) bool {
 	}
 
 	return false
+}
+
+// NamesToJSONString returns a JSON marshaled string of component names.
+func (cns ComponentNames) NamesToJSONString() string {
+	raw, err := json.Marshal(cns)
+	if err != nil {
+		panic(fmt.Sprintf("%#v", maskAny(err)))
+	}
+
+	return string(raw)
 }
