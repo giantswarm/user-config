@@ -63,12 +63,6 @@ const (
 
 	// DiffTypeComponentMemoryLimitUpdated
 	DiffTypeComponentMemoryLimitUpdated DiffType = "component-memory-limit-updated"
-
-	// DiffTypeComponentAddedToPod
-	DiffTypeComponentAddedToPod DiffType = "component-added-to-pod"
-
-	// DiffTypeComponentRemovedFromPod
-	DiffTypeComponentRemovedFromPod DiffType = "component-removed-from-pod"
 )
 
 type DiffInfo struct {
