@@ -86,7 +86,7 @@ func TestDiffComponentAddedToPod(t *testing.T) {
 
 	expectedDiffInfos := DiffInfos{
 		DiffInfo{
-			Type:      DiffTypeComponentAddedToPod,
+			Type:      DiffTypeComponentAdded,
 			Component: "root/a/c",
 			New:       "root/a/c",
 		},
@@ -126,7 +126,7 @@ func TestDiffComponentRemovedFromPod(t *testing.T) {
 
 	expectedDiffInfos := DiffInfos{
 		DiffInfo{
-			Type:      DiffTypeComponentRemovedFromPod,
+			Type:      DiffTypeComponentRemoved,
 			Component: "root/a/c",
 			Old:       "root/a/c",
 		},

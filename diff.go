@@ -116,8 +116,6 @@ func (dis DiffInfos) ComponentNames() ComponentNames {
 //   - DiffTypeServiceNameUpdated
 //   - DiffTypeComponentAdded
 //   - DiffTypeComponentRemoved
-//   - DiffTypeComponentAddedToPod
-//   - DiffTypeComponentRemovedFromPod
 func ServiceDiff(oldDef, newDef V2AppDefinition) DiffInfos {
 	diffInfos := DiffInfos{}
 
@@ -181,25 +179,11 @@ func diffComponentAdded(oldDefs, newDefs ComponentDefinitions) DiffInfos {
 		newName := ComponentName(orderedName)
 
 		if _, ok := oldDefs[newName]; !ok {
-			if newDefs.IsPod(newName) {
-				// The component definition of the given name does define a pod. This
-				// means we need to create a diff type for the component definition
-				// that reflects the component is updated. This should result in
-				// updating the whole pod at once.
-				diffInfos = append(diffInfos, DiffInfo{
-					Type:      DiffTypeComponentAddedToPod,
-					Component: newName,
-					New:       newName.String(),
-				})
-			} else {
-				// The component definition of the given name does NOT define a pod. Just
-				// create a diff type that reflects the component is added.
-				diffInfos = append(diffInfos, DiffInfo{
-					Type:      DiffTypeComponentAdded,
-					Component: newName,
-					New:       newName.String(),
-				})
-			}
+			diffInfos = append(diffInfos, DiffInfo{
+				Type:      DiffTypeComponentAdded,
+				Component: newName,
+				New:       newName.String(),
+			})
 		}
 	}
 
@@ -213,25 +197,11 @@ func diffComponentRemoved(oldDefs, newDefs ComponentDefinitions) DiffInfos {
 		oldName := ComponentName(orderedName)
 
 		if _, ok := newDefs[oldName]; !ok {
-			if oldDefs.IsPod(oldName) {
-				// The component definition of the given name does define a pod. This
-				// means we need to create a diff type for the component definition
-				// that reflects the component is updated. This should result in
-				// updating the whole pod at once.
-				diffInfos = append(diffInfos, DiffInfo{
-					Type:      DiffTypeComponentRemovedFromPod,
-					Component: oldName,
-					Old:       oldName.String(),
-				})
-			} else {
-				// The component definition of the given name does NOT define a pod. Just
-				// create a diff type that reflects the component is removed.
-				diffInfos = append(diffInfos, DiffInfo{
-					Type:      DiffTypeComponentRemoved,
-					Component: oldName,
-					Old:       oldName.String(),
-				})
-			}
+			diffInfos = append(diffInfos, DiffInfo{
+				Type:      DiffTypeComponentRemoved,
+				Component: oldName,
+				Old:       oldName.String(),
+			})
 		}
 	}
 
