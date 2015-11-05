@@ -233,13 +233,6 @@ func (nds *ComponentDefinitions) PodComponents(name ComponentName) (ComponentDef
 // ComponentDefinitions.PodComponents, this method does at first reverse lookup
 // the pod root.
 func (nds *ComponentDefinitions) PodComponentsRecursive(name ComponentName) (ComponentDefinitions, error) {
-	if !nds.IsPod(name) {
-		def, err := nds.ComponentByName(name)
-		if err != nil {
-			return nil, maskAny(err)
-		}
-		return ComponentDefinitions{name: def}, nil
-	}
 	rootName, _, err := nds.PodRoot(name)
 	if err != nil {
 		return nil, maskAny(err)
