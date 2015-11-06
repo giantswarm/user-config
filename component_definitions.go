@@ -337,33 +337,33 @@ func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
 //   - prevent duplicated lists, once a component definition is present in one
 //     list, it is not present in other lists.
 func (nds *ComponentDefinitions) AllDefsPerPod(compDefs ComponentDefinitions) ([]ComponentDefinitions, error) {
-	compDefsList := []ComponentDefinitions{}
+	defsPerPod := []ComponentDefinitions{}
 
 first:
 	for _, name := range compDefs.ComponentNames() {
-		for _, compDefs := range compDefsList {
-			if compDefs.ComponentNames().Contain(name) {
+		for _, defs := range defsPerPod {
+			if defs.ComponentNames().Contain(name) {
 				// if the current component is already tracked, skip it
 				continue first
 			}
 		}
 
-		if compDefs.IsPod(name) {
-			podCompDefs, err := compDefs.PodComponentsRecursive(name)
+		if nds.IsPod(name) {
+			podCompDefs, err := nds.PodComponentsRecursive(name)
 			if err != nil {
 				return nil, maskAny(err)
 			}
-			compDefsList = append(compDefsList, podCompDefs)
+			defsPerPod = append(defsPerPod, podCompDefs)
 		} else {
 			// The component definition for the given name does not define a pod.
 			// Just group the current definiton on its own.
-			compDef, err := compDefs.ComponentByName(name)
+			compDef, err := nds.ComponentByName(name)
 			if err != nil {
 				return nil, maskAny(err)
 			}
-			compDefsList = append(compDefsList, ComponentDefinitions{name: compDef})
+			defsPerPod = append(defsPerPod, ComponentDefinitions{name: compDef})
 		}
 	}
 
-	return compDefsList, nil
+	return defsPerPod, nil
 }
