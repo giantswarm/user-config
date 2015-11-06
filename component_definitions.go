@@ -331,3 +331,39 @@ func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
 
 	return compNames
 }
+
+// AllDefsPerPod tries to group component definitions, based on this rules:
+//   - group component definitions that share same pod
+//   - prevent duplicated lists, once a component definition is present in one
+//     list, it is not present in other lists.
+func (nds *ComponentDefinitions) AllDefsPerPod(compDefs ComponentDefinitions) ([]ComponentDefinitions, error) {
+	compDefsList := []ComponentDefinitions{}
+
+first:
+	for _, name := range compDefs.ComponentNames() {
+		for _, compDefs := range compDefsList {
+			if compDefs.ComponentNames().Contain(name) {
+				// if the current component is already tracked, skip it
+				continue first
+			}
+		}
+
+		if compDefs.IsPod(name) {
+			podCompDefs, err := compDefs.PodComponentsRecursive(name)
+			if err != nil {
+				return nil, maskAny(err)
+			}
+			compDefsList = append(compDefsList, podCompDefs)
+		} else {
+			// The component definition for the given name does not define a pod.
+			// Just group the current definiton on its own.
+			compDef, err := compDefs.ComponentByName(name)
+			if err != nil {
+				return nil, maskAny(err)
+			}
+			compDefsList = append(compDefsList, ComponentDefinitions{name: compDef})
+		}
+	}
+
+	return compDefsList, nil
+}
