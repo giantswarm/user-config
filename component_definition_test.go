@@ -259,7 +259,7 @@ func Test_AllDefsPerPod(t *testing.T) {
 		"root/b": service.Components["root/b"],
 	}
 
-	defsPerPod, err := service.Components.AllDefsPerPod(input)
+	defsPerPod, err := service.Components.AllDefsPerPod(input.ComponentNames())
 	if err != nil {
 		t.Fatalf("AllDefsPerPod failed: %#v", err)
 	}

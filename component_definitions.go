@@ -336,11 +336,11 @@ func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
 //   - group component definitions that share same pod
 //   - prevent duplicated lists, once a component definition is present in one
 //     list, it is not present in other lists.
-func (nds *ComponentDefinitions) AllDefsPerPod(compDefs ComponentDefinitions) ([]ComponentDefinitions, error) {
+func (nds *ComponentDefinitions) AllDefsPerPod(names ComponentNames) ([]ComponentDefinitions, error) {
 	defsPerPod := []ComponentDefinitions{}
 
 first:
-	for _, name := range compDefs.ComponentNames() {
+	for _, name := range names {
 		for _, defs := range defsPerPod {
 			if defs.ComponentNames().Contain(name) {
 				// if the current component is already tracked, skip it
