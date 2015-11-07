@@ -18,7 +18,7 @@ func (cns ComponentNames) Contain(name ComponentName) bool {
 }
 
 // NamesToJSONString returns a JSON marshaled string of component names.
-func (cns ComponentNames) NamesToJSONString() string {
+func (cns ComponentNames) ToJSONString() string {
 	raw, err := json.Marshal(cns)
 	if err != nil {
 		panic(fmt.Sprintf("%#v", maskAny(err)))
