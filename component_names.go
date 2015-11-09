@@ -17,6 +17,19 @@ func (cns ComponentNames) Contain(name ComponentName) bool {
 	return false
 }
 
+func (cns ComponentNames) Filter(names ComponentNames) ComponentNames {
+	list := ComponentNames{}
+
+	for _, cn := range cns {
+		if names.Contain(cn) {
+			continue
+		}
+		list = append(list, cn)
+	}
+
+	return list
+}
+
 func (cns ComponentNames) ContainAny(names ComponentNames) bool {
 	for _, cn := range cns {
 		for _, name := range names {
