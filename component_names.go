@@ -17,6 +17,18 @@ func (cns ComponentNames) Contain(name ComponentName) bool {
 	return false
 }
 
+func (cns ComponentNames) ContainAny(names ComponentNames) bool {
+	for _, cn := range cns {
+		for _, name := range names {
+			if cn.Equals(name) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // NamesToJSONString returns a JSON marshaled string of component names.
 func (cns ComponentNames) ToJSONString() string {
 	raw, err := json.Marshal(cns)
