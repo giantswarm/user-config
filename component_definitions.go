@@ -244,9 +244,9 @@ func (nds *ComponentDefinitions) PodComponentsRecursive(name ComponentName) (Com
 	return podComps, nil
 }
 
-// IsPod returns true in case the given component is part of a pod, otherwise
+// IsPartIfPod returns true in case the given component is part of a pod, otherwise
 // false.
-func (nds *ComponentDefinitions) IsPod(name ComponentName) bool {
+func (nds *ComponentDefinitions) IsPartIfPod(name ComponentName) bool {
 	_, _, err := nds.PodRoot(name)
 	if IsComponentNotFound(err) {
 		return false
@@ -348,7 +348,7 @@ first:
 			}
 		}
 
-		if nds.IsPod(name) {
+		if nds.IsPartIfPod(name) {
 			podCompDefs, err := nds.PodComponentsRecursive(name)
 			if err != nil {
 				return nil, maskAny(err)
