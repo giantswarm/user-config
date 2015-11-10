@@ -228,6 +228,33 @@ func (nds *ComponentDefinitions) PodComponents(name ComponentName) (ComponentDef
 	}
 }
 
+// PodComponentsRecursive returns a map of all components that are part of the
+// pod specified by a component with the given name. Other than
+// ComponentDefinitions.PodComponents, this method does at first reverse lookup
+// the pod root.
+func (nds *ComponentDefinitions) PodComponentsRecursive(name ComponentName) (ComponentDefinitions, error) {
+	rootName, _, err := nds.PodRoot(name)
+	if err != nil {
+		return nil, maskAny(err)
+	}
+	podComps, err := nds.PodComponents(rootName)
+	if err != nil {
+		return nil, maskAny(err)
+	}
+	return podComps, nil
+}
+
+// IsPartOfPod returns true in case the given component is part of a pod, otherwise
+// false.
+func (nds *ComponentDefinitions) IsPartOfPod(name ComponentName) bool {
+	_, _, err := nds.PodRoot(name)
+	if IsComponentNotFound(err) {
+		return false
+	}
+
+	return true
+}
+
 // PodRoot returns the component that defines the pod the component with given name is a part of.
 // If there is no such component, ComponentNotFoundError is returned.
 func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *ComponentDefinition, error) {
@@ -235,7 +262,7 @@ func (nds *ComponentDefinitions) PodRoot(name ComponentName) (ComponentName, *Co
 		// Find first parent
 		parentName, parent, err := nds.ParentOf(name)
 		if err != nil {
-			return "", nil, err
+			return "", nil, maskAny(err)
 		}
 		if parent.IsPodRoot() {
 			// We found our pod root
@@ -303,4 +330,40 @@ func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
 	}
 
 	return compNames
+}
+
+// AllDefsPerPod tries to group component definitions, based on this rules:
+//   - group component definitions that share same pod
+//   - prevent duplicated lists, once a component definition is present in one
+//     list, it is not present in other lists.
+func (nds *ComponentDefinitions) AllDefsPerPod(names ComponentNames) ([]ComponentDefinitions, error) {
+	defsPerPod := []ComponentDefinitions{}
+
+first:
+	for _, name := range names {
+		for _, defs := range defsPerPod {
+			if defs.ComponentNames().Contain(name) {
+				// if the current component is already tracked, skip it
+				continue first
+			}
+		}
+
+		if nds.IsPartOfPod(name) {
+			podCompDefs, err := nds.PodComponentsRecursive(name)
+			if err != nil {
+				return nil, maskAny(err)
+			}
+			defsPerPod = append(defsPerPod, podCompDefs)
+		} else {
+			// The component definition for the given name does not define a pod.
+			// Just group the current definiton on its own.
+			compDef, err := nds.ComponentByName(name)
+			if err != nil {
+				return nil, maskAny(err)
+			}
+			defsPerPod = append(defsPerPod, ComponentDefinitions{name: compDef})
+		}
+	}
+
+	return defsPerPod, nil
 }
