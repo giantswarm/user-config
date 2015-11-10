@@ -30,12 +30,23 @@ func (cns ComponentNames) Filter(names ComponentNames) ComponentNames {
 	return list
 }
 
+func (cns ComponentNames) Unique() ComponentNames {
+	names := ComponentNames{}
+
+	for _, cn := range cns {
+		if names.Contain(cn) {
+			continue
+		}
+		names = append(names, cn)
+	}
+
+	return names
+}
+
 func (cns ComponentNames) ContainAny(names ComponentNames) bool {
 	for _, cn := range cns {
-		for _, name := range names {
-			if cn.Equals(name) {
-				return true
-			}
+		if names.Contain(cn) {
+			return true
 		}
 	}
 
