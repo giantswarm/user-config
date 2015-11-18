@@ -368,10 +368,10 @@ first:
 	return defsPerPod, nil
 }
 
-func (nds *ComponentDefinitions) Map(names ComponentNames) []ComponentDefinitions {
+func (nds *ComponentDefinitions) Map(names ComponentNames) ComponentDefinitions {
 	list := ComponentDefinitions{}
 
-	for name, def := range nds {
+	for name, def := range *nds {
 		if names.Contain(name) {
 			list[name] = def
 		}
