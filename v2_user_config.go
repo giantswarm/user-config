@@ -36,12 +36,6 @@ func (ad *V2AppDefinition) UnmarshalJSON(data []byte) error {
 
 	result := V2AppDefinition(adc)
 
-	// validate app definition without validation context. validation context is
-	// given on server side to additionally validate specific definitions.
-	if err := result.Validate(nil); err != nil {
-		return mask(err)
-	}
-
 	*ad = result
 
 	return nil
