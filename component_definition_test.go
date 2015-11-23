@@ -1,6 +1,7 @@
 package userconfig_test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -229,5 +230,42 @@ func Test_CyclicDeps_AdditionalCircle(t *testing.T) {
 		t.Fatalf("expected error to be InvalidComponentDefinitionError, got: %#v", err)
 	} else if !strings.Contains(err.Error(), userconfig.LinkCycleError.Error()) {
 		t.Fatalf("expected error to provide message of LinkCycleError, got: %s", err.Error())
+	}
+}
+
+func Test_AllDefsPerPod(t *testing.T) {
+	service := testService()
+
+	service.Components["root"] = setPod(testComponent(), userconfig.PodChildren)
+	service.Components["root/a"] = testComponent()
+	service.Components["root/b"] = testComponent()
+
+	service.Components["other"] = setPod(testComponent(), userconfig.PodChildren)
+	service.Components["other/a"] = testComponent()
+	service.Components["other/b"] = testComponent()
+
+	service.Components["a"] = testComponent()
+	service.Components["a/b"] = testComponent()
+	service.Components["a/c"] = testComponent()
+
+	expectedDefsPerPod := []userconfig.ComponentDefinitions{
+		userconfig.ComponentDefinitions{
+			"root/a": service.Components["root/a"],
+			"root/b": service.Components["root/b"],
+		},
+	}
+
+	input := userconfig.ComponentDefinitions{
+		"root/b": service.Components["root/b"],
+	}
+
+	defsPerPod, err := service.Components.AllDefsPerPod(input.ComponentNames())
+	if err != nil {
+		t.Fatalf("AllDefsPerPod failed: %#v", err)
+	}
+	if !reflect.DeepEqual(defsPerPod, expectedDefsPerPod) {
+		t.Logf("defsPerPod:         %#v", defsPerPod)
+		t.Logf("expectedDefsPerPod: %#v", expectedDefsPerPod)
+		t.Fatalf("AllDefsPerPod failed: unexpected result")
 	}
 }
