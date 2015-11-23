@@ -219,6 +219,9 @@ func (nds ComponentDefinitions) detectLinkCycle(linkDefinition LinkDefinition) e
 
 	var recursive func(ld LinkDefinition) error
 	recursive = func(ld LinkDefinition) error {
+		if ld.LinksToOtherService() {
+			return nil
+		}
 		targetName := ComponentName(ld.Component)
 
 		if linkedComponents.Contain(targetName) {

@@ -44,3 +44,45 @@ func TestLinkStringReliability(t *testing.T) {
 		}
 	}
 }
+
+// TestLinkDetectCycleIssueWrtService: This test ensures that the link cycle detection
+// works well with links to a component that link to another service.
+func TestLinkDetectCycleIssueWrtService(t *testing.T) {
+	// In this service, component 'a' links to component 'b' and component 'b'
+	// links to another service. This should NOT result in validation errors.
+	app := V2AppDefinition{
+		Components: ComponentDefinitions{
+			ComponentName("a"): &ComponentDefinition{
+				Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+				Links: LinkDefinitions{
+					LinkDefinition{
+						Component:  ComponentName("b"),
+						TargetPort: generictypes.MustParseDockerPort("80/tcp"),
+					},
+				},
+			},
+			ComponentName("b"): &ComponentDefinition{
+				Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
+				Links: LinkDefinitions{
+					LinkDefinition{
+						Service:    AppName("other-service"),
+						TargetPort: generictypes.MustParseDockerPort("80/tcp"),
+					},
+				},
+				Ports: PortDefinitions{
+					generictypes.MustParseDockerPort("80/tcp"),
+				},
+			},
+		},
+	}
+	valCtx := &ValidationContext{
+		Protocols:     []string{"tcp"},
+		MinVolumeSize: "1 GB",
+		MaxVolumeSize: "100 GB",
+		MinScaleSize:  1,
+		MaxScaleSize:  10,
+	}
+	if err := app.Validate(valCtx); err != nil {
+		t.Fatalf("Validate failed: %#v", err)
+	}
+}
