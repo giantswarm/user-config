@@ -83,9 +83,9 @@ func TestUnmarshalV2EnvStructEmpty(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2EnvFullApp(t *testing.T) {
+func TestUnmarshalV2EnvFullService(t *testing.T) {
 	// Test the validator for full apps containing both array and structs
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 
 	byteSlice := []byte(`{
     "components": {
@@ -112,9 +112,9 @@ func TestUnmarshalV2EnvFullApp(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2EnvFullAppUpperCase(t *testing.T) {
+func TestUnmarshalV2EnvFullServiceUpperCase(t *testing.T) {
 	// Test the validator for full apps containing both array and structs with uppercase env keys
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 
 	byteSlice := []byte(`{
     "components": {

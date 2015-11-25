@@ -9,7 +9,7 @@ import (
 )
 
 func TestV2AppLinksScaleDefaults(t *testing.T) {
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	valCtx := NewValidationContext()
 
 	err := a.SetDefaults(valCtx)
@@ -25,7 +25,7 @@ func TestV2AppLinksScaleDefaults(t *testing.T) {
 }
 
 func TestV2AppScaleHideDefaults(t *testing.T) {
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	valCtx := NewValidationContext()
 	valCtx.MinScaleSize = 3
 	valCtx.MaxScaleSize = 8
@@ -56,7 +56,7 @@ func TestV2AppScaleHideDefaults(t *testing.T) {
 func TestV2AppScaleHideMinScale(t *testing.T) {
 	customScale := 6
 
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
 		Max: customScale,
 	}
@@ -95,7 +95,7 @@ func TestV2AppScaleHideMinScale(t *testing.T) {
 func TestV2AppScaleHideMaxScale(t *testing.T) {
 	customScale := 6
 
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
 		Min: customScale,
 	}
@@ -130,7 +130,7 @@ func TestV2AppScaleHideMaxScale(t *testing.T) {
 }
 
 func TestV2ScaleAppHidePlacement(t *testing.T) {
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
 		Placement: "simple",
 	}
@@ -158,7 +158,7 @@ func TestV2ScaleAppHidePlacement(t *testing.T) {
 
 func TestV2ScaleAppDontHideCustomPlacement(t *testing.T) {
 	customPlacement := userconfig.Placement("one-per-machine")
-	a := V2ExampleDefinition()
+	a := ExampleDefinition()
 	a.Components["component/a"].Scale = &userconfig.ScaleDefinition{
 		Placement: customPlacement,
 	}

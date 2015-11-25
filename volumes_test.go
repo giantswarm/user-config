@@ -33,14 +33,14 @@ func TestVolumesValidMaxSize(t *testing.T) {
 }
 
 func TestVolumesDuplicatedPath(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data", "/data"}, []string{"5 GB", "10 GB"})
+	a := ExampleDefinitionWithVolume([]string{"/data", "/data"}, []string{"5 GB", "10 GB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %#v", err)
@@ -55,14 +55,14 @@ func TestVolumesDuplicatedPath(t *testing.T) {
 }
 
 func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data", "/data/"}, []string{"5 GB", "10 GB"})
+	a := ExampleDefinitionWithVolume([]string{"/data", "/data/"}, []string{"5 GB", "10 GB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %#v", err)
@@ -77,14 +77,14 @@ func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
 }
 
 func TestVolumesInvalidSizeUnit(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"5 KB"})
+	a := ExampleDefinitionWithVolume([]string{"/data"}, []string{"5 KB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -99,14 +99,14 @@ func TestVolumesInvalidSizeUnit(t *testing.T) {
 }
 
 func TestVolumesNegativeSize(t *testing.T) {
-	a := V2ExampleDefinitionWithVolume([]string{"/data"}, []string{"-5 GB"})
+	a := ExampleDefinitionWithVolume([]string{"/data"}, []string{"-5 GB"})
 
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")

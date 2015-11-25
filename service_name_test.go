@@ -6,7 +6,7 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func TestValidAppNames(t *testing.T) {
+func TestValidServiceNames(t *testing.T) {
 	list := map[string]string{
 		"a":           "app name should be allowed to be normal single character",
 		"x":           "app name should be allowed to be normal single character",
@@ -18,7 +18,7 @@ func TestValidAppNames(t *testing.T) {
 	}
 
 	for name, reason := range list {
-		appName := userconfig.AppName(name)
+		appName := userconfig.ServiceName(name)
 		err := appName.Validate()
 
 		if err != nil {
@@ -27,7 +27,7 @@ func TestValidAppNames(t *testing.T) {
 	}
 }
 
-func TestInvalidAppNames(t *testing.T) {
+func TestInvalidServiceNames(t *testing.T) {
 	list := map[string]string{
 		"":      "app name must not be empty",
 		" ":     "app name must not be empty space",
@@ -44,19 +44,19 @@ func TestInvalidAppNames(t *testing.T) {
 	}
 
 	for name, reason := range list {
-		appName := userconfig.AppName(name)
+		appName := userconfig.ServiceName(name)
 		err := appName.Validate()
 
 		if err == nil {
 			t.Fatalf("invalid app name '%s' not detected: %s", name, reason)
 		}
-		if !userconfig.IsInvalidAppName(err) {
-			t.Fatalf("expected error to be InvalidAppNameError")
+		if !userconfig.IsInvalidServiceName(err) {
+			t.Fatalf("expected error to be InvalidServiceNameError")
 		}
 	}
 }
 
-func TestAppNameEmpty(t *testing.T) {
+func TestServiceNameEmpty(t *testing.T) {
 	list := []struct {
 		Name   string
 		Result bool
@@ -67,7 +67,7 @@ func TestAppNameEmpty(t *testing.T) {
 	}
 
 	for _, test := range list {
-		name := userconfig.AppName(test.Name)
+		name := userconfig.ServiceName(test.Name)
 		result := name.Empty()
 		if test.Result != result {
 			t.Fatalf("Test %v failed: got '%v', expected '%v'", test, result, test.Result)

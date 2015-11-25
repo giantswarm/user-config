@@ -8,8 +8,8 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func V2ExampleDefinition() userconfig.V2AppDefinition {
-	return userconfig.V2AppDefinition{
+func ExampleDefinition() userconfig.ServiceDefinition {
+	return userconfig.ServiceDefinition{
 		Components: userconfig.ComponentDefinitions{
 			userconfig.ComponentName("component/a"): &userconfig.ComponentDefinition{
 				Image: userconfig.MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
@@ -23,9 +23,9 @@ func V2ExampleDefinition() userconfig.V2AppDefinition {
 	}
 }
 
-func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefinition {
-	appDef := V2ExampleDefinition()
-	componentA, ok := appDef.Components["component/a"]
+func ExampleDefinitionWithVolume(paths, sizes []string) userconfig.ServiceDefinition {
+	serviceDef := ExampleDefinition()
+	componentA, ok := serviceDef.Components["component/a"]
 	if !ok {
 		panic("missing component")
 	}
@@ -38,14 +38,14 @@ func V2ExampleDefinitionWithVolume(paths, sizes []string) userconfig.V2AppDefini
 		volumes = append(volumes, userconfig.VolumeConfig{Path: path, Size: userconfig.VolumeSize(sizes[i])})
 	}
 	componentA.Volumes = volumes
-	appDef.Components["component/a"] = componentA
+	serviceDef.Components["component/a"] = componentA
 
-	return appDef
+	return serviceDef
 }
 
-func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinition {
-	appDef := V2ExampleDefinition()
-	componentA, ok := appDef.Components["component/a"]
+func ExampleDefinitionWithLinks(names, ports []string) userconfig.ServiceDefinition {
+	serviceDef := ExampleDefinition()
+	componentA, ok := serviceDef.Components["component/a"]
 	if !ok {
 		panic("missing component")
 	}
@@ -58,9 +58,9 @@ func V2ExampleDefinitionWithLinks(names, ports []string) userconfig.V2AppDefinit
 		links = append(links, userconfig.LinkDefinition{Component: userconfig.ComponentName(name), TargetPort: generictypes.MustParseDockerPort(ports[i])})
 	}
 	componentA.Links = links
-	appDef.Components["component/a"] = componentA
+	serviceDef.Components["component/a"] = componentA
 
-	return appDef
+	return serviceDef
 }
 
 func NewValidationContext() *userconfig.ValidationContext {
@@ -73,22 +73,22 @@ func NewValidationContext() *userconfig.ValidationContext {
 	}
 }
 
-func TestV2AppValidLinks(t *testing.T) {
-	a := V2ExampleDefinitionWithLinks([]string{"component/b"}, []string{"80/tcp"})
+func TestServiceValidLinks(t *testing.T) {
+	a := ExampleDefinitionWithLinks([]string{"component/b"}, []string{"80/tcp"})
 	_, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 }
 
-func TestV2AppLinksInvalidComponent(t *testing.T) {
-	a := V2ExampleDefinitionWithLinks([]string{"component/c"}, []string{"80/tcp"})
+func TestServiceLinksInvalidComponent(t *testing.T) {
+	a := ExampleDefinitionWithLinks([]string{"component/c"}, []string{"80/tcp"})
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %#v", err)
@@ -103,19 +103,19 @@ func TestV2AppLinksInvalidComponent(t *testing.T) {
 }
 
 // That test is usefull to ensure that `swarm cat` works as expected. There was
-// an issue where the app def was marshaled and unmarshaled twice on its way
+// an issue where the service def was marshaled and unmarshaled twice on its way
 // from appd to api to cli. There the scale was defaulted although none was set
-// by the user. This was caused by a wrong implementation in the app def
+// by the user. This was caused by a wrong implementation in the service def
 // validation.
-func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
-	a := V2ExampleDefinition()
+func TestServiceMarshalUnmarshalDontSetDefaults(t *testing.T) {
+	a := ExampleDefinition()
 
 	raw, err := json.Marshal(a)
 	if err != nil {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
@@ -126,8 +126,8 @@ func TestV2AppMarshalUnmarshalDontSetDefaults(t *testing.T) {
 	}
 }
 
-func TestV2AppSetDefaults(t *testing.T) {
-	a := V2ExampleDefinition()
+func TestServiceSetDefaults(t *testing.T) {
+	a := ExampleDefinition()
 	valCtx := NewValidationContext()
 
 	if err := a.SetDefaults(valCtx); err != nil {
@@ -135,7 +135,7 @@ func TestV2AppSetDefaults(t *testing.T) {
 	}
 
 	if err := a.Validate(valCtx); err != nil {
-		t.Fatalf("validating app failed: %#v", err)
+		t.Fatalf("validating service failed: %#v", err)
 	}
 
 	raw, err := json.Marshal(a)
@@ -143,7 +143,7 @@ func TestV2AppSetDefaults(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
@@ -158,8 +158,8 @@ func TestV2AppSetDefaults(t *testing.T) {
 	}
 }
 
-func TestV2AppHideDefaults(t *testing.T) {
-	a := V2ExampleDefinition()
+func TestServiceHideDefaults(t *testing.T) {
+	a := ExampleDefinition()
 	valCtx := NewValidationContext()
 
 	if err := a.SetDefaults(valCtx); err != nil {
@@ -167,7 +167,7 @@ func TestV2AppHideDefaults(t *testing.T) {
 	}
 
 	if err := a.Validate(valCtx); err != nil {
-		t.Fatalf("validating app failed: %#v", err)
+		t.Fatalf("validating service failed: %#v", err)
 	}
 
 	raw, err := json.Marshal(a)
@@ -175,7 +175,7 @@ func TestV2AppHideDefaults(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	var b userconfig.V2AppDefinition
+	var b userconfig.ServiceDefinition
 	err = json.Unmarshal(raw, &b)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %s", err.Error())
@@ -191,8 +191,8 @@ func TestV2AppHideDefaults(t *testing.T) {
 	}
 }
 
-func TestV2AbsentAppName(t *testing.T) {
-	a := V2ExampleDefinition()
+func TestAbsentServiceName(t *testing.T) {
+	a := ExampleDefinition()
 	name, err := a.Name()
 	if err != nil {
 		t.Fatalf("Name failed: %#v", err)
@@ -203,10 +203,10 @@ func TestV2AbsentAppName(t *testing.T) {
 	}
 }
 
-func TestV2SpecifiedAppName(t *testing.T) {
-	a := V2ExampleDefinition()
+func TestSpecifiedServiceName(t *testing.T) {
+	a := ExampleDefinition()
 	expectedName := "nice-he"
-	a.AppName = userconfig.AppName(expectedName)
+	a.ServiceName = userconfig.ServiceName(expectedName)
 	name, err := a.Name()
 	if err != nil {
 		t.Fatalf("Name failed: %#v", err)

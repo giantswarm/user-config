@@ -7,7 +7,7 @@ import (
 	"github.com/giantswarm/user-config"
 )
 
-func TestParseV2AppDef(t *testing.T) {
+func TestParseServiceDef(t *testing.T) {
 	b := []byte(`{
 		"components": {
 			"component/a": {
@@ -32,7 +32,7 @@ func TestParseV2AppDef(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %v", err)
@@ -91,7 +91,7 @@ func TestParseV2AppDef(t *testing.T) {
 	}
 }
 
-func TestV2AppDefFixFieldName(t *testing.T) {
+func TestServiceDefFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"Components": {
 			"component/fooBar": {
@@ -100,7 +100,7 @@ func TestV2AppDefFixFieldName(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %v", err)
@@ -125,7 +125,7 @@ func TestV2AppDefFixFieldName(t *testing.T) {
 	}
 }
 
-func TestV2AppDefCannotFixFieldName(t *testing.T) {
+func TestServiceDefCannotFixFieldName(t *testing.T) {
 	b := []byte(`{
 		"components": {
 			"foo/bar": {
@@ -134,7 +134,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")
@@ -147,7 +147,7 @@ func TestV2AppDefCannotFixFieldName(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2AppDefMissingField(t *testing.T) {
+func TestUnmarshalServiceDefMissingField(t *testing.T) {
 	// "image" is missing
 	b := []byte(`{
 		"components": {
@@ -155,7 +155,7 @@ func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 		}
 	}`)
 
-	var def userconfig.V2AppDefinition
+	var def userconfig.ServiceDefinition
 	err := json.Unmarshal(b, &def)
 	if err != nil {
 		t.Fatalf("json.Unmarshal failed: %#v", err)
@@ -169,7 +169,7 @@ func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 	}
 }
 
-func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
+func TestUnmarshalServiceDefUnknownField(t *testing.T) {
 	b := []byte(`{
 		"components": {
 			"foo/bar": {
@@ -179,7 +179,7 @@ func TestUnmarshalV2AppDefUnknownField(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 	err := json.Unmarshal(b, &appDef)
 	if err == nil {
 		t.Fatalf("json.Unmarshal NOT failed")

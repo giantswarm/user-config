@@ -110,10 +110,10 @@ func (dis DiffInfos) ComponentNames() ComponentNames {
 //   - DiffTypeServiceNameUpdated
 //   - DiffTypeComponentAdded
 //   - DiffTypeComponentRemoved
-func ServiceDiff(oldDef, newDef V2AppDefinition) DiffInfos {
+func ServiceDiff(oldDef, newDef ServiceDefinition) DiffInfos {
 	diffInfos := DiffInfos{}
 
-	diffInfos = append(diffInfos, diffServiceNameUpdated(oldDef.AppName, newDef.AppName)...)
+	diffInfos = append(diffInfos, diffServiceNameUpdated(oldDef.ServiceName, newDef.ServiceName)...)
 	diffInfos = append(diffInfos, diffComponentAdded(oldDef.Components, newDef.Components)...)
 	diffInfos = append(diffInfos, diffComponentUpdated(oldDef.Components, newDef.Components)...)
 	diffInfos = append(diffInfos, diffComponentRemoved(oldDef.Components, newDef.Components)...)
@@ -151,7 +151,7 @@ func FilterDiffType(diffInfos DiffInfos, diffType DiffType) DiffInfos {
 	return newDiffInfos
 }
 
-func diffServiceNameUpdated(oldName, newName AppName) DiffInfos {
+func diffServiceNameUpdated(oldName, newName ServiceName) DiffInfos {
 	diffInfos := DiffInfos{}
 
 	if !newName.Equals(oldName) {

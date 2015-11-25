@@ -190,8 +190,8 @@ var _ = Describe("v2 user config pod validator", func() {
 
 		Describe("parsing valid volume configs in pods", func() {
 			var (
-				err    error
-				appDef V2AppDefinition
+				err        error
+				serviceDef ServiceDefinition
 			)
 
 			BeforeEach(func() {
@@ -232,7 +232,7 @@ var _ = Describe("v2 user config pod validator", func() {
 			          }
 			        }`)
 
-				err = json.Unmarshal(byteSlice, &appDef)
+				err = json.Unmarshal(byteSlice, &serviceDef)
 			})
 
 			It("should not throw error", func() {
@@ -240,23 +240,23 @@ var _ = Describe("v2 user config pod validator", func() {
 			})
 
 			It("should parse 5 components", func() {
-				Expect(appDef.Components).To(HaveLen(5))
+				Expect(serviceDef.Components).To(HaveLen(5))
 			})
 
 			It("should parse one volume for each component", func() {
-				Expect(appDef.Components[ComponentName("session1/api")].Volumes).To(HaveLen(1))
-				Expect(appDef.Components[ComponentName("session1/alt1")].Volumes).To(HaveLen(1))
-				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes).To(HaveLen(1))
-				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes).To(HaveLen(1))
+				Expect(serviceDef.Components[ComponentName("session1/api")].Volumes).To(HaveLen(1))
+				Expect(serviceDef.Components[ComponentName("session1/alt1")].Volumes).To(HaveLen(1))
+				Expect(serviceDef.Components[ComponentName("session1/alt2")].Volumes).To(HaveLen(1))
+				Expect(serviceDef.Components[ComponentName("session1/alt3")].Volumes).To(HaveLen(1))
 
-				Expect(appDef.Components[ComponentName("session1/api")].Volumes[0].Path).To(Equal("/data1"))
-				Expect(appDef.Components[ComponentName("session1/api")].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
-				Expect(appDef.Components[ComponentName("session1/alt1")].Volumes[0].VolumesFrom).To(Equal("session1/api"))
-				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
-				Expect(appDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumePath).To(Equal("/data1"))
-				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
-				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumePath).To(Equal("/data1"))
-				Expect(appDef.Components[ComponentName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
+				Expect(serviceDef.Components[ComponentName("session1/api")].Volumes[0].Path).To(Equal("/data1"))
+				Expect(serviceDef.Components[ComponentName("session1/api")].Volumes[0].Size).To(Equal(VolumeSize("27 GB")))
+				Expect(serviceDef.Components[ComponentName("session1/alt1")].Volumes[0].VolumesFrom).To(Equal("session1/api"))
+				Expect(serviceDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(serviceDef.Components[ComponentName("session1/alt2")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(serviceDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumeFrom).To(Equal("session1/api"))
+				Expect(serviceDef.Components[ComponentName("session1/alt3")].Volumes[0].VolumePath).To(Equal("/data1"))
+				Expect(serviceDef.Components[ComponentName("session1/alt3")].Volumes[0].Path).To(Equal("/alt4"))
 
 			})
 		})

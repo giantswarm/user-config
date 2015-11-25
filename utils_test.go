@@ -20,8 +20,8 @@ func testApp() ComponentDefinitions {
 	return make(ComponentDefinitions)
 }
 
-func testService() V2AppDefinition {
-	return V2AppDefinition{
+func testService() ServiceDefinition {
+	return ServiceDefinition{
 		Components: ComponentDefinitions{},
 	}
 }
