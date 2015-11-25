@@ -42,10 +42,10 @@ func TestVolumesDuplicatedPath(t *testing.T) {
 
 	var b userconfig.V2AppDefinition
 	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %#v", err)
 	}
-
+	err = b.Validate(nil)
 	if err.Error() != "duplicate volume '/data' found in component 'component/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
@@ -64,10 +64,10 @@ func TestVolumesDuplicatedPathTrailingSlash(t *testing.T) {
 
 	var b userconfig.V2AppDefinition
 	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %#v", err)
 	}
-
+	err = b.Validate(nil)
 	if err.Error() != "duplicate volume '/data' found in component 'component/a'" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}

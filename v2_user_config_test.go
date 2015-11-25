@@ -90,9 +90,10 @@ func TestV2AppLinksInvalidComponent(t *testing.T) {
 
 	var b userconfig.V2AppDefinition
 	err = json.Unmarshal(raw, &b)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %#v", err)
 	}
+	err = b.Validate(nil)
 	if err.Error() != "invalid link to component 'component/c': does not exists" {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
