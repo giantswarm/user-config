@@ -155,11 +155,12 @@ func TestUnmarshalV2AppDefMissingField(t *testing.T) {
 		}
 	}`)
 
-	var appDef userconfig.V2AppDefinition
-	err := json.Unmarshal(b, &appDef)
-	if err == nil {
-		t.Fatalf("json.Unmarshal NOT failed")
+	var def userconfig.V2AppDefinition
+	err := json.Unmarshal(b, &def)
+	if err != nil {
+		t.Fatalf("json.Unmarshal failed: %#v", err)
 	}
+	err = def.Validate(nil)
 	if err.Error() != `component 'foo/bar' must have an 'image'` {
 		t.Fatalf("expected proper error, got: %s", err.Error())
 	}
