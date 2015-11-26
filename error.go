@@ -22,7 +22,7 @@ var (
 	InvalidAppDefinitionError       = errgo.New("invalid service definition")
 	InvalidComponentDefinitionError = errgo.New("invalid component definition")
 	InvalidImageDefinitionError     = errgo.New("invalid image definition")
-	InvalidAppNameError             = errgo.New("invalid service name")
+	InvalidServiceNameError         = errgo.New("invalid service name")
 	InvalidComponentNameError       = errgo.New("invalid component name")
 	InvalidPodConfigError           = errgo.New("invalid pod configuration")
 	PortNotFoundError               = errgo.New("port not found")
@@ -53,7 +53,7 @@ var (
 		IsInvalidAppDefinition,
 		IsInvalidComponentDefinition,
 		IsInvalidImageDefinition,
-		IsInvalidAppName,
+		IsInvalidServiceName,
 		IsInvalidComponentName,
 		IsComponentNotFound,
 		IsPortNotFound,
@@ -158,8 +158,8 @@ func IsInvalidImageDefinition(err error) bool {
 	return errgo.Cause(err) == InvalidImageDefinitionError
 }
 
-func IsInvalidAppName(err error) bool {
-	return errgo.Cause(err) == InvalidAppNameError
+func IsInvalidServiceName(err error) bool {
+	return errgo.Cause(err) == InvalidServiceNameError
 }
 
 func IsInvalidComponentName(err error) bool {

@@ -80,7 +80,7 @@ func TestUnmarshalV2DomainFullService(t *testing.T) {
 	// elements.  With this loop we prevent that it works "by mistake" the first
 	// time (but not the second or third time)
 	for i := 0; i < 1000; i++ {
-		var appDef userconfig.V2AppDefinition
+		var appDef userconfig.ServiceDefinition
 
 		byteSlice := []byte(`
 			{

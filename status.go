@@ -1,3 +1,6 @@
+// TODO code within this file is deprecated. See
+// https://github.com/giantswarm/container-states/
+
 package userconfig
 
 type Status string

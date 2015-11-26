@@ -10,7 +10,7 @@ import (
 )
 
 type LinkDefinition struct {
-	Service AppName `json:"service,omitempty" description:"Name of the service that is linked to"`
+	Service ServiceName `json:"service,omitempty" description:"Name of the service that is linked to"`
 
 	// Name of a required component
 	Component ComponentName `json:"component,omitempty" description:"Name of a component that is linked to"`
