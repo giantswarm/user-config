@@ -8,47 +8,47 @@ import (
 
 func TestValidServiceNames(t *testing.T) {
 	list := map[string]string{
-		"a":           "app name should be allowed to be normal single character",
-		"x":           "app name should be allowed to be normal single character",
-		"0":           "app name should be allowed to be normal single character",
-		"3":           "app name should be allowed to be normal single character",
-		"wjehfg":      "app name should be allowed to contain normal words",
-		"wj_eh-fg":    "app name should be allowed to contain dashes and underscores",
-		"foo-bar.com": "app name should be allowed to contain dashes and dots",
+		"a":           "service name should be allowed to be normal single character",
+		"x":           "service name should be allowed to be normal single character",
+		"0":           "service name should be allowed to be normal single character",
+		"3":           "service name should be allowed to be normal single character",
+		"wjehfg":      "service name should be allowed to contain normal words",
+		"wj_eh-fg":    "service name should be allowed to contain dashes and underscores",
+		"foo-bar.com": "service name should be allowed to contain dashes and dots",
 	}
 
 	for name, reason := range list {
-		appName := userconfig.ServiceName(name)
-		err := appName.Validate()
+		serviceName := userconfig.ServiceName(name)
+		err := serviceName.Validate()
 
 		if err != nil {
-			t.Fatalf("valid app name '%s' detected to be invalid: %s", name, reason)
+			t.Fatalf("valid service name '%s' detected to be invalid: %s", name, reason)
 		}
 	}
 }
 
 func TestInvalidServiceNames(t *testing.T) {
 	list := map[string]string{
-		"":      "app name must not be empty",
-		" ":     "app name must not be empty space",
-		"-":     "app name must not start with special chars",
-		".":     "app name must not start with special chars",
-		"-/-/-": "app name must not start contain slashes",
-		"-x":    "app name must not start with special chars",
-		"&0":    "app name must not start with special chars",
-		"$3":    "app name must not start with special chars",
-		"()wjehfg/skdjcsd/jshg": "app name must not start with special chars",
-		"a ":   "app name parts must not contain spaces",
-		" a":   "app name parts must not start with spaces",
-		".foo": "app name parts must not start with dots",
+		"":      "service name must not be empty",
+		" ":     "service name must not be empty space",
+		"-":     "service name must not start with special chars",
+		".":     "service name must not start with special chars",
+		"-/-/-": "service name must not start contain slashes",
+		"-x":    "service name must not start with special chars",
+		"&0":    "service name must not start with special chars",
+		"$3":    "service name must not start with special chars",
+		"()wjehfg/skdjcsd/jshg": "service name must not start with special chars",
+		"a ":   "service name parts must not contain spaces",
+		" a":   "service name parts must not start with spaces",
+		".foo": "service name parts must not start with dots",
 	}
 
 	for name, reason := range list {
-		appName := userconfig.ServiceName(name)
-		err := appName.Validate()
+		serviceName := userconfig.ServiceName(name)
+		err := serviceName.Validate()
 
 		if err == nil {
-			t.Fatalf("invalid app name '%s' not detected: %s", name, reason)
+			t.Fatalf("invalid service name '%s' not detected: %s", name, reason)
 		}
 		if !userconfig.IsInvalidServiceName(err) {
 			t.Fatalf("expected error to be InvalidServiceNameError")

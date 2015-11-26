@@ -8,17 +8,17 @@ import (
 )
 
 type ServiceDefinition struct {
-	// Optional app name
+	// Optional service name
 	ServiceName ServiceName `json:"name,omitempty"`
 
 	// Components
 	Components ComponentDefinitions `json:"components"`
 }
 
-// ParseServiceDefinition tries to parse the v2 app definition.
+// ParseServiceDefinition tries to parse the v2 service definition.
 func ParseServiceDefinition(b []byte) (ServiceDefinition, error) {
-	var appDef ServiceDefinition
-	if err := json.Unmarshal(b, &appDef); err != nil {
+	var serviceDef ServiceDefinition
+	if err := json.Unmarshal(b, &serviceDef); err != nil {
 		if IsSyntax(err) {
 			if strings.Contains(err.Error(), "$") {
 				return ServiceDefinition{}, maskf(err, "Cannot parse swarm.json. Maybe not all variables replaced properly.")
@@ -28,22 +28,22 @@ func ParseServiceDefinition(b []byte) (ServiceDefinition, error) {
 		return ServiceDefinition{}, mask(err)
 	}
 
-	return appDef, nil
+	return serviceDef, nil
 }
 
 func (sd *ServiceDefinition) UnmarshalJSON(data []byte) error {
-	// We fix the json buffer so V2CheckForUnknownFields doesn't complain about
+	// We fix the json buffer so CheckForUnknownFields doesn't complain about
 	// `Components` (with uper N).
 	data, err := FixJSONFieldNames(data)
 	if err != nil {
 		return err
 	}
 
-	if err := V2CheckForUnknownFields(data, sd); err != nil {
+	if err := CheckForUnknownFields(data, sd); err != nil {
 		return err
 	}
 
-	// Just unmarshal the given bytes into the app def struct, since there
+	// Just unmarshal the given bytes into the service def struct, since there
 	// were no errors.
 	var sdc serviceDefCopy
 	if err := json.Unmarshal(data, &sdc); err != nil {
@@ -119,7 +119,7 @@ func (sd *ServiceDefinition) SetDefaults(valCtx *ValidationContext) error {
 }
 
 // Name returns the name of the given definition if it exists.
-// It is does not exist, it generates an application name.
+// It is does not exist, it generates an service name.
 func (sd *ServiceDefinition) Name() (string, error) {
 	// Is a name specified?
 	if !sd.ServiceName.Empty() {

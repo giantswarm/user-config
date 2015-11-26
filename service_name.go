@@ -7,13 +7,13 @@ import (
 )
 
 var (
-	appNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_.-]{0,99}$")
+	serviceNameRegExp = regexp.MustCompile("^[a-zA-Z0-9]{1}[a-z0-9A-Z_.-]{0,99}$")
 )
 
 type ServiceName string
 
 // ParseServiceName returns the name of the given definition if it exists. It
-// is does not exist, it generates an app name.
+// is does not exist, it generates an service name.
 func ParseServiceName(b []byte) (string, error) {
 	// try to fetch the name from a simple definition
 	var simple map[string]interface{}
@@ -32,12 +32,12 @@ func ParseServiceName(b []byte) (string, error) {
 		}
 	}
 
-	appDef, err := ParseServiceDefinition(b)
+	serviceDef, err := ParseServiceDefinition(b)
 	if err != nil {
 		return "", mask(err)
 	}
 
-	name, err := appDef.Name()
+	name, err := serviceDef.Name()
 	if err != nil {
 		return "", mask(err)
 	}
@@ -56,7 +56,7 @@ func (an ServiceName) Empty() bool {
 }
 
 // Equals returns true if the given ServiceName is equal to the other
-// given application name, false otherwise.
+// given service name, false otherwise.
 func (an ServiceName) Equals(other ServiceName) bool {
 	return an == other
 }
@@ -64,12 +64,12 @@ func (an ServiceName) Equals(other ServiceName) bool {
 // Validate checks that the given ServiceName is a valid ServiceName.
 func (an ServiceName) Validate() error {
 	if an.Empty() {
-		return maskf(InvalidServiceNameError, "app name must not be empty")
+		return maskf(InvalidServiceNameError, "service name must not be empty")
 	}
 
 	anStr := an.String()
-	if !appNameRegExp.MatchString(anStr) {
-		return maskf(InvalidServiceNameError, "app name '%s' must match regexp: %s", anStr, appNameRegExp)
+	if !serviceNameRegExp.MatchString(anStr) {
+		return maskf(InvalidServiceNameError, "service name '%s' must match regexp: %s", anStr, serviceNameRegExp)
 	}
 
 	return nil
