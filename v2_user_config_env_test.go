@@ -84,8 +84,8 @@ func TestUnmarshalV2EnvStructEmpty(t *testing.T) {
 }
 
 func TestUnmarshalV2EnvFullService(t *testing.T) {
-	// Test the validator for full apps containing both array and structs
-	var appDef userconfig.ServiceDefinition
+	// Test the validator for full services containing both array and structs
+	var serviceDef userconfig.ServiceDefinition
 
 	byteSlice := []byte(`{
     "components": {
@@ -106,15 +106,15 @@ func TestUnmarshalV2EnvFullService(t *testing.T) {
     }
 }`)
 
-	err := json.Unmarshal(byteSlice, &appDef)
+	err := json.Unmarshal(byteSlice, &serviceDef)
 	if err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 }
 
 func TestUnmarshalV2EnvFullServiceUpperCase(t *testing.T) {
-	// Test the validator for full apps containing both array and structs with uppercase env keys
-	var appDef userconfig.ServiceDefinition
+	// Test the validator for full services containing both array and structs with uppercase env keys
+	var serviceDef userconfig.ServiceDefinition
 
 	byteSlice := []byte(`{
     "components": {
@@ -135,12 +135,12 @@ func TestUnmarshalV2EnvFullServiceUpperCase(t *testing.T) {
     }
 }`)
 
-	err := json.Unmarshal(byteSlice, &appDef)
+	err := json.Unmarshal(byteSlice, &serviceDef)
 	if err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 
-	envArray, err := appDef.Components.ComponentByName("env-array")
+	envArray, err := serviceDef.Components.ComponentByName("env-array")
 	if err != nil {
 		t.Fatalf("ComponentByName failed: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestUnmarshalV2EnvFullServiceUpperCase(t *testing.T) {
 		t.Fatalf("Invalid result: got \n%s\nexpected\n%s", got, expected)
 	}
 
-	envStruct, err := appDef.Components.ComponentByName("env-struct")
+	envStruct, err := serviceDef.Components.ComponentByName("env-struct")
 	if err != nil {
 		t.Fatalf("ComponentByName failed: %v", err)
 	}
