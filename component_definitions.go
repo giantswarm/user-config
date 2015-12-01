@@ -350,6 +350,8 @@ func (nds *ComponentDefinitions) ComponentNames() ComponentNames {
 //   - group component definitions that share same pod
 //   - prevent duplicated lists, once a component definition is present in one
 //     list, it is not present in other lists.
+// The resulting maps are sorted such that components that link to other components are
+// found after the component that they link to.
 func (nds *ComponentDefinitions) AllDefsPerPod(names ComponentNames) ([]ComponentDefinitions, error) {
 	defsPerPod := []ComponentDefinitions{}
 
