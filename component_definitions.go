@@ -1,5 +1,9 @@
 package userconfig
 
+import (
+	"github.com/juju/errgo"
+)
+
 type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
 func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
