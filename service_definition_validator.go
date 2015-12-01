@@ -12,10 +12,10 @@ import (
 	"github.com/kr/pretty"
 )
 
-type v2AppDefCopy V2AppDefinition
+type serviceDefCopy ServiceDefinition
 
-func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
-	var clean v2AppDefCopy
+func CheckForUnknownFields(b []byte, ac *ServiceDefinition) error {
+	var clean serviceDefCopy
 	if err := json.Unmarshal(b, &clean); err != nil {
 		return mask(err)
 	}
@@ -31,10 +31,10 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 	}
 
 	// Normalize fields to common format
-	v2NormalizeEnv(dirtyMap)
-	v2NormalizeDomains(dirtyMap)
-	v2NormalizeVolumeSizes(dirtyMap)
-	v2NormalizePorts(dirtyMap)
+	normalizeEnv(dirtyMap)
+	normalizeDomains(dirtyMap)
+	normalizeVolumeSizes(dirtyMap)
+	normalizePorts(dirtyMap)
 
 	var cleanMap map[string]interface{}
 	if err := json.Unmarshal(cleanBytes, &cleanMap); err != nil {
@@ -43,12 +43,12 @@ func V2CheckForUnknownFields(b []byte, ac *V2AppDefinition) error {
 
 	// Also normalize the clean map for ports because marshalling
 	// ports preserves the input format
-	v2NormalizeDomains(cleanMap)
-	v2NormalizePorts(cleanMap)
+	normalizeDomains(cleanMap)
+	normalizePorts(cleanMap)
 
 	diffs := pretty.Diff(dirtyMap, cleanMap)
 	for _, diff := range diffs {
-		*ac = V2AppDefinition{}
+		*ac = ServiceDefinition{}
 		return prettyJSONFieldError(diff)
 	}
 
@@ -98,10 +98,10 @@ func getMapEntry(def map[string]interface{}, key string) map[string]interface{} 
 	return entryMap
 }
 
-// v2NormalizeEnv normalizes all struct "env" elements under service/component
+// normalizeEnv normalizes all struct "env" elements under service/component
 // to its natural array format. This normalization function is expected to
 // normalize "valid" data and passthrough everything else.
-func v2NormalizeEnv(def map[string]interface{}) {
+func normalizeEnv(def map[string]interface{}) {
 	components := getMapEntry(def, "components")
 	if components == nil {
 		// No components element
@@ -137,9 +137,9 @@ func v2NormalizeEnv(def map[string]interface{}) {
 	}
 }
 
-// v2NormalizeDomains normalizes all domain objects to adhere to the
+// normalizeDomains normalizes all domain objects to adhere to the
 // `port: domainList` format
-func v2NormalizeDomains(def map[string]interface{}) {
+func normalizeDomains(def map[string]interface{}) {
 	components := getMapEntry(def, "components")
 	if components == nil {
 		// No services element
@@ -267,8 +267,8 @@ func sortStringSlice(value interface{}) interface{} {
 	}
 }
 
-// v2NormalizePorts normalizes all values of "ports" elements
-func v2NormalizePorts(def map[string]interface{}) {
+// normalizePorts normalizes all values of "ports" elements
+func normalizePorts(def map[string]interface{}) {
 	components := getMapEntry(def, "components")
 	if components == nil {
 		// No components element
@@ -338,10 +338,10 @@ func normalizeSinglePort(input interface{}) interface{} {
 	return input
 }
 
-// v2NormalizeVolumeSizes normalizes all volume sizes to it's normalized format
+// normalizeVolumeSizes normalizes all volume sizes to it's normalized format
 // of "number GB" This normalization function is expected to normalize "valid"
 // data and passthrough everything else.
-func v2NormalizeVolumeSizes(def map[string]interface{}) {
+func normalizeVolumeSizes(def map[string]interface{}) {
 	components := getMapEntry(def, "components")
 	if components == nil {
 		// No services element

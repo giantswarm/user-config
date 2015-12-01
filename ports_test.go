@@ -51,7 +51,7 @@ func TestInvalidPortsValues(t *testing.T) {
 
 func TestUnmarshalV2PortsFullService(t *testing.T) {
 	// Test the validator for full service containing ports in various formats
-	var appDef userconfig.V2AppDefinition
+	var appDef userconfig.ServiceDefinition
 
 	byteSlice := []byte(`{
     "components": {

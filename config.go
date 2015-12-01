@@ -4,6 +4,6 @@ type MetaDataConfig struct {
 	Stack string `json:"stack"`
 }
 
-type AppConfig struct {
+type ServiceConfig struct {
 	MetaData MetaDataConfig `json:"meta_data"`
 }

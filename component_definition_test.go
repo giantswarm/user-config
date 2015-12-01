@@ -10,7 +10,7 @@ import (
 )
 
 func Test_CyclicDeps_Valid_ComponentLinks(t *testing.T) {
-	def := userconfig.V2AppDefinition{
+	def := userconfig.ServiceDefinition{
 		Components: userconfig.ComponentDefinitions{},
 	}
 
@@ -56,7 +56,7 @@ func Test_CyclicDeps_Valid_ComponentLinks(t *testing.T) {
 }
 
 func Test_CyclicDeps_Valid_ServiceLinks(t *testing.T) {
-	def := userconfig.V2AppDefinition{
+	def := userconfig.ServiceDefinition{
 		Components: userconfig.ComponentDefinitions{},
 	}
 
@@ -68,7 +68,7 @@ func Test_CyclicDeps_Valid_ServiceLinks(t *testing.T) {
 		},
 		Links: userconfig.LinkDefinitions{
 			userconfig.LinkDefinition{
-				Service:    userconfig.AppName("service"),
+				Service:    userconfig.ServiceName("service"),
 				TargetPort: generictypes.MustParseDockerPort("80/tcp"),
 			},
 		},
@@ -102,7 +102,7 @@ func Test_CyclicDeps_Valid_ServiceLinks(t *testing.T) {
 }
 
 func Test_CyclicDeps_LinkToSelf(t *testing.T) {
-	def := userconfig.V2AppDefinition{
+	def := userconfig.ServiceDefinition{
 		Components: userconfig.ComponentDefinitions{},
 	}
 
@@ -128,7 +128,7 @@ func Test_CyclicDeps_LinkToSelf(t *testing.T) {
 }
 
 func Test_CyclicDeps_OnlyCircle(t *testing.T) {
-	def := userconfig.V2AppDefinition{
+	def := userconfig.ServiceDefinition{
 		Components: userconfig.ComponentDefinitions{},
 	}
 
@@ -182,7 +182,7 @@ func Test_CyclicDeps_OnlyCircle(t *testing.T) {
 }
 
 func Test_CyclicDeps_AdditionalCircle(t *testing.T) {
-	def := V2ExampleDefinition()
+	def := ExampleDefinition()
 
 	// Component "one" links to component "two"
 	def.Components[userconfig.ComponentName("one")] = &userconfig.ComponentDefinition{

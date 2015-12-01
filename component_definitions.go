@@ -1,5 +1,11 @@
 package userconfig
 
+import (
+	"fmt"
+
+	"github.com/juju/errgo"
+)
+
 type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
 func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
@@ -135,6 +141,16 @@ func (nds *ComponentDefinitions) ComponentByName(name ComponentName) (*Component
 	}
 
 	return nil, maskf(ComponentNotFoundError, name.String())
+}
+
+func (nds *ComponentDefinitions) Contains(name ComponentName) bool {
+	for componentName, _ := range *nds {
+		if name == componentName {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ParentOf returns the closest parent of the component with the given name.
@@ -365,11 +381,88 @@ first:
 		}
 	}
 
-	return defsPerPod, nil
+	sortedDefsPerPod, err := nds.sortByLinks(defsPerPod)
+	if err != nil {
+		return nil, maskAny(err)
+	}
+	return sortedDefsPerPod, nil
 }
 
 // sortByLinks orders the given list such that components with links to other components
 // come later that the components they link to
-func (nds *ComponentDefinitions) sortByLinks(defs []ComponentDefinitions) []ComponentDefinitions {
+func (nds *ComponentDefinitions) sortByLinks(defs []ComponentDefinitions) ([]ComponentDefinitions, error) {
+	// Re-order such that components that link to other components are after before those other components
+	for i := 0; i < len(defs); {
+		def := defs[i]
+		newIndex, err := nds.getIndexFromLinks(def, defs)
+		if err != nil {
+			return nil, maskAny(err)
+		}
+		if newIndex < 0 || newIndex <= i {
+			// No change needed
+			i++
+			continue
+		}
+		// Move c from i to newIndex (knowing that newIndex > i)
+		fmt.Printf("i=%d newIndex=%d len=%d\n", i, newIndex, len(defs))
+		fromNewIndex := defs[newIndex:]
+		defs = append(defs[:newIndex], def)             // Inset def before newIndex (part 1)
+		defs = append(defs[:newIndex], fromNewIndex...) // Inset def before newIndex (part 2)
+		defs = append(defs[:i], defs[i+1:]...)          // Remove def from index i
+		// Restart from the beginning
+		i = 0
+	}
+	return defs, nil
+}
 
+// getIndexFromLinks returns the index (in cs) where the given component should be
+// placed in order to be after all of the component it links to
+func (nds *ComponentDefinitions) getIndexFromLinks(def ComponentDefinitions, defs []ComponentDefinitions) (int, error) {
+	newIndex := -1
+
+	// indexOf returns the index in `deps` of the map that contains a component with given name
+	indexOf := func(compName ComponentName) (int, error) {
+		for i, d := range defs {
+			if d.Contains(compName) {
+				return i, nil
+			}
+		}
+		return 0, maskAny(ComponentNotFoundError)
+	}
+
+	for _, c := range def {
+		for _, link := range c.Links {
+			if link.LinksToOtherService() {
+				continue
+			}
+			// Resolve link to link in same application
+			implName, _, err := link.Resolve(*nds)
+			if err != nil {
+				return 0, maskAny(err)
+			}
+
+			// Find implementation component
+			implDefIndex, err := indexOf(implName)
+			if err != nil {
+				return 0, maskAny(errgo.WithCausef(nil, ComponentNotFoundError, "unknown component: %s in definitions list", implName))
+			}
+
+			if implDefIndex > newIndex {
+				newIndex = implDefIndex
+			}
+		}
+	}
+	return newIndex, nil
+}
+
+func (nds *ComponentDefinitions) Map(names ComponentNames) ComponentDefinitions {
+	list := ComponentDefinitions{}
+
+	for name, def := range *nds {
+		if names.Contain(name) {
+			list[name] = def
+		}
+	}
+
+	return list
 }

@@ -13,19 +13,19 @@ import (
 func TestLinkStringReliability(t *testing.T) {
 	lds := LinkDefinitions{
 		LinkDefinition{
-			Service:    AppName("service1"),
+			Service:    ServiceName("service1"),
 			Component:  ComponentName("component1"),
 			Alias:      "alias1",
 			TargetPort: generictypes.MustParseDockerPort("80/tcp"),
 		},
 		LinkDefinition{
-			Service:    AppName("aaa"),
+			Service:    ServiceName("aaa"),
 			Component:  ComponentName("zzz"),
 			Alias:      "bbb",
 			TargetPort: generictypes.MustParseDockerPort("1111/tcp"),
 		},
 		LinkDefinition{
-			Service:    AppName("foo"),
+			Service:    ServiceName("foo"),
 			Component:  ComponentName("bar"),
 			Alias:      "baz",
 			TargetPort: generictypes.MustParseDockerPort("9999/tcp"),
@@ -50,7 +50,7 @@ func TestLinkStringReliability(t *testing.T) {
 func TestLinkDetectCycleIssueWrtService(t *testing.T) {
 	// In this service, component 'a' links to component 'b' and component 'b'
 	// links to another service. This should NOT result in validation errors.
-	app := V2AppDefinition{
+	app := ServiceDefinition{
 		Components: ComponentDefinitions{
 			ComponentName("a"): &ComponentDefinition{
 				Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
@@ -65,7 +65,7 @@ func TestLinkDetectCycleIssueWrtService(t *testing.T) {
 				Image: MustParseImageDefinition("registry.giantswarm.io/landingpage:0.10.0"),
 				Links: LinkDefinitions{
 					LinkDefinition{
-						Service:    AppName("other-service"),
+						Service:    ServiceName("other-service"),
 						TargetPort: generictypes.MustParseDockerPort("80/tcp"),
 					},
 				},
