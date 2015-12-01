@@ -367,3 +367,9 @@ first:
 
 	return defsPerPod, nil
 }
+
+// sortByLinks orders the given list such that components with links to other components
+// come later that the components they link to
+func (nds *ComponentDefinitions) sortByLinks(defs []ComponentDefinitions) []ComponentDefinitions {
+
+}
