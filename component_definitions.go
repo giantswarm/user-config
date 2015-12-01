@@ -1,11 +1,5 @@
 package userconfig
 
-import (
-	"fmt"
-
-	"github.com/juju/errgo"
-)
-
 type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
 func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
@@ -403,12 +397,8 @@ func (nds *ComponentDefinitions) sortByLinks(defs []ComponentDefinitions) ([]Com
 			i++
 			continue
 		}
-		// Move c from i to newIndex (knowing that newIndex > i)
-		fmt.Printf("i=%d newIndex=%d len=%d\n", i, newIndex, len(defs))
-		fromNewIndex := defs[newIndex:]
-		defs = append(defs[:newIndex], def)             // Inset def before newIndex (part 1)
-		defs = append(defs[:newIndex], fromNewIndex...) // Inset def before newIndex (part 2)
-		defs = append(defs[:i], defs[i+1:]...)          // Remove def from index i
+		// Swap defs[i] with defs[newIndex]
+		defs[newIndex], defs[i] = defs[i], defs[newIndex]
 		// Restart from the beginning
 		i = 0
 	}
