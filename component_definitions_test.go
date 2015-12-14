@@ -97,3 +97,39 @@ func Test_AllDefsPerPod_Sorting_WithPods(t *testing.T) {
 		t.Fatalf("Expected 'pod/a' & 'pod/b' to come last, got %#v", defs[1])
 	}
 }
+
+func Test_AllDefsPerPod_Sorting_NotAllNames(t *testing.T) {
+	def := userconfig.ServiceDefinition{
+		Components: userconfig.ComponentDefinitions{},
+	}
+
+	// Component "a" links to component "b", no pods involved
+	// Therefore we expect to get 2 maps from AllDefsPerPod, the first containing 'b', the second containing 'a'
+	def.Components["dep"] = testComponent()
+	def.Components["box"] = testComponent()
+	def.Components["dep"].Ports = userconfig.PortDefinitions{
+		generictypes.MustParseDockerPort("80"),
+	}
+	def.Components["box"].Links = userconfig.LinkDefinitions{
+		userconfig.LinkDefinition{
+			Component:  userconfig.ComponentName("dep"),
+			TargetPort: generictypes.MustParseDockerPort("80/tcp"),
+		},
+	}
+
+	if err := def.Validate(nil); err != nil {
+		t.Fatalf("expected definition to be valid, got error: %#v", err)
+	}
+
+	names := userconfig.ComponentNames{"box"}
+	defs, err := def.Components.AllDefsPerPod(names)
+	if err != nil {
+		t.Fatalf("AllDefsPerPod failed: %#v", err)
+	}
+	if len(defs) != 1 {
+		t.Fatalf("Expected to get 1 maps, got %d", len(defs))
+	}
+	if !defs[0].Contains("box") {
+		t.Fatalf("Expected 'box' to come first, got %#v", defs[0])
+	}
+}
