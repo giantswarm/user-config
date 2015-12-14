@@ -104,7 +104,7 @@ func Test_AllDefsPerPod_Sorting_NotAllNames(t *testing.T) {
 	}
 
 	// Component "box" links to component "dep", no pods involved, we only ask for "box"
-	// Therefore we expect to get 1 maps from AllDefsPerPod, the containing 'box'.
+	// Therefore we expect to get 1 map from AllDefsPerPod, containing 'box'.
 	// No error is allowed.
 	def.Components["dep"] = testComponent()
 	def.Components["box"] = testComponent()
