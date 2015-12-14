@@ -1,9 +1,5 @@
 package userconfig
 
-import (
-	"github.com/juju/errgo"
-)
-
 type ComponentDefinitions map[ComponentName]*ComponentDefinition
 
 func (nds ComponentDefinitions) validate(valCtx *ValidationContext) error {
@@ -440,7 +436,8 @@ func (nds *ComponentDefinitions) getIndexFromLinks(def ComponentDefinitions, def
 			// Find implementation component
 			implDefIndex, err := indexOf(implName)
 			if err != nil {
-				return 0, maskAny(errgo.WithCausef(nil, ComponentNotFoundError, "unknown component: %s in definitions list", implName))
+				// linked-to component is not in our lists, so we don't have to care about it
+				continue
 			}
 
 			if implDefIndex > newIndex {
