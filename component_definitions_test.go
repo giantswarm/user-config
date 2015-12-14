@@ -103,8 +103,9 @@ func Test_AllDefsPerPod_Sorting_NotAllNames(t *testing.T) {
 		Components: userconfig.ComponentDefinitions{},
 	}
 
-	// Component "a" links to component "b", no pods involved
-	// Therefore we expect to get 2 maps from AllDefsPerPod, the first containing 'b', the second containing 'a'
+	// Component "box" links to component "dep", no pods involved, we only ask for "box"
+	// Therefore we expect to get 1 maps from AllDefsPerPod, the containing 'box'.
+	// No error is allowed.
 	def.Components["dep"] = testComponent()
 	def.Components["box"] = testComponent()
 	def.Components["dep"].Ports = userconfig.PortDefinitions{
