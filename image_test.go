@@ -29,9 +29,11 @@ func TestTypeAssertDockerImage(t *testing.T) {
 
 func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{
-		Org:                   "myorg",
-		PublicDockerRegistry:  "registry.giantswarm.io",
-		PrivateDockerRegistry: "registry.private.giantswarm.io",
+		Org: "myorg",
+		RestrictedRegistries: []string{
+			"registry.giantswarm.io",
+			"registry.private.giantswarm.io",
+		},
 	}
 
 	id := userconfig.MustParseImageDefinition("registry.giantswarm.io/myorg/foo")
@@ -44,9 +46,11 @@ func TestImageValidOrgWithPublicRegistry(t *testing.T) {
 
 func TestImageValidOrgWithPrivateRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{
-		Org:                   "myorg",
-		PublicDockerRegistry:  "registry.giantswarm.io",
-		PrivateDockerRegistry: "registry.private.giantswarm.io",
+		Org: "myorg",
+		RestrictedRegistries: []string{
+			"registry.giantswarm.io",
+			"registry.private.giantswarm.io",
+		},
 	}
 
 	id := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/myorg/foo")
@@ -59,9 +63,11 @@ func TestImageValidOrgWithPrivateRegistry(t *testing.T) {
 
 func TestImageInvalidOrgWithPublicRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{
-		Org:                   "myorg",
-		PublicDockerRegistry:  "registry.giantswarm.io",
-		PrivateDockerRegistry: "registry.private.giantswarm.io",
+		Org: "myorg",
+		RestrictedRegistries: []string{
+			"registry.giantswarm.io",
+			"registry.private.giantswarm.io",
+		},
 	}
 
 	id := userconfig.MustParseImageDefinition("registry.giantswarm.io/otherorg/foo")
@@ -77,9 +83,11 @@ func TestImageInvalidOrgWithPublicRegistry(t *testing.T) {
 
 func TestImageInvalidOrgWithPrivateRegistry(t *testing.T) {
 	valCtx := &userconfig.ValidationContext{
-		Org:                   "myorg",
-		PublicDockerRegistry:  "registry.giantswarm.io",
-		PrivateDockerRegistry: "registry.private.giantswarm.io",
+		Org: "myorg",
+		RestrictedRegistries: []string{
+			"registry.giantswarm.io",
+			"registry.private.giantswarm.io",
+		},
 	}
 
 	id := userconfig.MustParseImageDefinition("registry.private.giantswarm.io/otherorg/foo")
