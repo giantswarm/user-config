@@ -72,8 +72,9 @@ type ValidationContext struct {
 	MinMemoryLimit        ByteSize
 	MaxMemoryLimit        ByteSize
 
-	PublicDockerRegistry  string
-	PrivateDockerRegistry string
+	// RestrictedRegistries contains the registry names, where the validator should throw an error, if the repository
+	// namespace does not contain the Org
+	RestrictedRegistries []string
 }
 
 // validate performs semantic validations of this ServiceDefinition.
