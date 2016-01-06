@@ -31,5 +31,10 @@ func (id ImageDefinition) Validate(valCtx *ValidationContext) error {
 }
 
 func (id ImageDefinition) isGSRegistry(valCtx *ValidationContext) bool {
-	return id.Registry == valCtx.PublicDockerRegistry || id.Registry == valCtx.PrivateDockerRegistry
+	for _, registry := range valCtx.RestrictedRegistries {
+		if id.Registry == registry {
+			return true
+		}
+	}
+	return false
 }
