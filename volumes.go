@@ -21,6 +21,9 @@ type VolumeConfig struct {
 
 	// Path inside the other component to share
 	VolumePath string `json:"volume-path,omitempty" description:"Path in another component to share"`
+
+	// Shared controls whether all instances of the parent component will get the same volume (true) or each gets their own (false). Defaults to false.
+	Shared bool `json:"shared,omitempty" description:"Share this volume across all instances"`
 }
 
 // validate validates the settings of this VolumeConfig.
